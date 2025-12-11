@@ -1,0 +1,18 @@
+# PDF Processing
+pdfplumber==0.10.3
+PyPDF2==3.0.1
+
+# LLM Integration
+anthropic==0.34.2
+openai==1.35.3
+google-generativeai==0.8.3
+requests==2.32.3
+
+# Text Processing
+nltk==3.8.1
+
+# Data Handling
+python-dotenv==1.0.0
+
+# Utilities
+tqdm==4.66.1
