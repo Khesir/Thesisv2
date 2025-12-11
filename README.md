@@ -32,7 +32,7 @@ pip install -r requirements.txt
 Create a `.env` file in the project root:
 
 ```bash
-ANTHROPIC_API_KEY=your_api_key_here
+GOOGLE_API_KEY=your_google_api_key_here
 ```
 
 ## Usage
@@ -40,7 +40,7 @@ ANTHROPIC_API_KEY=your_api_key_here
 ### Process a PDF file
 
 ```bash
-python process_pdf.py your_document.pdf
+python main.py ".\docs\FAO-Crop Soil Requirements.pdf"
 ```
 
 This will:
@@ -48,18 +48,6 @@ This will:
 2. Process and chunk the text
 3. Extract agricultural information using AI
 4. Save results to `your_document_extracted.json`
-
-### Specify custom output location
-
-```bash
-python process_pdf.py document.pdf -o results/output.json
-```
-
-### Pass API key directly (optional)
-
-```bash
-python process_pdf.py document.pdf --api-key sk-ant-...
-```
 
 ## Example Output
 
@@ -102,26 +90,6 @@ The system automatically extracts:
 - ✅ Yield data
 - ✅ Regional information
 - ✅ Best practices
-
-## Programmatic Usage
-
-```python
-from dotenv import load_dotenv
-from process_pdf import process_pdf
-
-load_dotenv()
-
-# Process a PDF
-result = process_pdf(
-    pdf_path="document.pdf",
-    output_path="results.json"
-)
-
-# Access the data
-if result.get('success', True):
-    crops = result['extracted_data']['crops']
-    recommendations = result['extracted_data']['recommendations']
-```
 
 ## Troubleshooting
 
