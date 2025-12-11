@@ -9,7 +9,7 @@ google-generativeai==0.8.3
 requests==2.32.3
 
 # Text Processing
-nltk==3.8.1
+nltk==3.9
 
 # Data Handling
 python-dotenv==1.0.0
