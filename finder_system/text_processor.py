@@ -52,8 +52,15 @@ class TextProcessor:
         if max_chunk_size is None:
             max_chunk_size = self.chunk_size
 
-        # Split by paragraphs first
+        # Calculate max characters based on token estimate (1 token ≈ 4 characters)
+        max_chars = max_chunk_size * 4
+
+        # Try splitting by paragraphs first
         paragraphs = text.split('\n\n')
+
+        # If no paragraph breaks found (single large block), split by sentences or fixed size
+        if len(paragraphs) == 1 and len(text) > max_chars:
+            return self._segment_by_sentences(text, max_chunk_size)
 
         chunks = []
         current_chunk = ""
@@ -63,6 +70,26 @@ class TextProcessor:
             # Approximate token count (rough estimate: 1 token ≈ 4 characters)
             paragraph_tokens = len(paragraph) / 4
             current_tokens = len(current_chunk) / 4
+
+            # If a single paragraph exceeds max size, split it further
+            if paragraph_tokens > max_chunk_size:
+                # Save current chunk if not empty
+                if current_chunk:
+                    chunks.append({
+                        'chunk_id': chunk_num,
+                        'text': current_chunk.strip(),
+                        'token_count': int(current_tokens)
+                    })
+                    chunk_num += 1
+                    current_chunk = ""
+
+                # Split the large paragraph
+                sub_chunks = self._segment_by_sentences(paragraph, max_chunk_size)
+                for sub_chunk in sub_chunks:
+                    sub_chunk['chunk_id'] = chunk_num
+                    chunks.append(sub_chunk)
+                    chunk_num += 1
+                continue
 
             if current_tokens + paragraph_tokens > max_chunk_size and current_chunk:
                 # Save current chunk
@@ -78,6 +105,75 @@ class TextProcessor:
                 current_chunk += "\n\n" + paragraph if current_chunk else paragraph
 
         # Add the last chunk
+        if current_chunk:
+            chunks.append({
+                'chunk_id': chunk_num,
+                'text': current_chunk.strip(),
+                'token_count': int(len(current_chunk) / 4)
+            })
+
+        return chunks
+
+    def _segment_by_sentences(self, text: str, max_chunk_size: int) -> List[Dict]:
+        """
+        Split text by sentences when paragraph splitting isn't possible
+
+        Args:
+            text: Text to segment
+            max_chunk_size: Maximum tokens per chunk
+
+        Returns:
+            List of text chunks with metadata
+        """
+        # Split by sentence-ending punctuation
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+
+        chunks = []
+        current_chunk = ""
+        chunk_num = 0
+        max_chars = max_chunk_size * 4
+
+        for sentence in sentences:
+            sentence_len = len(sentence)
+            current_len = len(current_chunk)
+
+            # If single sentence exceeds max, split by character count with word boundaries
+            if sentence_len > max_chars:
+                if current_chunk:
+                    chunks.append({
+                        'chunk_id': chunk_num,
+                        'text': current_chunk.strip(),
+                        'token_count': int(current_len / 4)
+                    })
+                    chunk_num += 1
+                    current_chunk = ""
+
+                # Split long sentence by words
+                words = sentence.split()
+                for word in words:
+                    if len(current_chunk) + len(word) + 1 > max_chars and current_chunk:
+                        chunks.append({
+                            'chunk_id': chunk_num,
+                            'text': current_chunk.strip(),
+                            'token_count': int(len(current_chunk) / 4)
+                        })
+                        chunk_num += 1
+                        current_chunk = word
+                    else:
+                        current_chunk += " " + word if current_chunk else word
+                continue
+
+            if current_len + sentence_len + 1 > max_chars and current_chunk:
+                chunks.append({
+                    'chunk_id': chunk_num,
+                    'text': current_chunk.strip(),
+                    'token_count': int(current_len / 4)
+                })
+                chunk_num += 1
+                current_chunk = sentence
+            else:
+                current_chunk += " " + sentence if current_chunk else sentence
+
         if current_chunk:
             chunks.append({
                 'chunk_id': chunk_num,

@@ -1,0 +1,2742 @@
+{
+  "document_info": {
+    "file_path": ".\\docs\\FAO-Crop Soil Requirements.pdf",
+    "file_name": "FAO-Crop Soil Requirements.pdf",
+    "processed_date": "2026-01-18T20:04:19.422898",
+    "metadata": {
+      "title": "",
+      "author": "",
+      "subject": "",
+      "creator": "",
+      "producer": "",
+      "creation_date": "D:20070430164548+02'00'",
+      "total_pages": 115,
+      "word_count": 47993
+    },
+    "content_hash": "854144da296aaec1bd23147c9f46a74a0b144fc47cea7afa40bd9d139f458f3c"
+  },
+  "processing_info": {
+    "total_chunks": 78,
+    "chunks_processed": 21,
+    "provider_used": "gemini",
+    "strategy": "failover",
+    "total_usage": {
+      "input_tokens": 36841,
+      "output_tokens": 41251,
+      "total_tokens": 78092
+    }
+  },
+  "extracted_data": {
+    "crops": [
+      {
+        "name": "Wheat",
+        "scientific_name": "Triticum aestivum L.",
+        "category": "cereal",
+        "soil_requirements": {
+          "types": [
+            "fertile soil",
+            "good structure",
+            "porous subsoil"
+          ],
+          "ph_range": "slightly acid to neutral (can be grown in alkaline calcareous soils under irrigation)",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": "well distributed rains",
+          "humidity": null,
+          "conditions": [
+            "water supply should not be restrictive",
+            "temperate regions",
+            "subtropical Indian conditions"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "200 kg/ha (for 6.7 tonnes grain/ha winter wheat); 128 kg/ha (for 4.6 tonnes grain/ha in subtropical India); 25 kg/tonne of grain (in temperate regions for 15% protein); 350 kg/ha (total plant biomass for 10 tonnes yield in temperate regions)",
+            "timing": "small requirement before winter; highest during maximum vegetative growth in spring; >80% taken up by ear emergence",
+            "notes": "70% of absorbed N ends up in grains; fertilizer amounts can be adjusted to N removal in grains as fertile soils generally provide one-third of the total amount"
+          },
+          "phosphorus": {
+            "rate": "55 kg P2O5/ha (for 6.7 tonnes grain/ha winter wheat); 46 kg P2O5/ha (for 4.6 tonnes grain/ha in subtropical India)",
+            "timing": null,
+            "notes": "In the intensive rice-wheat rotation, where wheat has been fertilized adequately, the rate of P application to rice can be reduced."
+          },
+          "potassium": {
+            "rate": "252 kg K2O/ha (for 6.7 tonnes grain/ha winter wheat); 219 kg K2O/ha (for 4.6 tonnes grain/ha in subtropical India)",
+            "timing": null,
+            "notes": "20-25% of absorbed K ends up in grains"
+          },
+          "other_nutrients": [
+            {
+              "name": "Calcium",
+              "rate": "27 kg/ha",
+              "notes": "absorbed in subtropical Indian conditions for 4.6 tonnes grain/ha"
+            },
+            {
+              "name": "Magnesium",
+              "rate": "19 kg/ha",
+              "notes": "absorbed in subtropical Indian conditions for 4.6 tonnes grain/ha"
+            },
+            {
+              "name": "Sulfur",
+              "rate": "22 kg/ha",
+              "notes": "absorbed in subtropical Indian conditions for 4.6 tonnes grain/ha"
+            },
+            {
+              "name": "Iron",
+              "rate": "1.8 kg/ha",
+              "notes": "absorbed in subtropical Indian conditions for 4.6 tonnes grain/ha"
+            },
+            {
+              "name": "Zinc",
+              "rate": "0.5 kg/ha",
+              "notes": "absorbed in subtropical Indian conditions for 4.6 tonnes grain/ha"
+            },
+            {
+              "name": "Manganese",
+              "rate": "0.5 kg/ha",
+              "notes": "absorbed in subtropical Indian conditions for 4.6 tonnes grain/ha"
+            },
+            {
+              "name": "Copper",
+              "rate": "0.15 kg/ha",
+              "notes": "absorbed in subtropical Indian conditions for 4.6 tonnes grain/ha"
+            }
+          ]
+        },
+        "planting_info": {
+          "season": "before winter (for winter wheat)",
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "use of organic manure (apply before sowing or carefully as slurry during early growth)",
+          "appropriate nutrient management",
+          "crop protection management",
+          "breeding programmes (e.g., short-straw trait for responsiveness to nutrients and lodging resistance)",
+          "Intensive rice-wheat rotation."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "about 3 tonnes/ha (world average)",
+          "range": "1 tonne/ha to more than 12 tonnes/ha; up to 14 tonnes/ha (high yields)",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "Subtropical Indian conditions",
+            "specific_info": "A crop producing 4.6 tonnes grains and 6.9 tonnes straw absorbed 128 kg N, 46 kg P2O5, 219 kg K2O, 27 kg Ca, 19 kg Mg, 22 kg S, 1.8 kg Fe, 0.5 kg Zn, 0.5 kg Mn and 0.15 kg Cu."
+          },
+          {
+            "region": "Temperate regions",
+            "specific_info": "25 kg N are required per tonne of grain containing 15 percent protein. A yield of 10 tonnes will need 250 kg/ha N for the grains alone, and about 30-40 percent more for the total plant biomass, which results in a total amount of 350 kg N/ha."
+          }
+        ],
+        "recommendations": [
+          "seek information relevant to local conditions from local sources",
+          "ensure balanced crop nutrition for sustaining medium to high yields",
+          "use highly productive varieties with appropriate nutrient and crop protection management on fertile soils with adequate water supply",
+          "adjust fertilizer amounts to N removal in grains"
+        ]
+      },
+      {
+        "name": "Winter Wheat",
+        "scientific_name": null,
+        "category": "cereal",
+        "soil_requirements": {
+          "types": [
+            "most soils",
+            "sandy soils",
+            "S-deficient soils",
+            "poor soils",
+            "neutral to alkaline soils",
+            "coarse-textured soils",
+            "fertile soils"
+          ],
+          "ph_range": "neutral to alkaline (for Mn/Zn deficiency)",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": "cold weather (spring for N type)",
+          "rainfall": "low rainfall (N placement advantage)",
+          "humidity": null,
+          "conditions": [
+            "subtropical conditions",
+            "water stress"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "200-250 kg N/ha (for high yields); 120-150 kg N/ha (subtropical, irrigated HYVs); ~half of HYV rate (subtropical, traditional/unirrigated); 40-120 kg N/ha (unirrigated, depending on stored soil moisture)",
+            "timing": "Split applications: 30 kg N/ha (autumn); ~120 kg N/ha (early spring); 30-50 kg N/ha (beginning of tillering); 40-60 kg N/ha (ear emergence, can be split); Subtropical: 2-3 splits at planting, and one month and two months after planting.",
+            "notes": "No special N fertilizer needed. Quick-acting nitrate superior to ammonium or urea in spring with cold weather. Placement brings little advantage on most soils, except under low rainfall and no irrigation. Basal dressing (subtropical) in form of urea or NP/NPK complexes. Top-dressing (subtropical): common N fertilizers, ammonium sulphate better on S-deficient soils. Late foliar spray at ear emergence can improve protein content for baking quality. One kilogram of fertilizer N produces about 15-25 kg of grain."
+          },
+          "phosphorus": {
+            "rate": "90 kg/ha P2O5 (for a yield of 8 tonnes/ha); 30% higher on deficient soils; 50% lower on soils with high amounts",
+            "timing": "Before sowing in spring or autumn",
+            "notes": "Optimal supply required for high yields, even during water stress."
+          },
+          "potassium": {
+            "rate": "160 kg/ha K2O (for a yield of 8 tonnes/ha); 30% higher on deficient soils; 50% lower on soils with high amounts",
+            "timing": "Before sowing in spring or autumn",
+            "notes": "Optimal supply required for high yields, even during water stress. Danger of K leaching on sandy soils."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium",
+              "rate": "25 kg/ha Mg (for a yield of 8 tonnes/ha); 30% higher on deficient soils; 50% lower on soils with high amounts",
+              "notes": "Likely to be limiting in poor soils, at high yields, and with persistent NPK use. Apply prior to sowing."
+            },
+            {
+              "name": "Sulfur",
+              "rate": null,
+              "notes": "Likely to be limiting in poor soils, at high yields, and with persistent NPK use. Apply prior to sowing or through an S-containing N fertilizer in the standing crop. Ammonium sulphate performs better on S-deficient soils for top-dressing."
+            },
+            {
+              "name": "Manganese",
+              "rate": null,
+              "notes": "May be in short supply in neutral to alkaline soils for high yields. Correct with foliar spray of 0.5% manganese sulphate solution 2-4 days before first irrigation and again 2-3 times at weekly intervals on sunny days."
+            },
+            {
+              "name": "Zinc",
+              "rate": "62.5 kg/ha zinc sulphate (soil application, once every 2-3 years); 2.5 kg zinc sulphate + 1.25 kg unslaked lime in 500 litres water/ha (foliar spray)",
+              "notes": "May be in short supply in neutral to alkaline soils for high yields. Deficiency is a problem in coarse-textured soils under intensive cropping. Foliar spray: 0.5% zinc sulphate, generally 2-3 sprays at 15-day intervals."
+            },
+            {
+              "name": "Copper",
+              "rate": null,
+              "notes": "May be in short supply on sandy soils for high yields."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": "spring or autumn (for P and K application)",
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Split application of N fertilizers",
+          "Foliar spray for late N application to improve protein content",
+          "Foliar sprays for visible nutrient deficiency symptoms (water-soluble fertilizers)",
+          "Irrigation (mentioned for HYVs in subtropical conditions and Mn deficiency correction)",
+          "Intensive cropping (linked to Zn deficiency)"
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [
+          {
+            "region": "Subtropical conditions",
+            "specific_info": "Generally recommended N amounts are 120-150 kg N/ha to irrigated HYVs, and about half of this to traditional varieties or where irrigation is not available. N application is generally recommended in 2-3 splits at planting, and one month and two months after planting. Basal dressing generally given in the form of urea or through NP/NPK complexes. For top-dressing, ammonium sulphate performs better than others on S-deficient soils."
+          }
+        ],
+        "recommendations": [
+          "Reduce fertilization rate if yields are limited by climate or other constraints.",
+          "Apply P and K before sowing in spring or autumn unless there is danger of K leaching on sandy soils.",
+          "On fertile soils, nutrients applied to offset nutrient removal with grains and straw are sufficient.",
+          "On deficient soils, nutrient amounts added should be at least 30 percent higher than recommended.",
+          "On soils containing high amounts, nutrient amounts should be about 50 percent lower than recommended.",
+          "For visible deficiency symptoms, apply water-soluble fertilizers or foliar sprays."
+        ]
+      },
+      {
+        "name": "Rice",
+        "scientific_name": "Oryza sativa L.",
+        "category": "cereal",
+        "soil_requirements": {
+          "types": [
+            "wetland rice soils",
+            "rice soils",
+            "flooded soil"
+          ],
+          "ph_range": "moves towards neutrality after submergence",
+          "drainage": "submerged or waterlogged conditions"
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": "lower-yielding rainy season, dry season (abundant sunshine)",
+          "humidity": null,
+          "conditions": [
+            "anaerobic, reducing conditions in the flooded soil",
+            "wetland system (submerged or waterlogged)"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "50-60 kg N/ha (from Sesbania green manure); up to 25-50 kg N/ha (from BGA and/or Azolla Anabaena association); 20-30 kg N/ha (from BGA inoculation); similar amounts of N (from Azolla biomass)",
+            "timing": "Organic manure: a week or two before transplanting; Sesbania green manure: before planting rice; Azolla biomass: before or during the growth of rice",
+            "notes": "Green manuring with fast-growing leguminous plants is recommended where adequate water is available. BNF by BGA and/or Azolla Anabaena association has considerable scope. Azolla biomass also contributes significant amounts of other nutrients."
+          },
+          "phosphorus": {
+            "rate": "11 kg P2O5 per 1 tonne of paddy (uptake); relatively small supply of P from mineralization unless green manured",
+            "timing": "Phosphate meant for rice can be applied to leguminous green manure (e.g., Sesbania) instead, when planted before rice.",
+            "notes": "Adequate supply of phosphate promotes greater N fixation."
+          },
+          "potassium": {
+            "rate": "30-40 kg K2O/ha (accumulated by Azolla)",
+            "timing": null,
+            "notes": "Azolla can accumulate K2O from irrigation water."
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": "Rabi (dry season), Kharif (wet season)",
+          "method": "transplanting",
+          "spacing": null,
+          "duration": "major part of the growth period under submerged/waterlogged conditions"
+        },
+        "farming_practices": [
+          "Wetland system cultivation",
+          "incorporation of a good green manure crop raised before planting",
+          "split applications of N to avoid leaching losses (particularly on permeable soils)",
+          "working basal N application into the flooded soil",
+          "applying ammonium or urea N into the reduced soil horizon",
+          "using urea supergranules for placement in the reduced zone",
+          "using nitrate-containing fertilizers (AN, CAN) for top-dressing when crop uptake is rapid and topsoil has a mat of roots",
+          "Organic manuring",
+          "Green manuring with fast-growing leguminous plants (e.g., Sesbania)",
+          "Incorporation of green manure into the soil",
+          "Biofertilizers (BGA, Azolla Anabaena association)",
+          "Inoculation of paddy-field with BGA",
+          "Incorporation of Azolla biomass"
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": "20 kg or more of paddy per kilogram of N (yield response); average yields of 4 dwarf and 7 tall indica rice as affected by N fertilization (Figure 42 shows ~2-6 t/ha depending on N and variety)",
+          "unit": "kg/kg N, tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "Rabi (dry season)",
+            "specific_info": "irrigated HYVs can justify 30-40 kg N/ha more than in the lower-yielding rainy season"
+          },
+          {
+            "region": "Kharif (wet season)",
+            "specific_info": "lower-yielding season for rice compared to dry season"
+          }
+        ],
+        "recommendations": [
+          "160 kg N/ha or more is recommended for HYVs under good management with assured water supply.",
+          "The timing of N applications is very important for improving the efficiency of N use by rice.",
+          "The method of N application is also important for reducing N losses and improving the nitrogen-use efficiency.",
+          "The basal application should be worked into the flooded soil.",
+          "The applications of ammonium or urea N should, where possible, be made into the reduced soil horizon.",
+          "Placement of urea in the reduced zone can be facilitated by using urea supergranules.",
+          "Nitrate-containing fertilizers such as AN or CAN are often less satisfactory for rice, particularly where given at or before planting. They can be used for top-dressing when crop uptake of nutrients is proceeding rapidly, and the topsoil is covered with a mat of roots, and thus, N losses are minimized.",
+          "Where adequate water is available, green manuring with a fast-growing leguminous plant is often recommended.",
+          "Where a leguminous green manure such as Sesbania is planted before rice, it is sometimes recommended that the phosphate meant for application to rice be applied to the green manure instead."
+        ]
+      },
+      {
+        "name": "Upland Rice",
+        "scientific_name": null,
+        "category": "cereal",
+        "soil_requirements": {
+          "types": [
+            "sandy soils (for K response)"
+          ],
+          "ph_range": null,
+          "drainage": "free-draining sandy soils (for K split application)"
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": "relies mostly on rainfall",
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "50-100 kg N/ha",
+            "timing": "split between a basal and a top-dressing",
+            "notes": "High leaching losses, can suffer from N stress even where N is applied."
+          },
+          "phosphorus": {
+            "rate": "20-40 kg P2O5/ha (traditional varieties); 40-80 kg P2O5/ha (improved varieties)",
+            "timing": "basal dressing",
+            "notes": "Many upland rice soils are low in available P, moderate P applications usually required. Water-soluble P or a combination of water- and citrate-soluble P is normally most efficient. Applied to promote root growth and tiller formation."
+          },
+          "potassium": {
+            "rate": "20-40 kg K2O/ha (traditional varieties); 60 kg K2O/ha (improved varieties)",
+            "timing": "basal dressing on most soils; split application on free-draining sandy soils",
+            "notes": "Responses to K are generally greater on sandy soils. Improved varieties usually respond to K, especially where given adequate N and P. Application of 60 kg K2O/ha particularly on soils that are poor in K."
+          },
+          "other_nutrients": [
+            {
+              "name": "Sulfur",
+              "rate": null,
+              "notes": "Deficiency is becoming more widespread. Supplied through AS or SSP if part of fertilization schedule."
+            },
+            {
+              "name": "Zinc",
+              "rate": "10-12 kg Zn/ha",
+              "notes": "Applied through zinc sulphate (21 percent Zn) before planting if not applied to the nursery. Can be surface broadcast and incorporated before final puddling. Deficiency can occur commonly, especially on high pH soils."
+            },
+            {
+              "name": "Iron",
+              "rate": null,
+              "notes": "Deficiency can occur fairly commonly, especially on high pH soils, more so in upland rice. Corrected by 2-3 foliar sprays of 1-percent ferrous sulphate at weekly intervals. Green manuring also reduces Fe deficiency."
+            },
+            {
+              "name": "Silicon",
+              "rate": null,
+              "notes": "Rice is unusual in responding to Si. Applied in the form of soluble silicates and waste products containing Si in some countries. Thought to promote growth by making soil P more readily available, producing strong stems, providing resistance against certain pests, and protecting from Fe and Mn toxicity."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Green manuring reduces Fe deficiency."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [
+          {
+            "region": "Pantnagar, India",
+            "specific_info": "Field-scale deficiency of Zn in rice was first discovered here."
+          }
+        ],
+        "recommendations": [
+          "Identify and correct micronutrient deficiencies wherever they occur."
+        ]
+      },
+      {
+        "name": "Wetland Rice",
+        "scientific_name": null,
+        "category": "cereal",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": "Availability of soil P is improved by flooding. Flooded rice can make better use of the residual P applied to wheat. In monoculture with two rice crops, the dry-season crop usually requires a higher rate of P application than the wet-season crop."
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": "dry-season crop, wet-season crop (in monoculture)",
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [],
+        "recommendations": []
+      },
+      {
+        "name": "Sesbania",
+        "scientific_name": null,
+        "category": "legume",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": "adequate water available",
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "50-60 kg N/ha (can add to soil)",
+            "timing": "incorporated into the soil before planting rice",
+            "notes": "Promotes N fixation, especially with adequate phosphate."
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": "Phosphate meant for rice can be applied to Sesbania instead.",
+            "notes": "Adequate supply of phosphate promotes greater N fixation."
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": null,
+          "method": "planted before rice",
+          "spacing": null,
+          "duration": "fast-growing"
+        },
+        "farming_practices": [
+          "Used as a green manure crop for rice",
+          "Incorporated into the soil before planting rice"
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [],
+        "recommendations": [
+          "Often recommended as a green manure crop for rice where adequate water is available."
+        ]
+      },
+      {
+        "name": "Maize",
+        "scientific_name": "Zea mays L.",
+        "category": "cereal",
+        "soil_requirements": {
+          "types": [
+            "alkaline calcareous soils",
+            "soils with a low organic matter content"
+          ],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": "adequate water supply (natural or irrigation) for full crop growth; rainfed maize requires about half the N rates of irrigated crop",
+          "humidity": null,
+          "conditions": [
+            "good growing conditions"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "60-150 kg N/ha",
+            "timing": "Slow uptake in early stages, rapid increase to maximum before and after tasseling (exceeding 4 kg N/ha/day). Best scheduled in accordance with uptake pattern. Application to seedbed followed by side-dressing when crop is knee high. For very high rates, two top-dressings (second at tasseling) are recommended.",
+            "notes": "For irrigated HYVs such as hybrids/composites in India: 60-80 kg N/ha to early-maturing varieties, 80-100 kg N/ha to medium-duration varieties, and 90-150 kg N/ha to late-maturing varieties. Yield potential up to 250-300 kg N/ha where yields of 12 tonnes/ha or more can be expected. Local recommendations should be based on local experimentation under prevailing growing conditions."
+          },
+          "phosphorus": {
+            "rate": "30-100 kg P2O5/ha",
+            "timing": "before or at the time of planting",
+            "notes": "Adequate P is very important as the crop cannot readily take up soil P in the large amounts needed for optimal growth and high yield. Best results from N and other inputs will not be obtained without adequate P, which should be applied mainly in water-soluble form. Rates of P application should be varied according to soil test for available P and in relation to yield potential. Can be omitted in intensive maize-wheat annual rotation in subtropical India where the preceding wheat crop has been regularly fertilized with P or 12-15 tonnes FYM/ha is applied to maize."
+          },
+          "potassium": {
+            "rate": "30-100 kg K2O/ha",
+            "timing": "before or at the time of planting",
+            "notes": "Taken up in large quantities, but only a small proportion of total uptake is removed with the grain. Important to ensure that the overall supply is sufficient for high yields. Use of K fertilizer is especially important where high rates of N fertilizer are used and high yields expected. Where the soils are supplied adequately with K, its application is advocated on the basis of soil analysis and yield potential. Can be omitted in intensive maize-wheat annual rotation in subtropical India where the preceding wheat crop has been regularly fertilized with K or 12-15 tonnes FYM/ha is applied to maize."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium",
+              "rate": "73 kg MgO/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Calcium",
+              "rate": "57 kg CaO/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Sulfur",
+              "rate": "21 kg S/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Chlorine",
+              "rate": "81 kg Cl/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Iron",
+              "rate": "2130 g Fe/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Zinc",
+              "rate": "380 g Zn/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Manganese",
+              "rate": "340 g Mn/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Boron",
+              "rate": "240 g B/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Copper",
+              "rate": "110 g Cu/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            },
+            {
+              "name": "Molybdenum",
+              "rate": "9 g Mo/ha (uptake for 9.5 tonnes grain/ha)",
+              "notes": null
+            }
+          ]
+        },
+        "planting_info": {
+          "season": "earliness of sowing is important",
+          "method": "application to the seedbed (for N fertilizer)",
+          "spacing": "plant population (e.g., 45,000 or 60,000 plants/ha)",
+          "duration": "early-maturing varieties, medium-duration varieties, late-maturing varieties"
+        },
+        "farming_practices": [
+          "Optimal inputs and management practices",
+          "Weed control",
+          "Plant population management",
+          "Moisture supply management (natural or irrigation)",
+          "Organic manures (12-15 tonnes FYM/ha) should be applied 3-4 weeks before planting maize, surface broadcast followed by incorporation in the soil.",
+          "Both P and K are most effective where applied as a basal dressing before or at the time of planting through a seed-cum-fertilizer drill.",
+          "Where suitable equipment is available, sideband application, together with a moderate rate of N, will improve effectiveness on many soils.",
+          "Where mechanical equipment for fertilizer application is not available, the fertilizer can be dropped in open furrows and covered with soil before planting.",
+          "For Zn application in India, apply along the row, followed by hoeing and irrigation.",
+          "Intensive maize-wheat annual rotation."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "9.5 tonnes/ha (under North American conditions)",
+          "range": "12 tonnes/ha or more",
+          "unit": "tonnes/ha",
+          "notes": "A yield response of 30 kg grain/kg N can be obtained under good growing conditions."
+        },
+        "regional_data": [
+          {
+            "region": "North American conditions",
+            "specific_info": "A crop producing 9.5 tonnes of grain per hectare removes specific amounts of nutrients."
+          },
+          {
+            "region": "specific regions",
+            "specific_info": "N fertilizer requirement can be calculated directly from crop uptake of N only in specific regions due to variations in soil N supply and unpredictable efficiency."
+          },
+          {
+            "region": "India",
+            "specific_info": "General recommendation for irrigated HYVs of maize (hybrids/composites) for N application: 60-80 kg N/ha to early-maturing varieties, 80-100 kg N/ha to medium-duration varieties, and 90-150 kg N/ha to late-maturing varieties. Recommendation for Zn application: 25 kg zinc sulphate (21 percent Zn) mixed with 25 kg soil along the row, followed by hoeing and irrigation. Foliar spray for standing crop: 3 kg zinc sulphate + 1.5 kg of lime in 500 litres of water per hectare."
+          },
+          {
+            "region": "Illinois, USA",
+            "specific_info": "Phosphate application is based on soil tests and crop removals with the twin objectives of building up the soil P level up to the optimum and replacing the P removed by maize at harvest."
+          },
+          {
+            "region": "Subtropical India",
+            "specific_info": "In the intensive maize-wheat annual rotation, fertilizer recommendations suggest that the application of P and K to maize can be omitted where the preceding wheat crop has been regularly fertilized with these nutrients or 12-15 tonnes FYM/ha is applied to maize."
+          }
+        ],
+        "recommendations": [
+          "Optimal levels of fertilizer and plant population should be adjusted downwards where moisture supply is inadequate or uncertain.",
+          "The best returns from N fertilizer are only obtained where the water supply, either natural or supplemented by irrigation, is adequate for full crop growth.",
+          "Local recommendations on amounts of N should be based on local experimentation under the prevailing growing conditions.",
+          "Adequate P is very important for maize.",
+          "Ensure that the overall K supply is sufficient for high yields.",
+          "Use of K fertilizer is especially important where high rates of N fertilizer are used and high yields expected.",
+          "Zn application should be based on local experience combined with soil and plant analysis."
+        ]
+      },
+      {
+        "name": "Chickpea",
+        "scientific_name": "Cicer arietinum L.",
+        "category": "legume",
+        "soil_requirements": {
+          "types": [
+            "neutral to alkaline soils"
+          ],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "arid regions",
+            "semi-arid regions",
+            "irrigated conditions (for Zn deficiency correction)"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "15-20 kg N/ha",
+            "timing": "before planting",
+            "notes": "starter dose, meets N needs until N-fixation system becomes operational; 91 kg/ha removed for 1.5 tonnes grain"
+          },
+          "phosphorus": {
+            "rate": "40-50 kg P2O5/ha",
+            "timing": "before planting",
+            "notes": "14 kg P2O5/ha removed for 1.5 tonnes grain"
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": "60 kg K2O/ha removed for 1.5 tonnes grain"
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": null,
+          "method": "grown with or without irrigation",
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Rhizobium inoculation is often recommended to augment N supply, benefit equivalent to 20-25 kg N/ha.",
+          "Irrigation benefits increase with increased nutrient application."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "1.5 tonnes",
+          "range": null,
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [],
+        "recommendations": [
+          "Rhizobium inoculation is often recommended.",
+          "An N application of 15-20 kg N/ha is necessary as a starter dose.",
+          "Application of 40-50 kg P2O5/ha is recommended.",
+          "In S-deficient soils, apply 20-30 kg S/ha through conventional sulphate sources.",
+          "To correct Zn deficiency, soil application of zinc sulphate at 25 kg/ha is suggested under irrigated conditions.",
+          "Fe deficiency can be corrected by providing foliar sprays with 2-percent ferrous sulphate solutions.",
+          "In B-deficient soils, application of borax can increase yield."
+        ]
+      },
+      {
+        "name": "Pigeon pea",
+        "scientific_name": "Cajanus cajan (L). Millsp.",
+        "category": "legume",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "15-20 kg N/ha",
+            "timing": "before planting",
+            "notes": "starter N dose; 85 kg N/ha removed for 1.2 tonnes grain"
+          },
+          "phosphorus": {
+            "rate": "40-50 kg P2O5/ha",
+            "timing": "before planting",
+            "notes": "18 kg P2O5/ha removed for 1.2 tonnes grain"
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": "need depends on soil K status and yield potential of the cultivar; 75 kg K2O/ha removed for 1.2 tonnes grain"
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium",
+              "rate": null,
+              "notes": "25 kg MgO/ha removed for 1.2 tonnes grain"
+            },
+            {
+              "name": "Calcium",
+              "rate": null,
+              "notes": "32 kg CaO/ha removed for 1.2 tonnes grain"
+            },
+            {
+              "name": "Sulfur",
+              "rate": "20-30 kg S/ha",
+              "notes": "in S-deficient soils, through conventional sulphate sources, results in a 10-15 percent grain yield increase; 9 kg S/ha removed for 1.2 tonnes grain"
+            },
+            {
+              "name": "Iron",
+              "rate": null,
+              "notes": "1440 g Fe/ha removed for 1.2 tonnes grain"
+            },
+            {
+              "name": "Zinc",
+              "rate": "5 kg Zn/ha",
+              "notes": "soil application through zinc sulphate to correct Zn deficiency; 38 g Zn/ha removed for 1.2 tonnes grain"
+            },
+            {
+              "name": "Manganese",
+              "rate": null,
+              "notes": "128 g Mn/ha removed for 1.2 tonnes grain"
+            },
+            {
+              "name": "Copper",
+              "rate": null,
+              "notes": "31 g Cu/ha removed for 1.2 tonnes grain"
+            },
+            {
+              "name": "Boron",
+              "rate": null,
+              "notes": "deficiencies can be corrected by application of suitable carriers as per local recommendations"
+            },
+            {
+              "name": "DAP (Diammonium Phosphate)",
+              "rate": "100 kg DAP/ha",
+              "notes": "delivers 18 kg N and 46 kg P2O5; often suggested for simplicity"
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": "perennial in habit but often cultivated as an annual crop"
+        },
+        "farming_practices": [
+          "Rhizobium inoculation with Rhizobium culture is generally recommended to augment soil N supply, might result in benefits to the extent of 20-25 kg N/ha."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "1.2 tonnes",
+          "range": "10-15% grain yield increase (with S application in S-deficient soils)",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [],
+        "recommendations": [
+          "Rhizobium inoculation is generally recommended.",
+          "Apply a starter N dose of 15-20 kg N/ha.",
+          "Apply 40-50 kg P2O5/ha.",
+          "For simplicity, 100 kg DAP/ha is often suggested.",
+          "In S-deficient soils, apply 20-30 kg S/ha through conventional sulphate sources.",
+          "Correct B and Zn deficiencies by applying suitable carriers, e.g., 5 kg Zn/ha through zinc sulphate."
+        ]
+      },
+      {
+        "name": "Groundnut/peanut",
+        "scientific_name": "Arachis hypogaea L.",
+        "category": "oilseed",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [
+          {
+            "region": "India",
+            "specific_info": "major cash crop"
+          },
+          {
+            "region": "China",
+            "specific_info": "major cash crop"
+          },
+          {
+            "region": "United States of America",
+            "specific_info": "major cash crop"
+          }
+        ],
+        "recommendations": []
+      },
+      {
+        "name": "Groundnut",
+        "scientific_name": null,
+        "category": "oilseed",
+        "soil_requirements": {
+          "types": [
+            "acid soils",
+            "alkaline calcareous soils",
+            "coarse-textured soils",
+            "sandy soils"
+          ],
+          "ph_range": "around 6.0",
+          "drainage": "good drainage (facilitated by coarse-textured soils)"
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "semi-arid",
+            "semi-humid",
+            "dry conditions"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "20-30 kg N/ha (starter dressing)",
+            "timing": "until nodule bacteria are fully established",
+            "notes": "Most N requirement provided through Biological Nitrogen Fixation (BNF). Starter dressing needed unless soil fertility is high or organic manure applied. Rhizobium inoculation recommended, can fix 110-150 kg N/ha."
+          },
+          "phosphorus": {
+            "rate": "40-70 kg P2O5/ha",
+            "timing": null,
+            "notes": "Needed for optimal yield and nodule development. S-containing fertilizers like SSP are preferred as they also provide 12% S and 19% Ca."
+          },
+          "potassium": {
+            "rate": "20-50 kg K2O/ha",
+            "timing": null,
+            "notes": "Generally supplied by soil reserves, residues, and organic manure. Application needed on K deficient soils or for high yields under irrigated conditions. Excess K can accentuate Ca deficiency."
+          },
+          "other_nutrients": [
+            {
+              "name": "Sulfur (S)",
+              "rate": null,
+              "notes": "Frequently requires supplementary applications. SSP provides 12% S. Needs depend on S input from rainfall and previous crops. Sources: AS, SSP, ASP, gypsum, pyrites, SPM from sugar factories."
+            },
+            {
+              "name": "Calcium (Ca)",
+              "rate": "300-500 kg gypsum/ha (additional application)",
+              "timing": "at flowering stage (gypsum), at or before flowering (300-500 kg gypsum/ha)",
+              "notes": "Unusual in showing Ca deficiency. Can be overcome by liming soil to pH 6.0. SSP provides 19% Ca. Foliar spray of soluble Ca salt can be effective. Ca deficiency accentuated by excess K or Mg."
+            },
+            {
+              "name": "Magnesium (Mg)",
+              "rate": null,
+              "notes": "Can suffer from deficiency in acid leached soils, sandy soils, or acid soils. Can be supplied by liming with dolomite. Excess Mg has same effect on Ca availability as excess K and should be avoided."
+            },
+            {
+              "name": "Iron (Fe)",
+              "rate": null,
+              "notes": "Deficiencies known to occur depending on soil conditions."
+            },
+            {
+              "name": "Zinc (Zn)",
+              "rate": null,
+              "notes": "Deficiencies known to occur depending on soil conditions."
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": null,
+              "notes": "Deficiencies known to occur depending on soil conditions."
+            },
+            {
+              "name": "Boron (B)",
+              "rate": null,
+              "notes": "Deficiencies known to occur depending on soil conditions."
+            },
+            {
+              "name": "Molybdenum (Mo)",
+              "rate": null,
+              "notes": "Deficiencies known to occur depending on soil conditions."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Rhizobium inoculation (especially where crop is new, not grown for years, or native population is inadequate/ineffective)",
+          "Fertilizers can often be sideband placed",
+          "Liming the soil to pH 6.0 (to overcome Ca deficiency)",
+          "Foliar spray of a soluble Ca salt (for Ca deficiency)",
+          "Liming with dolomite (for Mg deficiency)"
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": "3 tonnes pods/ha (reference for nutrient removal)",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "West Africa",
+            "specific_info": "Traditional low-input crop grown by smallholders."
+          },
+          {
+            "region": "United States of America",
+            "specific_info": "Nutrient removal for 3 tonnes pods/ha: 192 kg N, 48 kg P2O5, 80 kg K2O, 79 kg MgO."
+          },
+          {
+            "region": "North Indian conditions",
+            "specific_info": "Nutrient removal per tonne of economic produce: Macronutrients (kg): N 58.1, P2O5 19.6, K2O 30.1, Mg 13.3, Ca 20.5, S 7.9; Micronutrients (g): Fe 2284, Zn 109, Mn 93, Cu 36."
+          },
+          {
+            "region": "Many groundnut-growing areas",
+            "specific_info": "Application of 300-500 kg gypsum/ha recommended at or before flowering."
+          }
+        ],
+        "recommendations": [
+          "Inoculation with Rhizobium culture is usually recommended.",
+          "A starter dressing of 20-30 kg N/ha is needed until nodule bacteria are fully established, unless soil fertility is high or organic manure has been applied.",
+          "P application is crucial for optimal yield and nodule development.",
+          "S-containing fertilizers like SSP are preferred for P source due to additional S and Ca benefits.",
+          "Potash application is necessary on K deficient soils or for high yields under irrigated conditions.",
+          "Pay attention to nutrition beyond just N, P, and K, as supplementary S and Ca are frequently required.",
+          "Ca deficiency can be overcome by liming soil to pH 6.0, or by applying additional Ca (e.g., gypsum) at flowering.",
+          "Foliar spray of soluble Ca salt can be effective for Ca deficiency.",
+          "Mg deficiency in sandy or acid soils can be supplied by liming with dolomite, but avoid excess Mg.",
+          "Prefer cultivars that are efficient users of Fe and tolerant of Fe deficiency where such seeds are available."
+        ]
+      },
+      {
+        "name": "Soybean",
+        "scientific_name": "Glycine max (L.) Merr",
+        "category": "legume|oilseed",
+        "soil_requirements": {
+          "types": [
+            "near neutral soils",
+            "limed acid soils",
+            "coarse-textured soils",
+            "clay soils"
+          ],
+          "ph_range": "near neutral",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "wide range of climate conditions"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "146 kg/tonne of grain production (total uptake); 100 kg N/ha (response in absence of poor BNF); 20-40 kg N/ha (starter dose)",
+            "timing": "starter dose recommended as nodules take weeks to develop and N fixation to start",
+            "notes": "N fixation can meet a large part of N requirement (100 kg N/ha or more under good conditions). Seed treatment with bacterial inoculant is usually necessary for N fixation. Large applications of N are needed where N fixation is very low."
+          },
+          "phosphorus": {
+            "rate": "25 kg P2O5/tonne of grain production (total uptake); 50-70 kg P2O5/ha (low nutrient status soils); 40-60 kg P2O5/ha (US, low-fertility soils, for 2.5-2.7 tonnes/ha yield); 10-15 kg P2O5/ha (extra for each additional tonne of grain yield)",
+            "timing": "before planting (for gypsum application)",
+            "notes": "Requirements should be based on soil test values. Can be applied through SSP (provides S) or DAP (then gypsum for S). Application rates are higher at higher yield levels in soils with a high clay content."
+          },
+          "potassium": {
+            "rate": "53 kg K2O/tonne of grain production (total uptake); 60-100 kg K2O/ha (low nutrient status soils); 100-150 kg K2O/ha (US, low to normal clay content soils, for 2.5-2.7 tonnes/ha yield); 20-30 kg K2O/ha (extra for each additional tonne of grain yield)",
+            "timing": null,
+            "notes": "Requirements should be based on soil test values. Application rates are higher at higher yield levels in soils with a high clay content."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium (Mg)",
+              "rate": "22 kg MgO/tonne of grain production (total uptake)",
+              "notes": "Responds to application depending on soil fertility status and crop growth conditions."
+            },
+            {
+              "name": "Calcium (Ca)",
+              "rate": "28 kg CaO/tonne of grain production (total uptake)",
+              "notes": null
+            },
+            {
+              "name": "Sulfur (S)",
+              "rate": "5 kg S/tonne of grain production (total uptake); 200-250 kg gypsum/ha",
+              "notes": "Significant responses to S application have been found in many field trials in India. Advisable to apply phosphate through SSP so that the crop also receives S. Where DAP is used, gypsum can be applied to the soil before planting."
+            },
+            {
+              "name": "Iron (Fe)",
+              "rate": "476 g/tonne of grain production (total uptake)",
+              "notes": null
+            },
+            {
+              "name": "Zinc (Zn)",
+              "rate": "104 g/tonne of grain production (total uptake); 5 kg Zn/ha (on coarse-textured soils); 10 kg Zn/ha (on clay soils)",
+              "notes": "Responses obtained depending on soil fertility status and crop growth conditions. Application rates are for remedying Zn deficiency."
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": "123 g/tonne of grain production (total uptake)",
+              "notes": "Responses obtained depending on soil fertility status and crop growth conditions."
+            },
+            {
+              "name": "Copper (Cu)",
+              "rate": "41 g/tonne of grain production (total uptake)",
+              "notes": null
+            },
+            {
+              "name": "Boron (B)",
+              "rate": "55 g/tonne of grain production (total uptake)",
+              "notes": null
+            },
+            {
+              "name": "Molybdenum (Mo)",
+              "rate": "13 g/tonne of grain production (total uptake)",
+              "notes": null
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Rhizobium inoculation (Bradyrhizobium japonicum culture) is often recommended particularly where the crop has been introduced recently or the native Rhizobium population is inadequate and ineffective.",
+          "Seed treatment with bacterial inoculant for N fixation.",
+          "Fertilizer P and K requirements should be based on soil test values.",
+          "Application of gypsum to the soil before planting at the rate of 200-250 kg/ha where DAP is used."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "3-4 tonnes/ha (under good growing conditions with adequate N fixation)",
+          "range": "2.5-2.7 tonnes/ha (expected in United States of America)",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "India",
+            "specific_info": "Significant responses of soybean to S application have been found in many field trials."
+          },
+          {
+            "region": "United States of America",
+            "specific_info": "For an expected grain yield of 2.5-2.7 tonnes/ha, the recommended rates of P on low-fertility soils are 40-60 kg P2O5/ha, and 100-150 kg K2O/ha on soils with a low to normal clay content."
+          }
+        ],
+        "recommendations": [
+          "Inoculation with Rhizobium japonicum (now known as Bradyrhizobium japonicum) culture is often recommended particularly where the crop has been introduced recently or the native Rhizobium population is inadequate and ineffective.",
+          "A starter dose of 20-40 kg N/ha is recommended as it takes some weeks for the nodules to develop and N fixation to start.",
+          "Fertilizer P and K requirements should be based on soil test values.",
+          "It may be advisable to apply phosphate through SSP so that the crop also receives an S application."
+        ]
+      },
+      {
+        "name": "Oilseed Rape",
+        "scientific_name": "Brassica napus L.",
+        "category": "oilseed",
+        "soil_requirements": {
+          "types": [
+            "deep fertile topsoil",
+            "porous crumb structure (uppermost soil layer)"
+          ],
+          "ph_range": "neutral",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "winter-season crop"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "300-350 kg/ha (total uptake for 4.5 tonnes seed/ha); 30-40 kg N/ha (autumn fertilization); 250-280 kg/ha N (main growing season from soil and fertilizer); 80-100 kg N/ha (first application early spring); 60-80 kg N/ha (second application at start of elongation); 25 kg N/ha (third application at beginning of flowering for very high yields)",
+            "timing": "Autumn, early spring, at start of elongation, at beginning of flowering",
+            "notes": "Requirements are higher than 30-35 kg N per tonne of seed removal. Prefers nitrate N. Ammonium nitrate is a good source. N solutions and urea can be used except for the very early dose in spring. Less N is required for lower yield levels. Tends to leave large amounts of N in the soil after harvest (both as nitrate and as crop residues), potentially more than 100 kg/ha N."
+          },
+          "phosphorus": {
+            "rate": "80-100 kg P2O5/ha",
+            "timing": "at sowing",
+            "notes": "For a high yield goal of 4.5 tonnes of seeds per hectare on optimal nutrient range soil. Adjustments: 30% higher on slightly deficient soils, 50% less on sufficiency range soils."
+          },
+          "potassium": {
+            "rate": "150-200 kg K2O/ha",
+            "timing": "at sowing",
+            "notes": "For a high yield goal of 4.5 tonnes of seeds per hectare on optimal nutrient range soil. Adjustments: 30% higher on slightly deficient soils, 50% less on sufficiency range soils."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium",
+              "rate": "30-50 kg Mg/ha (total uptake for 4.5 tonnes seed/ha)",
+              "notes": null
+            },
+            {
+              "name": "Sulfur",
+              "rate": "80-100 kg S/ha (total uptake for 4.5 tonnes seed/ha)",
+              "notes": null
+            }
+          ]
+        },
+        "planting_info": {
+          "season": "winter-season",
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Ensure deep fertile topsoil without a compact layer to facilitate root growth",
+          "Maintain a porous crumb structure of the uppermost soil layer for rapid germination of small seeds",
+          "Ensure sufficient organic matter for optimal biological activity",
+          "Practice good N management to keep mineral N residue below 50 kg N/ha or utilize the residual amount by the following crop",
+          "A split application of P and K with part applied in spring is needed on light soils where losses may occur in winter.",
+          "Foliar spraying is effective for Manganese deficiency.",
+          "The need for Molybdenum fertilizers must be based on diagnostic methods.",
+          "Zinc fertilizer application can be omitted if the previous crop in the rotation has received Zn application or 10-15 tonnes of FYM/ha have been used.",
+          "In case of an acute Sulfur deficiency, foliar spray with a soluble S fertilizer can be used as a quick remedy."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "33.5,",
+          "range": "up to 45,",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "Europe",
+            "specific_info": "Average yields of 33.5 tonnes/ha."
+          }
+        ],
+        "recommendations": [
+          "Ensure an abundant and timely nutrient supply for good growth and high seed yield.",
+          "Oil extracted from seeds (containing 40 percent oil) is used for salad oil, as a cooking medium, and for fuel.",
+          "Residues (oilseed cake) are protein-rich animal feed.",
+          "Maintain high soil reaction, but be aware it can lower Manganese availability."
+        ]
+      },
+      {
+        "name": "Sunflower",
+        "scientific_name": "Helianthus annuus L.",
+        "category": "oilseed",
+        "soil_requirements": {
+          "types": [
+            "sandy",
+            "calcareous"
+          ],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": "adequate for rainfed crop",
+          "humidity": null,
+          "conditions": [
+            "irrigated conditions",
+            "under moisture stress"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "75-80 kg N/ha (irrigated); 50-60 kg N/ha (rainfed)",
+            "timing": "three splits (50% at sowing, 25% at buttoning, 25% at flowering)",
+            "notes": "Excess N increases the risk of disease and lodging, with a consequent reduction in oil content."
+          },
+          "phosphorus": {
+            "rate": "60-80 kg P2O5/ha",
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": "50-150 kg K2O/ha",
+            "timing": null,
+            "notes": "Very high removal, particularly where the stalks are also removed. Application should be based on soil tests and crop removal."
+          },
+          "other_nutrients": [
+            {
+              "name": "Total Nutrient Uptake (for 3.5 tonnes/ha seed yield)",
+              "rate": "N 131 kg, P2O5 87 kg, K2O 385 kg, MgO 70 kg, CaO 210 kg, Fe 732 g, Zn 348 g, Mn 412 g, Cu 59 g, B 396 g",
+              "notes": "These are total nutrient uptake values, not application rates."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": "sowing time (for B application)",
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Roots can reach down to a depth of 2 m.",
+          "Application of Nitrogen in three splits is advantageous.",
+          "Potash application is necessary and should be based on soil tests and crop removal.",
+          "Application of FYM is commonly recommended."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "much lower than potential",
+          "range": "potential up to 5 tonnes/ha",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [],
+        "recommendations": [
+          "Avoid excess nitrogen to prevent disease, lodging, and reduction in oil content.",
+          "Application of FYM is commonly recommended.",
+          "S application is normally suggested, particularly on S-deficient soils.",
+          "Special attention should be paid to B nutrition."
+        ]
+      },
+      {
+        "name": "Potatoes",
+        "scientific_name": "Solanum tuberosum L.",
+        "category": "tuber",
+        "soil_requirements": {
+          "types": [
+            "slightly to moderately acid soils"
+          ],
+          "ph_range": "slightly to moderately acid (best); wide pH range (can grow successfully)",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": "high rainfall conditions (split N application); high rainfall areas (AS and CAN superior to urea)",
+          "humidity": null,
+          "conditions": [
+            "temperate regions",
+            "tropical and subtropical areas"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "306 kg/ha (removal for 90 tonnes tubers/ha in UK); 117 kg/ha (removal for 36 tonnes tubers/ha in Simla hills); 135 kg/ha (removal for 34 tonnes tubers/ha in plains); 200-300 kg N/ha (recommendation for temperate regions); 80-150 kg N/ha (recommendation for tropical and subtropical areas)",
+            "timing": "Usually, the entire N is applied to the seedbed. Split application in high rainfall conditions. Applications after tuber development may delay maturity.",
+            "notes": "Promotes early foliage development and photosynthetic capacity. Excess N may delay tuber initiation and reduce yield. Requirement depends on soil type and previous cropping. Preceding legume/crop with high residual effects or organic manure can reduce N requirements by 40-50 kg/ha. Utilizes both ammonium and nitrate N, preferring ammonium in early stages. AS and CAN are superior to urea in high rainfall areas."
+          },
+          "phosphorus": {
+            "rate": "93 kg P2O5/ha (removal for 90 tonnes tubers/ha in UK); 32 kg P2O5/ha (removal for 36 tonnes tubers/ha in Simla hills); 21 kg P2O5/ha (removal for 34 tonnes tubers/ha in plains); 30-50 kg P2O5/ha (taken up by crop); 60-100 kg P2O5/ha (recommendation for most tropical areas); 100-300 kg P2O5/ha (recommendation for some temperate regions)",
+            "timing": null,
+            "notes": "Needs a good supply of readily available P due to shallow root system. Water-soluble P is the most efficient source. Many tropical potato-growing soils are acid and immobilize P rapidly. P fertilizer applications need to be considerably higher than crop uptake due to low P-use efficiency. Applied P is used more efficiently when sideband placed, especially at low or moderate rates."
+          },
+          "potassium": {
+            "rate": "487 kg K2O/ha (removal for 90 tonnes tubers/ha in UK); 224 kg K2O/ha (removal for 36 tonnes tubers/ha in Simla hills); 157 kg K2O/ha (removal for 34 tonnes tubers/ha in plains)",
+            "timing": null,
+            "notes": "Plays a major role in starch production."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium",
+              "rate": "19 kg MgO/ha (removal for 90 tonnes tubers/ha in UK); 63 kg Mg/ha (removal for 36 tonnes tubers/ha in Simla hills)",
+              "notes": null
+            },
+            {
+              "name": "Calcium",
+              "rate": "10 kg CaO/ha (removal for 90 tonnes tubers/ha in UK); 37 kg Ca/ha (removal for 36 tonnes tubers/ha in Simla hills)",
+              "notes": null
+            },
+            {
+              "name": "Sulfur",
+              "rate": "14 kg S/ha (removal for 36 tonnes tubers/ha in Simla hills)",
+              "notes": null
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": "150-170 days (temperate regions); shorter in plains than in hills"
+        },
+        "farming_practices": [
+          "P is sideband placed for efficient use.",
+          "Split N application in high rainfall conditions to reduce leaching losses.",
+          "Usually, the entire N is applied to the seedbed."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": "tonnes tubers/ha"
+        },
+        "regional_data": [
+          {
+            "region": "United Kingdom",
+            "specific_info": "Nutrient removal for a crop producing 90 tonnes tubers/ha: N 306, P2O5 93, K2O 487, MgO 19, CaO 10 kg/ha."
+          },
+          {
+            "region": "India (Simla hills)",
+            "specific_info": "Nutrient removal by a normal crop yielding 36 tonnes tubers/ha: N 117, P2O5 32, K2O 224, S 14, Ca 37, Mg 63 kg/ha. Crop duration is longer than in the plains."
+          },
+          {
+            "region": "India (plains)",
+            "specific_info": "An adequately fertilized crop yielding 34 tonnes tubers/ha removed 135 kg N, 21 kg P2O5, and 157 kg K2O. Crop duration is shorter than in the hills."
+          },
+          {
+            "region": "Temperate regions",
+            "specific_info": "High-yielding, rainfed or irrigated potatoes with a growing period of 150-170 days respond to as much as 200-300 kg N/ha. P requirement can be in the range of 100 to 300 kg/ha P2O5 depending on soil P status."
+          },
+          {
+            "region": "Tropical and subtropical areas",
+            "specific_info": "N recommendations are in the range of 80-150 kg N/ha. P recommendations range from 60 to 100 kg/ha P2O5. Many tropical potato-growing soils are acid and immobilize P fertilizer rapidly."
+          }
+        ],
+        "recommendations": [
+          "High yields necessitate an adequate supply of nutrients throughout the growth period.",
+          "A preceding legume or another crop with high residual effects, or an application of organic manure, can reduce fertilizer N requirements by 40-50 kg/ha.",
+          "Potatoes need a good supply of readily available P.",
+          "P fertilizer applications need to be considerably higher than the 30-50 kg/ha of P2O5 taken up by the crop."
+        ]
+      },
+      {
+        "name": "Potato",
+        "scientific_name": null,
+        "category": "tuber",
+        "soil_requirements": {
+          "types": [
+            "leached, sandy soils"
+          ],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "withstand frost better (with sufficient K)"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": "Excess N can reduce tuber dry matter and cooking quality."
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": "60 to 300 kg K₂O/ha (general); 60 to 150 kg K₂O/ha (most developing countries)",
+            "timing": null,
+            "notes": "K requirement depends on soil type and organic manure application. Irrigation can improve the availability of soil K. Varietal differences in susceptibility to K deficiency. K deficiency can cause tuber blackening. Potassium sulphate is usually preferred to potassium chloride, especially where tubers are meant for further processing into crisps and other snacks, as potatoes are sensitive to excess chloride. Potassium sulphate can be recommended where the value of greater starch production exceeds the higher cost of SOP compared with MOP."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium",
+              "rate": null,
+              "notes": "Mg deficiency can occur on leached, sandy soils and may be intensified by large K fertilizer applications. It can be controlled by Mg applied in amendments such as dolomite or by Mg-containing fertilizer materials."
+            },
+            {
+              "name": "Micronutrients",
+              "rate": null,
+              "notes": "Soil application or foliar sprays are widely used methods. Needs can be met by soaking non-dormant seed tubers in 0.05-percent micronutrient salt solutions for three hours. High seed rate makes this possible. Cultivars can differ markedly with regard to their sensitivity to micronutrient deficiencies."
+            },
+            {
+              "name": "Zinc",
+              "rate": null,
+              "notes": "Dipping seed tubers in 2-percent zinc oxide suspension is effective for meeting Zn needs."
+            },
+            {
+              "name": "Copper",
+              "rate": null,
+              "notes": "Deficiencies are controllable by soil or foliar application."
+            },
+            {
+              "name": "Manganese",
+              "rate": null,
+              "notes": "Deficiencies are controllable by soil or foliar application."
+            },
+            {
+              "name": "Boron",
+              "rate": null,
+              "notes": "Storage life can be reduced where there is a B deficiency."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": "Soaking seed tubers in nutrient solutions; Dipping seed tubers in 2-percent zinc oxide suspension",
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Bulky organic manures and green manures have an important place in nutrient management.",
+          "Combined use of organic manures and fertilizers results in higher tuber yields than either alone.",
+          "Combined use of organic and mineral sources of nutrients is essential for sustaining high levels of potato production."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [
+          {
+            "region": "most developing countries",
+            "specific_info": "Potash recommendations are between 60 and 150 kg K₂O/ha."
+          }
+        ],
+        "recommendations": [
+          "Application of K through potassium sulphate is usually preferred to potassium chloride for tubers meant for processing.",
+          "Potassium sulphate can be recommended where the value of greater starch production exceeds the higher cost of SOP compared with MOP.",
+          "Combined use of organic and mineral sources of nutrients is essential for sustaining high levels of potato production."
+        ]
+      },
+      {
+        "name": "Sweet potato",
+        "scientific_name": "Ipomoea batatas Lam.",
+        "category": "tuber",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "about 50 kg N/ha (usual recommendation); less on soils well supplied with N",
+            "timing": null,
+            "notes": "N application increases tuber yield on most soils. Excess N can stimulate foliage production at the expense of tubers and may also lead to tuber cracking. Full benefit from N application is only obtained where there is also sufficient K."
+          },
+          "phosphorus": {
+            "rate": "about 50 kg P₂O₅/ha (average conditions); 70-90 kg P₂O₅/ha (on soils with low P status)",
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": "80-120 kg K₂O/ha (common recommendation)",
+            "timing": null,
+            "notes": "Crop removes more K than P, so fertilizer K has a greater effect on yield than P. Needs a good supply of K. N:K₂O ratio of 1:1.5 to 1:2. Potassium chloride can depress root dry-matter content."
+          },
+          "other_nutrients": [
+            {
+              "name": "General Nutrient Removal (for 14 tonnes biomass/ha)",
+              "rate": "N 51.6 kg/ha, P₂O₅ 17.2 kg/ha, K₂O 71.0 kg/ha, MgO 6.1 kg/ha, CaO 6.3 kg/ha, Fe 0.8 kg/ha",
+              "notes": "Estimated for a crop producing 10 tonnes of tubers and 4 tonnes of leaves."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": "14 tonnes of biomass per hectare (10 tonnes of tubers and 4 tonnes of leaves)",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "China",
+            "specific_info": "Accounts for 80 percent of world production."
+          }
+        ],
+        "recommendations": []
+      },
+      {
+        "name": "Sweet Potatoes",
+        "scientific_name": null,
+        "category": "tuber",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": "Use of potassium sulphate or a mixture of sources is recommended where Mg and S deficiencies occur."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium (Mg)",
+              "rate": null,
+              "notes": "Can suffer from Mg deficiency, inclusion in fertilizer schedule may be necessary."
+            },
+            {
+              "name": "Sulphur (S)",
+              "rate": null,
+              "notes": "Can suffer from S deficiency, inclusion in fertilizer schedule may be necessary."
+            },
+            {
+              "name": "Boron (B)",
+              "rate": null,
+              "notes": "Can suffer from B deficiency, corrective control measures may be necessary. Soil application rates range from 9 to 26 kg borax/ha. For foliar application, the suggested rate is 5-15 kg Solubor/ha at a maximum concentration of 2.5-5.0 percent."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [],
+        "recommendations": []
+      },
+      {
+        "name": "Cassava",
+        "scientific_name": "Manihot esculenta Crantz",
+        "category": "tuber",
+        "soil_requirements": {
+          "types": [
+            "acid laterite soils",
+            "low-fertility soils"
+          ],
+          "ph_range": "4.0-4.5",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "tropical",
+            "responds well to a good moisture regime",
+            "tropics",
+            "withstand drought conditions (shed leaves under adverse moisture conditions)"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "100 kg/ha (equivalent effect to 12.5 tonnes FYM/ha when used alone)",
+            "timing": "Split between a basal application and a top-dressing",
+            "notes": "Individual application of N could not increase tuber yields by more than 3 tonnes/ha. Combined use with FYM and P, K produced a four times greater yield increase."
+          },
+          "phosphorus": {
+            "rate": "40-80 kg P2O5/ha",
+            "timing": null,
+            "notes": "Individual application of P could not increase tuber yields by more than 3 tonnes/ha. Combined use with FYM and N, K produced a four times greater yield increase."
+          },
+          "potassium": {
+            "rate": "100-130 kg K2O/ha on soils of moderate K status (adjust for different soil K levels)",
+            "timing": "Optimal timing depends on soil K status. Generally, K application in two equal splits (50 percent as basal and 50 percent two months after planting) gives best results.",
+            "notes": "Individual application of K could not increase tuber yields by more than 3 tonnes/ha. Combined use with FYM and N, P produced a four times greater yield increase."
+          },
+          "other_nutrients": [
+            {
+              "name": "General Nutrient Removal (for 37 tonnes fresh tubers/ha)",
+              "rate": "N 198 kg/ha, P2O5 70 kg/ha, K2O 220 kg/ha, MgO 47 kg/ha, CaO 143 kg/ha, S 19 kg/ha; Fe 900 g/ha (tubers only), Zn 660 g/ha, Mn 1090 g/ha, B 200 g/ha, Cu 80 g/ha",
+              "notes": "Cassava removes large amounts of nutrients."
+            },
+            {
+              "name": "Zinc (Zn)",
+              "rate": "12.5 kg zinc sulphate (soil application for yield increase); 5-10 kg/ha zinc sulphate at planting (for control)",
+              "notes": "Deficiencies can occur. Soil application of 12.5 kg of zinc sulphate increased tuber yield by 4.0 tonnes/ha with optimal NPK. Control by application of zinc sulphate at a rate of 5-10 kg/ha at planting or by incorporating zinc oxide before planting. Under moderate deficiency, foliar application of 1-2 percent zinc sulphate may be effective. Under alkaline conditions, stake treatment by dipping in 2-5 percent solution of zinc sulphate for 15 minutes is recommended."
+            },
+            {
+              "name": "Molybdenum (Mo)",
+              "rate": "1.0 kg ammonium molybdate",
+              "notes": "Deficiencies can occur. Soil application of 1.0 kg of ammonium molybdate raised tuber yield by 2.8 tonnes/ha with optimal NPK."
+            },
+            {
+              "name": "Boron (B)",
+              "rate": "10 kg borax",
+              "notes": "Deficiencies can occur. Soil application of 10 kg of borax increased tuber yield by 3.1 tonnes/ha with optimal NPK."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Responds well to fertilizer application",
+          "Good management (for modern varieties to achieve high yields)",
+          "Integrated application of organic manures and mineral fertilizers",
+          "Liming of acid soils (pH 4.0-4.5) using calcium carbonate or a combination of calcium carbonate and magnesium carbonate"
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "10-15",
+          "range": "Individual N, P, K or FYM alone: up to 3 tonnes/ha increase; Combined FYM + NPK: four times greater increase than individual applications",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "India (tropical conditions)",
+            "specific_info": "Impact of applying 12.5 tonnes FYM/ha on tuber yields was equivalent to that obtained with 100 kg fertilizer N/ha used alone."
+          },
+          {
+            "region": "Kerala, India",
+            "specific_info": "Main cassava-growing state. Liming increased starch content of tubers and decreased their HCN content."
+          }
+        ],
+        "recommendations": [
+          "Where raised on natural soil fertility, yields may be very low, but the crop responds well to fertilizer application and to a good moisture regime.",
+          "Modern varieties grown under good management can yield more than 50 tonnes/ha.",
+          "Apply organic manures and mineral fertilizers in an integrated manner for additive effects.",
+          "Lime acid soils (pH 4.0-4.5) with calcium carbonate or a combination of calcium carbonate and magnesium carbonate to improve yield and quality."
+        ]
+      },
+      {
+        "name": "Sugar Cane",
+        "scientific_name": "Saccharum officinarum L.",
+        "category": "other",
+        "soil_requirements": {
+          "types": [
+            "well-drained loams",
+            "coarse-textured soils (prone to S and Zn deficiency)",
+            "variety of soils",
+            "less fertile soils (P uptake efficiency improved by furrow placement)",
+            "clay loams"
+          ],
+          "ph_range": "5.0-8.0",
+          "drainage": "well-drained"
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "tropical"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "250-350 kg/ha (common); 1 kg N/tonne of expected yield (plant cane); 1.5 kg N/tonne of cane (ratoon crop); 100-300 kg N/ha (12-month crop in India)",
+            "timing": "three splits within 100 days of planting; at tillering (45-60 days), formative stage (60-75 days), and grand growth stage (75-100 days). For ratoon crops, immediately or within two months after cutting previous crop.",
+            "notes": "Later applications are often less efficient and may reduce sugar content. High rates of N can adversely affect cane sugar concentration and juice quality, counteracted by adequate K."
+          },
+          "phosphorus": {
+            "rate": "100-120 kg P2O5/ha (plant crop, medium P status); 200 kg P2O5/ha (plant crop, P-deficient soils); 60 kg P2O5/ha (ratoon crop)",
+            "timing": "at planting (plant crop); immediately after cutting the previous crop (ratoon crop)",
+            "notes": "Stimulates root growth and early tillering. Placing P in the planting furrow increases efficiency, especially on less fertile soils. Many soils adsorb P rapidly, reducing availability for ratoon crop from initial application."
+          },
+          "potassium": {
+            "rate": "80-200 kg K2O/ha (typical application)",
+            "timing": null,
+            "notes": "Increases cane and sugar yields. Counteracts adverse effects of high N rates on cane sugar concentration and juice quality. High yields can remove as much as 400 kg K2O/ha. More K may be used on high-yielding, irrigated crops and lower rates on soils rich in available K. Potash nutrition can be monitored by soil and plant analysis."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium (MgO)",
+              "rate": "0.50 kg/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Calcium (CaO)",
+              "rate": "0.42 kg/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Sulfur (S)",
+              "rate": "0.25 kg/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Iron (Fe)",
+              "rate": "31 g/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Zinc (Zn)",
+              "rate": "4.5 g/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": "11 g/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Copper (Cu)",
+              "rate": "2.0 g/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Boron (B)",
+              "rate": "2.0 g/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Molybdenum (Mo)",
+              "rate": "0.01 g/tonne of cane yield (Brazilian conditions)",
+              "notes": null
+            },
+            {
+              "name": "Liming",
+              "rate": null,
+              "notes": "Necessary under very acid conditions, especially to avoid Al toxicity."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": "10-24 months after planting (long life cycle)"
+        },
+        "farming_practices": [
+          "Nutrient management is complex due to long life cycle and successive harvests (ratoons).",
+          "Liming is necessary under very acid conditions to avoid Al toxicity.",
+          "Successive harvests (ratoons) are taken.",
+          "Sugar-cane trash is invariably burned in the field to take a ratoon crop.",
+          "Suitable water management in the final stages of growth can minimize depressions in yield and quality at high N rates.",
+          "Apply N in three splits within 100 days of planting (tillering, formative, grand growth stages).",
+          "Apply N to ratoon crops immediately or within two months after cutting.",
+          "Apply P at planting, placing it in the planting furrow for increased efficiency.",
+          "Apply P to ratoon crops immediately after cutting the previous crop.",
+          "Monitor potash nutrition by soil and plant analysis and make supplementary applications if plant K concentrations fall.",
+          "Correct S deficiency using S-containing fertilizers, sugar-factory waste (press mud), or FYM (15-20 tonnes/ha).",
+          "Control micronutrient deficiencies (Zn, Cu, Mn) by applying deficient elements as sulphate salts or chelates.",
+          "Correct iron chlorosis by spraying ferrous sulphate (2.5 kg in 150 litres water) twice at fortnightly intervals.",
+          "Correct Zn deficiency by soil application of zinc sulphate (25 kg/ha) on coarse-textured soils."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "Brazil",
+            "specific_info": "Nutrient uptake per tonne of cane yield: N 0.8 kg, P2O5 0.30 kg, K2O 1.32 kg, MgO 0.50 kg, CaO 0.42 kg, S 0.25 kg; Fe 31 g, Zn 4.5 g, Mn 11 g, Cu 2.0 g, B 2.0 g, Mo 0.01 g."
+          },
+          {
+            "region": "India",
+            "specific_info": "A crop yielding 100 tonnes of cane per hectare absorbed 130 kg N, 50 kg P2O5 and 175 kg K2O. Recommended N rates range from 100 to 300 kg N/ha for a 12-month crop."
+          }
+        ],
+        "recommendations": [
+          "Apply N at optimal rates to maximize sugar yield, as excess N can depress cane yield and sugar content.",
+          "For plant cane, apply N in split doses, with the first application at planting or shortly after, and the second during rapid growth.",
+          "Ensure suitable water management in the final stages of growth, especially with high N rates, to maintain yield and quality.",
+          "Consider liming in very acid soils to prevent aluminum toxicity.",
+          "Burn sugar-cane trash in the field when taking a ratoon crop.",
+          "Obtain more specific N, P, and K recommendations from local sources and experience.",
+          "Utilize foliar diagnosis systems (e.g., DRIS) for guidance on fertilizer requirements based on analysis of specified leaves or organs at specified growth stages."
+        ]
+      },
+      {
+        "name": "Sugar Beet",
+        "scientific_name": "Beta vulgaris L.",
+        "category": "tuber",
+        "soil_requirements": {
+          "types": [
+            "porous structure"
+          ],
+          "ph_range": "slightly acid to neutral",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "40-50 kg N (uptake by 10 tonnes of beet + foliage)",
+            "timing": null,
+            "notes": "Beets contain about 50% of the total N uptake."
+          },
+          "phosphorus": {
+            "rate": "15-20 kg P2O5 (uptake by 10 tonnes of beet + foliage)",
+            "timing": null,
+            "notes": "Beets contain about 50% of the total P2O5 uptake."
+          },
+          "potassium": {
+            "rate": "45-70 kg K2O (uptake by 10 tonnes of beet + foliage)",
+            "timing": null,
+            "notes": "Beets contain about 50% of the total K2O uptake."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium",
+              "rate": "12-15 kg MgO (uptake by 10 tonnes of beet + foliage)",
+              "notes": "Beets contain about 50% of the total MgO uptake."
+            },
+            {
+              "name": "Sulfur",
+              "rate": "5 kg S (uptake by 10 tonnes of beet + foliage)",
+              "notes": "Beets contain about 50% of the total S uptake."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "35",
+          "range": "up to 80",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [],
+        "recommendations": []
+      },
+      {
+        "name": "Beets",
+        "scientific_name": null,
+        "category": "vegetable",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": "pH > 7 (can lead to B and Mn deficiencies)",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "200 kg N/ha (for 50-60 tonnes yield); 130 kg N/ha (if soil nitrate is 70 kg N/ha)",
+            "timing": "Early, before sowing (most recommended nutrients); determined by nitrate stored in the profile at the beginning of the season",
+            "notes": "Maximum nutrient demand occurs 3-4 months after sowing. Rate determined by nitrate stored in profile up to 91 cm depth."
+          },
+          "phosphorus": {
+            "rate": "200 kg P2O5/ha (very low soil nutrient status, 50 tonnes yield); 50 kg P2O5/ha (high soil nutrient status)",
+            "timing": "Early, before sowing",
+            "notes": null
+          },
+          "potassium": {
+            "rate": "400 kg K2O/ha (very low soil nutrient status, 50 tonnes yield); 100 kg K2O/ha (high soil nutrient status)",
+            "timing": "Early, before sowing",
+            "notes": null
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium (MgO)",
+              "rate": "100 kg MgO/ha (very low soil nutrient status, 50 tonnes yield)",
+              "notes": null
+            },
+            {
+              "name": "Boron (B)",
+              "rate": "1-2 kg/ha (if necessary)",
+              "notes": "Deficiencies can occur, especially on soils with pH of more than seven. Apply before sowing or through foliar spray."
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": "6-12 kg/ha (if necessary)",
+              "notes": "Deficiencies can occur, especially on soils with pH of more than seven. Apply before sowing or through foliar spray."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": "Maximum nutrient demand 3-4 months after sowing"
+        },
+        "farming_practices": [],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": "50-60 tonnes/ha",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "Germany",
+            "specific_info": "Fertilizer recommendations have been developed for various levels of soil nutrient status."
+          }
+        ],
+        "recommendations": []
+      },
+      {
+        "name": "Cotton",
+        "scientific_name": "Gossypium spp.",
+        "category": "other",
+        "soil_requirements": {
+          "types": [
+            "acid sandy soils",
+            "well-drained soils with good structure"
+          ],
+          "ph_range": null,
+          "drainage": "well-drained"
+        },
+        "climate_requirements": {
+          "temperature": "warm growing season",
+          "rainfall": "adequate moisture supply essential, especially during flowering and boll development",
+          "humidity": null,
+          "conditions": [
+            "warm growing season",
+            "rainfed (satisfactory crops)",
+            "irrigated (highest yields)"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "50-100 kg N/ha (rainfed cotton); 120 kg N/ha or more (irrigated crops); up to 300 kg N/ha (intensively cropped, irrigated regions)",
+            "timing": "Split application: part applied to the seed bed and part as a top-dressing at the start of flowering. Irrigated crops with high yield potential may receive two or three top-dressings.",
+            "notes": "Increases cotton yield by increasing the number and length of branches, and, therefore, the number of flowers, seed cotton yield and seed index. Amount depends on local conditions (including water supply). Excess N should be avoided as it may reduce yield and quality by overstimulating vegetative growth and delaying maturity. Soil and plant-tissue analysis for nitrate can be used to monitor N status."
+          },
+          "phosphorus": {
+            "rate": "30-100 kg P2O5/ha",
+            "timing": null,
+            "notes": "Increases the yield of seed cotton, weight of seed cotton per boll, number of seeds per boll, oil content in seed, and tends to bring early maturity. Application should be related to soil P status. Highest rates generally recommended for irrigated hybrids, and lowest rates or no P for rainfed traditional cultivars."
+          },
+          "potassium": {
+            "rate": "30-100 kg K2O/ha",
+            "timing": null,
+            "notes": "At low to moderate yields, cotton can be grown without K application, but it should be applied for higher yields, particularly on low K soils. Deficiencies occur where rapidly growing crops are furrow irrigated."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium (MgO)",
+              "rate": "40 kg (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": null
+            },
+            {
+              "name": "Calcium (CaO)",
+              "rate": "168 kg (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": "Very acid soils need to be limed."
+            },
+            {
+              "name": "Sulfur (S)",
+              "rate": "10 kg (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": null
+            },
+            {
+              "name": "Iron (Fe)",
+              "rate": "2960 g (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": null
+            },
+            {
+              "name": "Zinc (Zn)",
+              "rate": "116 g (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": null
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": "250 g (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": null
+            },
+            {
+              "name": "Copper (Cu)",
+              "rate": "120 g (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": null
+            },
+            {
+              "name": "Boron (B)",
+              "rate": "320 g (absorbed for 2.5 tonnes seed cotton/ha)",
+              "notes": null
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Good management",
+          "Timely sowing",
+          "Effective weed control",
+          "Effective pest control",
+          "Liming with dolomitic materials (to avoid Mg deficiency on acid sandy soils)",
+          "Foliar or soil applications for micronutrient deficiencies"
+        ],
+        "pests_diseases": [
+          {
+            "name": "premature senescence",
+            "type": "syndrome",
+            "treatment": null
+          }
+        ],
+        "yield_info": {
+          "average": null,
+          "range": "2.5 tonnes/ha (seed cotton, for nutrient absorption data)",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "Brazil",
+            "specific_info": "A cotton crop (G. hirsutum) producing 2.5 tonnes of seed cotton per hectare absorbed specific amounts of N, P2O5, K2O, MgO, CaO, S, Fe, Zn, Mn, Cu, B."
+          },
+          {
+            "region": "North and South America",
+            "specific_info": "S deficiency occurs fairly widely"
+          },
+          {
+            "region": "Africa",
+            "specific_info": "S deficiency occurs fairly widely"
+          }
+        ],
+        "recommendations": [
+          "Good management, including timely sowing and effective weed and pest control, is necessary for high yields and for best response to fertilizers."
+        ]
+      },
+      {
+        "name": "Jute",
+        "scientific_name": "Corchorus olitorius L., Corchorus capsularis L.",
+        "category": "other",
+        "soil_requirements": {
+          "types": [
+            "alluvial soils"
+          ],
+          "ph_range": "slightly acidic",
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "30-45 kg N/ha",
+            "timing": null,
+            "notes": null
+          },
+          "phosphorus": {
+            "rate": "10-20 kg P2O5/ha",
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": "10-20 kg K2O/ha",
+            "timing": null,
+            "notes": "In K-deficient areas, K application increases yield and reduces the incidence of root and stem rot."
+          },
+          "other_nutrients": [
+            {
+              "name": "Farmyard Manure (FYM)",
+              "rate": "10 tonnes/ha",
+              "notes": "Well-decomposed FYM to be added 2-3 weeks before sowing."
+            },
+            {
+              "name": "Calcium (Ca)",
+              "rate": null,
+              "notes": "Requirement in acid soils can be met from liming."
+            },
+            {
+              "name": "Magnesium (Mg)",
+              "rate": "40 kg/ha",
+              "notes": "In Mg-deficient areas, magnesium oxide can be applied at 40 kg/ha either through dolomitic limestone or through magnesium sulphate."
+            },
+            {
+              "name": "Sulfur (S)",
+              "rate": null,
+              "notes": "Where noticed, S deficiency can be corrected through the application of common S-containing N and P fertilizers."
+            },
+            {
+              "name": "Boron (B)",
+              "rate": null,
+              "notes": "Positive results obtained in some cases; application should be based on soil nutrient status and local experience."
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": null,
+              "notes": "Positive results obtained in some cases; application should be based on soil nutrient status and local experience."
+            },
+            {
+              "name": "Molybdenum (Mo)",
+              "rate": null,
+              "notes": "Positive results obtained in some cases; application should be based on soil nutrient status and local experience."
+            },
+            {
+              "name": "Nutrient Uptake (C. olitorius - tossa jute)",
+              "rate": "N 35.2 kg, P2O5 20.3 kg, K2O 63.2 kg, CaO 55.6 kg, MgO 13.3 kg (macronutrients); Fe 368 g, Mn 119 g, Zn 139 g, Cu 18 g (micronutrients) per tonne of dry-fibre production",
+              "notes": "Tossa jute has a 40-percent lower nutrient requirement than white jute per unit of dry-fibre production."
+            },
+            {
+              "name": "Nutrient Uptake (C. capsularis - white jute)",
+              "rate": "N 42.0 kg, P2O5 18.5 kg, K2O 88.5 kg, CaO 60.0 kg, MgO 24.5 kg (macronutrients); Fe 784 g, Mn 251 g, Zn 214 g, Cu 19.5 g (micronutrients) per tonne of dry-fibre production",
+              "notes": "White jute has a 40-percent higher nutrient requirement than tossa jute per unit of dry-fibre production."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Liming of acid soils is recommended.",
+          "Application of 10 tonnes FYM/ha (well-decomposed, 2-3 weeks before sowing).",
+          "Substantial amount of absorbed nutrients are returned to the soil with leaf fall before harvest (e.g., tossa jute returns N 42%, P 19%, K 18%, Ca 26%, Mg 21%)."
+        ],
+        "pests_diseases": [
+          {
+            "name": "root and stem rot",
+            "type": "disease",
+            "treatment": "Reduced by K application in K-deficient areas."
+          }
+        ],
+        "yield_info": {
+          "average": null,
+          "range": "3-4 tonnes/ha (dry fibre); 40-50 tonnes/ha (green matter)",
+          "unit": "tonnes/ha"
+        },
+        "regional_data": [
+          {
+            "region": "Bangladesh",
+            "specific_info": "Much of the world's jute production"
+          },
+          {
+            "region": "India",
+            "specific_info": "Much of the world's jute production"
+          }
+        ],
+        "recommendations": [
+          "Micronutrient application should be based on soil nutrient status and local experience.",
+          "Tossa jute (Corchorus olitorius L.) is a more efficient species for fibre production due to its deeper and more penetrating root system."
+        ]
+      },
+      {
+        "name": "Grassland (Temperate - Permanent/Sown)",
+        "scientific_name": null,
+        "category": "other",
+        "soil_requirements": {
+          "types": null,
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": "Temperate",
+          "rainfall": "Limited by low rainfall",
+          "humidity": null,
+          "conditions": [
+            "temperate",
+            "adverse temperatures can limit potential"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "300 kg/ha (for 10 tonnes/ha dry matter yield); 150-200 kg/ha (pastures); 250-300 kg/ha (meadows)",
+            "timing": "After grazing or cutting, possibly before rains",
+            "notes": "Annual N fertilizer application generally ranges from 50 to 350 kg N/ha. Split applications recommended: Pastures (60, 50, 40, 30 kg N/ha); Meadows (100, 80, 60, 40 kg N/ha). Urea especially before rains. Type of N fertilizer is of minor importance."
+          },
+          "phosphorus": {
+            "rate": "80 kg P2O5/ha (for 10 tonnes/ha dry matter yield); 20-30 kg P2O5/ha (intensive pastures); 100 kg P2O5/ha (meadows for 10 tonnes/ha dry matter)",
+            "timing": null,
+            "notes": "Any kind of P fertilizer can be used. Fertilization can be based on nutrient removals, which are small from pastures due to recycling but large from meadows where large amounts are removed in hay or silage."
+          },
+          "potassium": {
+            "rate": "300 kg K2O/ha (for 10 tonnes/ha dry matter yield); 20-30 kg K2O/ha (intensive pastures); 300 kg K2O/ha (meadows for 10 tonnes/ha dry matter)",
+            "timing": null,
+            "notes": "Potash fertilizers should preferably contain some Na to meet animal needs. Fertilization can be based on nutrient removals, which are small from pastures due to recycling but large from meadows where large amounts are removed in hay or silage."
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium (MgO)",
+              "rate": "34 kg/ha (for 10 tonnes/ha dry matter yield); 3 kg/ha (intensive pastures); 35 kg/ha (meadows for 10 tonnes/ha dry matter)",
+              "notes": "Fertilization can be based on nutrient removals."
+            },
+            {
+              "name": "Calcium (CaO)",
+              "rate": "84 kg/ha (for 10 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Sulfur (S)",
+              "rate": "24 kg/ha (for 10 tonnes/ha dry matter yield)",
+              "notes": "Deficiency recognized in many areas that do not receive S input through fertilizers or atmospheric pollution."
+            },
+            {
+              "name": "Iron (Fe)",
+              "rate": "1000 g/ha (for 10 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Zinc (Zn)",
+              "rate": "400 g/ha (for 10 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": "1600 g/ha (for 10 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Copper (Cu)",
+              "rate": "80 g/ha (for 10 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Molybdenum (Mo)",
+              "rate": null,
+              "notes": "Adequate Mo is essential for effective N fixation. Where Mo deficiency is recognized (often in acid soils), Mo should be applied, e.g., molybdenized SSP (0.02% Mo)."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Extensively used grasslands, composed of native species",
+          "Nutrient removal is minimal under grazing",
+          "Nutrient removal is much larger when biomass is removed for hay or silage and off-site feeding",
+          "Organic fertilizers (manure and slurry) often applied as nutrient sources",
+          "Single applications of slurry should not exceed 20 m3/ha on sown pastures"
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "10 tonnes/ha (dry matter) - specific yield level for nutrient uptake data",
+          "range": "1-15 tonnes/ha (general grassland yield); 8-10 tonnes/ha (meadows for N application)",
+          "unit": "tonnes/ha of dry matter"
+        },
+        "regional_data": [
+          {
+            "region": "Temperate areas",
+            "specific_info": "Good growing conditions for N application examples."
+          }
+        ],
+        "recommendations": [
+          "Replace nutrients removed from the field, especially on high-fertility soils or when biomass is removed for hay/silage.",
+          "Potash fertilizers should preferably contain some Na to meet animal needs.",
+          "Apply Mo where deficiency is recognized, often in acid soils."
+        ]
+      },
+      {
+        "name": "Grassland (Temperate - Grass/Legume Swards)",
+        "scientific_name": null,
+        "category": "other",
+        "soil_requirements": {
+          "types": null,
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": "Temperate",
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "temperate"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": "320 kg/ha (for 8 tonnes/ha dry matter yield)",
+            "timing": null,
+            "notes": "Legumes can supply up to 100 kg N/ha to the mixture."
+          },
+          "phosphorus": {
+            "rate": "69 kg P2O5/ha (for 8 tonnes/ha dry matter yield)",
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": "240 kg K2O/ha (for 8 tonnes/ha dry matter yield)",
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": [
+            {
+              "name": "Magnesium (MgO)",
+              "rate": "33 kg/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Calcium (CaO)",
+              "rate": "189 kg/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Sulfur (S)",
+              "rate": "25 kg/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Iron (Fe)",
+              "rate": "1500 g/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Zinc (Zn)",
+              "rate": "260 g/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Manganese (Mn)",
+              "rate": "880 g/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Copper (Cu)",
+              "rate": "80 g/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": null
+            },
+            {
+              "name": "Molybdenum (Mo)",
+              "rate": "5 g/ha (for 8 tonnes/ha dry matter yield)",
+              "notes": "Adequate Mo is essential for effective N fixation."
+            }
+          ]
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": "8 tonnes/ha (dry matter) - specific yield level for nutrient uptake data",
+          "range": null,
+          "unit": "tonnes/ha of dry matter"
+        },
+        "regional_data": [
+          {
+            "region": "Temperate areas",
+            "specific_info": "Legumes can supply up to 100 kg N/ha."
+          }
+        ],
+        "recommendations": []
+      },
+      {
+        "name": "Meadows",
+        "scientific_name": null,
+        "category": "other",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": "Slurry application is acceptable, with amounts up to double a previously mentioned (but not provided in this text) baseline."
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Grazing should not take place for several weeks after slurry application."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [],
+        "recommendations": []
+      },
+      {
+        "name": "Pasture",
+        "scientific_name": null,
+        "category": "other",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": "Slurry application is acceptable, with amounts up to double a previously mentioned (but not provided in this text) baseline."
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Grazing should not take place for several weeks after slurry application."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [],
+        "recommendations": []
+      },
+      {
+        "name": "Green manure crops",
+        "scientific_name": null,
+        "category": "other",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": []
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "Used as a nutrient source for other crops."
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": null,
+          "unit": null
+        },
+        "regional_data": [],
+        "recommendations": []
+      },
+      {
+        "name": "Irrigated Cereals",
+        "scientific_name": null,
+        "category": "cereal",
+        "soil_requirements": {
+          "types": [],
+          "ph_range": null,
+          "drainage": null
+        },
+        "climate_requirements": {
+          "temperature": null,
+          "rainfall": null,
+          "humidity": null,
+          "conditions": [
+            "irrigated areas",
+            "reduced uncertain water supply"
+          ]
+        },
+        "nutrients": {
+          "nitrogen": {
+            "rate": null,
+            "timing": null,
+            "notes": "Farmers can invest in nutrients"
+          },
+          "phosphorus": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "potassium": {
+            "rate": null,
+            "timing": null,
+            "notes": null
+          },
+          "other_nutrients": []
+        },
+        "planting_info": {
+          "season": null,
+          "method": null,
+          "spacing": null,
+          "duration": null
+        },
+        "farming_practices": [
+          "target high yields"
+        ],
+        "pests_diseases": [],
+        "yield_info": {
+          "average": null,
+          "range": "productivity rose many times over",
+          "unit": null
+        },
+        "regional_data": [
+          {
+            "region": "India",
+            "specific_info": "Green revolution took place, and productivity rose many times over in the period 1965-1990 due to well-developed irrigation facilities."
+          },
+          {
+            "region": "Pakistan",
+            "specific_info": "Green revolution took place, and productivity rose many times over in the period 1965-1990 due to well-developed irrigation facilities."
+          }
+        ],
+        "recommendations": []
+      }
+    ],
+    "general_info": {
+      "general_practices": [
+        "management of nutrients and their sources (mineral, organic and microbial) as part of INM",
+        "The supply of major nutrients should be ample during the growing season, even during short periods of stress caused by dryness or cold.",
+        "Application of purchased inputs such as mineral or organic fertilizer.",
+        "Using nutrient sources such as animal manure, compost, crop residues, green manure crops and urban wastes.",
+        "Nutrient management strategies.",
+        "The decision to apply external plant nutrients is generally based on economics (price and affordability), conditioned by resource availability and production risks.",
+        "Farmers consider economic and institutional factors when making decisions on fertilizer use.",
+        "Small-scale farmers in harsh climates (drylands) and with scarce resources are compelled to look for short-term results when applying plant nutrients.",
+        "In some developed agricultural areas, account is taken of soil moisture at planting and of the probability of rainfall using data provided by meteorologists.",
+        "In many developing agricultural areas, farmers must rely on their own experience and the experience of others due to lack of meteorological information.",
+        "In developing countries with well-developed irrigation facilities, farmers invest in nutrients and target high yields.",
+        "Farmers decide whether to aim for the maximum economic yield or maximum agronomic yield depending on circumstances."
+      ],
+      "general_recommendations": [
+        "Practical recommendations and guidelines on nutrient management for specific crops are usually provided by the local research and extension services in each country due to crop- and area-specific nature.",
+        "Extension workers or farmers should seek information relevant to their conditions from local sources and assess its applicability to local socio-economic conditions.",
+        "Guidelines should be seen as illustrative information to appreciate the importance of balanced crop nutrition for sustaining medium to high yields.",
+        "Nutrient requirement varies considerably depending on the soil fertility, climate conditions, cultivar characteristics, and yields.",
+        "Deficiencies of nutrients other than NPK are likely to occur in poor soils, at high yields and with persistent use of NPK.",
+        "Potash fertilization can be equally profitable even at lower response rates where K is cheaper than N and P.",
+        "Micronutrient deficiencies are becoming more common owing to the intensification of rice production.",
+        "There is a strong positive interaction between the availability of moisture and nutrients. The benefits of supplying irrigation increase with increased nutrient application.",
+        "Response to Phosphorus is determined by soil P status, moisture availability, and yield level.",
+        "Nitrogen and P2O5 are generally recommended in a ratio of 2:1.",
+        "The amounts of Phosphorus and Potassium required depend on the nutrient removal and soil nutrient supply.",
+        "On slightly deficient soils, the amount of P and K should be about 30 percent higher, and on soils in the sufficiency range about 50 percent less.",
+        "Historically, until about 1980, almost no fertilization with Sulfur was required in Europe due to large atmospheric S supply from industrial pollution. Since atmospheric additions have fallen, S deficiencies have become widespread.",
+        "Obtain more specific N, P, and K recommendations from local sources and experience.",
+        "Utilize foliar diagnosis systems (e.g., DRIS) for guidance on fertilizer requirements based on analysis of specified leaves or organs at specified growth stages.",
+        "Where the leaves are incorporated into the soil after harvest, the nutrients thus recycled must be taken into account in estimating the fertilizer requirement of the next crop.",
+        "Most of the recommended nutrients should be applied early, before sowing, as the maximum nutrient demand by the crop occurs 3-4 months after sowing.",
+        "Farmers need knowledge about purchased inputs (mineral or organic fertilizer) and their effects on crop yield in both agronomic and economic terms.",
+        "Farmers must make complex decisions on how much and which fertilizer to use, based on economic judgment, past experience, cash or credit available, and probable produce prices.",
+        "The economics of using nutrient sources like animal manure, compost, crop residues, green manure crops, and urban wastes are complex due to their variable nutrient composition, residual effect, and the cost and availability of labor to access, process, and apply them.",
+        "All agronomic data on crop responses to nutrients should always be subjected to economic analysis to account for differences in input and output prices and to address the basic issue of whether and to what extent fertilizer application will be profitable.",
+        "Information on factors affecting returns from nutrient application is valuable in decision-making.",
+        "Principal elements of production economics for fertilizer use include: physical yield response to applied fertilizers; price of fertilizer and crop (including transport, handling, marketing costs, and cost of servicing a loan); and the individual farmer's decision-making and risk-taking ability.",
+        "Important economic and institutional factors influencing fertilizer use include: the price relationship between fertilizers and the crops to which they are applied, together with the market outlook for these crops; the farmer's financial resources along with the availability and cost of credit; conditions of land tenure; and adequate supplies and distribution facilities.",
+        "Government policies, financing facilities, and marketing systems can positively or negatively influence these factors.",
+        "Farmers will apply plant nutrients only where their beneficial effects on crop yields are profitable.",
+        "Farmers' pursuit of higher income through higher yield should be balanced against the need to maintain soil fertility and avoid soil degradation.",
+        "The profitability of adopting Integrated Nutrient Management (INM) should be viewed over a longer term, as improvements in soil conditions associated with superior Nutrient Use Efficiency (NUE) tend to become apparent only after several cropping seasons.",
+        "Improved access to plant nutrient sources, markets, and low-risk production technology, coupled with the removal of financial and operational constraints (such as recycling of rainwater), will allow farmers to adopt plant nutrient management practices that are economically attractive and can support long-term sustainable crop production.",
+        "In drought years, no fertilizer should be applied.",
+        "In years with above average rainfall, even the normal rate of application would be insufficient for maximum yields.",
+        "The basic requirement of profitable crop production is to produce an agronomic yield that can maximize net returns.",
+        "Even the highest yield would not be of interest if its production were not cost-effective.",
+        "Farmers should realize that top profits are possible only with optimal investment, correct decisions and favourable weather."
+      ],
+      "sources": [
+        "This chapter provides crop-specific information on nutrient management, including diverse nutrient sources as part of Integrated Nutrient Management (INM), with an emphasis on local applicability and balanced nutrition for major field crops like wheat.",
+        "This text provides detailed nutrient management guidelines for winter wheat, including nitrogen application rates and timing, phosphorus, potassium, magnesium, sulfur, and micronutrient recommendations based on soil type and climate. It also briefly introduces rice cultivation under wetland systems.",
+        "This text covers nutrient requirements, uptake, and fertilizer practices, particularly nitrogen management, for rice, including different varieties and seasons, and their impact on yield and nutrient partitioning.",
+        "This text covers nutrient management (N, P, K, S, Zn, Fe, Si) for upland and wetland rice, including application rates, timing, and specific soil/climate considerations. It also touches upon yield differences and the impact of farming practices like rice-wheat rotation and green manuring.",
+        "The text provides detailed information on nutrient management for rice, focusing on organic and green manuring, and the use of biofertilizers like BGA and Azolla. It also offers comprehensive data on maize, including its nutrient requirements (macronutrients and micronutrients), uptake rates, optimal N application timing and rates, and the interaction of N with factors like plant population and moisture supply, particularly under North American conditions.",
+        "This text provides detailed nutrient management guidelines for maize, including nitrogen, phosphorus, potassium, and zinc, with specific application rates, timings, and regional recommendations. It also briefly introduces chickpea as an important grain legume in arid and semi-arid regions, noting its protein content.",
+        "This text provides detailed nutrient requirements (macronutrients and micronutrients) and recommended application practices for Chickpea and Pigeon pea, including starter nitrogen, phosphorus, sulfur, zinc, iron, and boron, as well as the benefits of Rhizobium inoculation. It also briefly mentions Groundnut as an oil crop and its regional importance.",
+        "This text provides detailed information on groundnut cultivation, focusing on its characteristics, soil and climate requirements, extensive nutrient management guidelines (including N, P, K, S, Ca, Mg, and micronutrients), nutrient removal rates, and specific farming practices like Rhizobium inoculation and liming.",
+        "This text provides detailed information on nutrient deficiencies and their management for groundnut, and comprehensive data on soil, climate, nutrient requirements, farming practices, and yield for soybean.",
+        "This text provides crop-centric data focusing on nutrient requirements, application rates, and farming practices for Oilseed Rape and Sunflower, including general guidelines for phosphorus, potassium, and sulfur management.",
+        "This text provides nutrient management guidelines for major field crops, specifically detailing soil, climate, nutrient requirements (N, P, K, S, B, Mg, Ca), application rates, timing, and specific farming practices for Sunflower and Potatoes, including regional data and yield-related nutrient removal.",
+        "The text covers nutrient management guidelines for potato and sweet potato, detailing potassium, nitrogen, phosphorus, and micronutrient requirements, soil considerations, and specific farming practices for each crop.",
+        "This text provides detailed crop-centric information for Sweet Potatoes and Cassava, focusing on nutrient requirements, deficiency symptoms, application rates, timing, and yield responses. It also touches upon climate resilience and general management practices for these tuber crops.",
+        "This text provides detailed nutrient management guidelines for Cassava and Sugar Cane, covering soil requirements, specific fertilizer application rates (including organic manures and liming), timing, and their effects on yield and quality under tropical conditions in India and Brazil.",
+        "This text provides detailed nutrient management guidelines for sugar cane, including nitrogen, phosphorus, potassium, sulfur, magnesium, and micronutrients, along with application timings and deficiency corrections. It also covers nutrient uptake and yield information for sugar beet, including its soil preferences.",
+        "This text provides crop-centric information on nutrient requirements, application rates, soil and climate preferences, and farming practices for beets and cotton, including regional data for Germany and Brazil.",
+        "The text provides nutrient management guidelines for Cotton and Jute, detailing soil requirements, deficiency corrections, fertilizer rates, and yield information.",
+        "This text discusses the economic and policy aspects of plant nutrient management, focusing on factors influencing farmers' decisions regarding fertilizer use. It covers the need for farmer knowledge, economic analysis of nutrient application (including mineral, organic, and other sources like manure and compost), and the impact of market prices, financial resources, land tenure, and supply chains on profitability.",
+        "This text discusses the economic and policy issues of plant nutrition, focusing on factors influencing farmers' decisions regarding nutrient application, the importance of climate and irrigation, and the balance between yield maximization and profit maximization. It highlights the long-term benefits of Integrated Nutrient Management (INM) and the impact of the Green Revolution on irrigated cereals in specific regions like India and Pakistan."
+      ]
+    },
+    "total_crops_extracted": 30
+  }
+}

@@ -126,135 +126,164 @@ class LLMExtractorInterface(ABC):
 
     def _combine_chunk_results(self, results: List[Dict]) -> Dict:
         """
-        Default implementation for combining extraction results from multiple chunks
-        Can be overridden by specific adapters if needed
+        Combine extraction results from multiple chunks into crop-centric structure.
+        Optimized for RAG retrieval - each crop contains all its related information.
 
         Args:
             results: List of extraction results
 
         Returns:
-            Combined data dictionary
+            Combined data dictionary with crops as the primary structure
         """
-        combined = {
-            'crops': [],
-            'soil_types': [],
-            'climate_conditions': {
-                'temperature_range': None,
-                'rainfall': None,
-                'sunlight': None,
-                'other_conditions': []
-            },
-            'growing_conditions': {
-                'soil_ph': None,
-                'planting_season': None,
-                'growing_period': None
-            },
-            'pests_diseases': [],
-            'farming_practices': [],
-            'fertilizers': [],
-            'yield_information': {
-                'average_yield': None,
-                'unit': None
-            },
-            'regional_data': {
-                'region': None,
-                'specific_recommendations': []
-            },
-            'recommendations': [],
-            'summaries': []
+        # Use a dict to merge crops by normalized name
+        crops_dict = {}
+        general_info = {
+            'general_practices': [],
+            'general_recommendations': [],
+            'sources': []
         }
 
-        # Combine data from all chunks
+        def normalize_crop_name(name: str) -> str:
+            """Normalize crop name for matching"""
+            if not name:
+                return ""
+            return name.lower().strip()
+
+        def merge_crop_data(existing: Dict, new: Dict) -> Dict:
+            """Merge new crop data into existing crop entry"""
+            # Update scientific name if not set
+            if new.get('scientific_name') and not existing.get('scientific_name'):
+                existing['scientific_name'] = new['scientific_name']
+
+            # Update category if not set
+            if new.get('category') and not existing.get('category'):
+                existing['category'] = new['category']
+
+            # Merge soil requirements
+            if new.get('soil_requirements'):
+                if not existing.get('soil_requirements'):
+                    existing['soil_requirements'] = {'types': [], 'ph_range': None, 'drainage': None}
+                nr = new['soil_requirements']
+                er = existing['soil_requirements']
+                if nr.get('types'):
+                    er['types'] = list(set(er.get('types', []) + nr['types']))
+                if nr.get('ph_range') and not er.get('ph_range'):
+                    er['ph_range'] = nr['ph_range']
+                if nr.get('drainage') and not er.get('drainage'):
+                    er['drainage'] = nr['drainage']
+
+            # Merge climate requirements
+            if new.get('climate_requirements'):
+                if not existing.get('climate_requirements'):
+                    existing['climate_requirements'] = {'temperature': None, 'rainfall': None, 'humidity': None, 'conditions': []}
+                nc = new['climate_requirements']
+                ec = existing['climate_requirements']
+                if nc.get('temperature') and not ec.get('temperature'):
+                    ec['temperature'] = nc['temperature']
+                if nc.get('rainfall') and not ec.get('rainfall'):
+                    ec['rainfall'] = nc['rainfall']
+                if nc.get('humidity') and not ec.get('humidity'):
+                    ec['humidity'] = nc['humidity']
+                if nc.get('conditions'):
+                    ec['conditions'] = list(set(ec.get('conditions', []) + nc['conditions']))
+
+            # Merge nutrients
+            if new.get('nutrients'):
+                if not existing.get('nutrients'):
+                    existing['nutrients'] = {}
+                for nutrient, info in new['nutrients'].items():
+                    if nutrient not in existing['nutrients']:
+                        existing['nutrients'][nutrient] = info
+                    elif isinstance(info, dict) and isinstance(existing['nutrients'][nutrient], dict):
+                        existing['nutrients'][nutrient].update({k: v for k, v in info.items() if v})
+
+            # Merge list fields
+            for field in ['farming_practices', 'pests_diseases', 'recommendations']:
+                if new.get(field):
+                    if not existing.get(field):
+                        existing[field] = []
+                    for item in new[field]:
+                        if item and item not in existing[field]:
+                            existing[field].append(item)
+
+            # Merge yield info
+            if new.get('yield_info'):
+                if not existing.get('yield_info'):
+                    existing['yield_info'] = {}
+                existing['yield_info'].update({k: v for k, v in new['yield_info'].items() if v})
+
+            # Merge planting info
+            if new.get('planting_info'):
+                if not existing.get('planting_info'):
+                    existing['planting_info'] = {}
+                existing['planting_info'].update({k: v for k, v in new['planting_info'].items() if v})
+
+            # Merge regional data
+            if new.get('regional_data'):
+                if not existing.get('regional_data'):
+                    existing['regional_data'] = []
+                for region in new['regional_data']:
+                    if region not in existing['regional_data']:
+                        existing['regional_data'].append(region)
+
+            return existing
+
+        # Process each chunk result
         for result in results:
             data = result.get('data', {})
 
-            # Combine crops (avoid duplicates)
+            # Process crops
             if data.get('crops'):
                 for crop in data['crops']:
-                    if crop and crop not in combined['crops']:
-                        combined['crops'].append(crop)
+                    if not crop or not crop.get('name'):
+                        continue
 
-            # Combine soil types
-            if data.get('soil_types'):
-                for soil in data['soil_types']:
-                    if soil and soil not in combined['soil_types']:
-                        combined['soil_types'].append(soil)
+                    crop_key = normalize_crop_name(crop['name'])
+                    if not crop_key:
+                        continue
 
-            # Combine climate conditions
-            if data.get('climate_conditions'):
-                cc = data['climate_conditions']
-                if cc.get('temperature_range') and not combined['climate_conditions']['temperature_range']:
-                    combined['climate_conditions']['temperature_range'] = cc['temperature_range']
-                if cc.get('rainfall') and not combined['climate_conditions']['rainfall']:
-                    combined['climate_conditions']['rainfall'] = cc['rainfall']
-                if cc.get('sunlight') and not combined['climate_conditions']['sunlight']:
-                    combined['climate_conditions']['sunlight'] = cc['sunlight']
-                if cc.get('other_conditions'):
-                    combined['climate_conditions']['other_conditions'].extend(cc['other_conditions'])
+                    if crop_key not in crops_dict:
+                        # Initialize new crop entry
+                        crops_dict[crop_key] = {
+                            'name': crop['name'],
+                            'scientific_name': crop.get('scientific_name'),
+                            'category': crop.get('category'),
+                            'soil_requirements': crop.get('soil_requirements', {'types': [], 'ph_range': None, 'drainage': None}),
+                            'climate_requirements': crop.get('climate_requirements', {'temperature': None, 'rainfall': None, 'humidity': None, 'conditions': []}),
+                            'nutrients': crop.get('nutrients', {}),
+                            'planting_info': crop.get('planting_info', {}),
+                            'farming_practices': crop.get('farming_practices', []),
+                            'pests_diseases': crop.get('pests_diseases', []),
+                            'yield_info': crop.get('yield_info', {}),
+                            'regional_data': crop.get('regional_data', []),
+                            'recommendations': crop.get('recommendations', [])
+                        }
+                    else:
+                        # Merge with existing crop data
+                        crops_dict[crop_key] = merge_crop_data(crops_dict[crop_key], crop)
 
-            # Combine growing conditions
-            if data.get('growing_conditions'):
-                gc = data['growing_conditions']
-                if gc.get('soil_ph') and not combined['growing_conditions']['soil_ph']:
-                    combined['growing_conditions']['soil_ph'] = gc['soil_ph']
-                if gc.get('planting_season') and not combined['growing_conditions']['planting_season']:
-                    combined['growing_conditions']['planting_season'] = gc['planting_season']
-                if gc.get('growing_period') and not combined['growing_conditions']['growing_period']:
-                    combined['growing_conditions']['growing_period'] = gc['growing_period']
+            # Collect general info not tied to specific crops
+            if data.get('general_practices'):
+                for practice in data['general_practices']:
+                    if practice and practice not in general_info['general_practices']:
+                        general_info['general_practices'].append(practice)
 
-            # Combine pests and diseases
-            if data.get('pests_diseases'):
-                for pest in data['pests_diseases']:
-                    if pest and pest not in combined['pests_diseases']:
-                        combined['pests_diseases'].append(pest)
+            if data.get('general_recommendations'):
+                for rec in data['general_recommendations']:
+                    if rec and rec not in general_info['general_recommendations']:
+                        general_info['general_recommendations'].append(rec)
 
-            # Combine farming practices
-            if data.get('farming_practices'):
-                for practice in data['farming_practices']:
-                    if practice and practice not in combined['farming_practices']:
-                        combined['farming_practices'].append(practice)
+            if data.get('source_summary'):
+                general_info['sources'].append(data['source_summary'])
 
-            # Combine fertilizers
-            if data.get('fertilizers'):
-                for fert in data['fertilizers']:
-                    if fert and fert not in combined['fertilizers']:
-                        combined['fertilizers'].append(fert)
+        # Convert crops dict to list
+        crops_list = list(crops_dict.values())
 
-            # Combine yield information
-            if data.get('yield_information'):
-                yi = data['yield_information']
-                if yi.get('average_yield') and not combined['yield_information']['average_yield']:
-                    combined['yield_information']['average_yield'] = yi['average_yield']
-                if yi.get('unit') and not combined['yield_information']['unit']:
-                    combined['yield_information']['unit'] = yi['unit']
-
-            # Combine regional data
-            if data.get('regional_data'):
-                rd = data['regional_data']
-                if rd.get('region') and not combined['regional_data']['region']:
-                    combined['regional_data']['region'] = rd['region']
-                if rd.get('specific_recommendations'):
-                    combined['regional_data']['specific_recommendations'].extend(rd['specific_recommendations'])
-
-            # Combine recommendations
-            if data.get('recommendations'):
-                for rec in data['recommendations']:
-                    if rec and rec not in combined['recommendations']:
-                        combined['recommendations'].append(rec)
-
-            # Collect summaries
-            if data.get('summary'):
-                combined['summaries'].append(data['summary'])
-
-        # Remove duplicates from list fields
-        combined['climate_conditions']['other_conditions'] = list(set(
-            combined['climate_conditions']['other_conditions']
-        ))
-        combined['regional_data']['specific_recommendations'] = list(set(
-            combined['regional_data']['specific_recommendations']
-        ))
-
-        return combined
+        return {
+            'crops': crops_list,
+            'general_info': general_info,
+            'total_crops_extracted': len(crops_list)
+        }
 
 
 class BaseLLMExtractor(LLMExtractorInterface):
@@ -265,8 +294,8 @@ class BaseLLMExtractor(LLMExtractorInterface):
 
     def create_extraction_prompt(self, text: str) -> str:
         """
-        Default extraction prompt template for agricultural information
-        Can be overridden by specific adapters
+        Crop-centric extraction prompt optimized for RAG retrieval.
+        Groups all information by crop for better conversational recommendations.
 
         Args:
             text: Text chunk to analyze
@@ -274,60 +303,72 @@ class BaseLLMExtractor(LLMExtractorInterface):
         Returns:
             Formatted prompt
         """
-        prompt = f"""You are an agricultural information extraction expert. Analyze the following text and extract structured agricultural information.
+        prompt = f"""You are an agricultural information extraction expert. Extract crop-centric data from the text below.
+
+IMPORTANT: Organize ALL information BY CROP. Each crop should contain all its related soil, climate, nutrient, and practice information together. This enables a chatbot to retrieve complete information when a user asks about a specific crop.
 
 Text to analyze:
 {text}
 
-Extract and return a JSON object with the following structure:
+Extract and return a JSON object with this CROP-CENTRIC structure:
 {{
   "crops": [
     {{
-      "name": "crop name",
-      "scientific_name": "scientific name if mentioned",
-      "category": "cereal|vegetable|fruit|legume|other"
+      "name": "Crop Name (use proper capitalization)",
+      "scientific_name": "Scientific name if mentioned, otherwise null",
+      "category": "cereal|vegetable|fruit|legume|oilseed|tuber|other",
+      "soil_requirements": {{
+        "types": ["suitable soil types for THIS crop"],
+        "ph_range": "optimal pH range for THIS crop (e.g., '6.0-7.0')",
+        "drainage": "drainage requirements"
+      }},
+      "climate_requirements": {{
+        "temperature": "temperature range or climate zone",
+        "rainfall": "water/rainfall needs (e.g., '450-650mm annually')",
+        "humidity": "humidity preferences if mentioned",
+        "conditions": ["other climate factors like 'temperate', 'semi-arid']
+      }},
+      "nutrients": {{
+        "nitrogen": {{"rate": "amount per hectare", "timing": "when to apply", "notes": "special instructions"}},
+        "phosphorus": {{"rate": "amount", "timing": "when to apply", "notes": "any notes"}},
+        "potassium": {{"rate": "amount", "timing": "when to apply", "notes": "any notes"}},
+        "other_nutrients": [{{"name": "nutrient name", "rate": "amount", "notes": "instructions"}}]
+      }},
+      "planting_info": {{
+        "season": "best planting season/time",
+        "method": "planting method",
+        "spacing": "plant spacing if mentioned",
+        "duration": "growing period/days to maturity"
+      }},
+      "farming_practices": ["specific practices for THIS crop"],
+      "pests_diseases": [
+        {{"name": "pest/disease name", "type": "pest|disease", "treatment": "control method if mentioned"}}
+      ],
+      "yield_info": {{
+        "average": "typical yield",
+        "range": "yield range (e.g., '1-14 tonnes/ha')",
+        "unit": "tonnes/ha or other unit"
+      }},
+      "regional_data": [
+        {{"region": "region name", "specific_info": "region-specific data for this crop"}}
+      ],
+      "recommendations": ["specific recommendations for growing THIS crop successfully"]
     }}
   ],
-  "soil_types": ["list of soil types mentioned"],
-  "climate_conditions": {{
-    "temperature_range": "temperature range if mentioned",
-    "rainfall": "rainfall requirements if mentioned",
-    "sunlight": "sunlight requirements if mentioned",
-    "other_conditions": ["other climate factors"]
-  }},
-  "growing_conditions": {{
-    "soil_ph": "pH range if mentioned",
-    "planting_season": "best planting time if mentioned",
-    "growing_period": "duration if mentioned"
-  }},
-  "pests_diseases": [
-    {{
-      "name": "pest or disease name",
-      "type": "pest|disease|weed",
-      "affected_crops": ["crops affected"]
-    }}
-  ],
-  "farming_practices": ["list of farming practices or techniques mentioned"],
-  "fertilizers": ["types of fertilizers or nutrients mentioned"],
-  "yield_information": {{
-    "average_yield": "yield data if mentioned",
-    "unit": "unit of measurement"
-  }},
-  "regional_data": {{
-    "region": "geographical region if mentioned",
-    "specific_recommendations": ["region-specific recommendations"]
-  }},
-  "recommendations": ["any agricultural recommendations or best practices"],
-  "summary": "brief summary of the key agricultural information in this text"
+  "general_practices": ["farming practices not specific to any single crop"],
+  "general_recommendations": ["general agricultural advice not crop-specific"],
+  "source_summary": "brief summary of what this text chunk covers"
 }}
 
-Important:
-- Only include information explicitly mentioned in the text
-- Use null for fields where information is not available
-- Use empty arrays [] for list fields with no data
-- Be accurate and do not hallucinate information
-- If the text is not about agriculture, return a JSON with all fields as null/empty and a note in summary
+CRITICAL RULES:
+1. ASSOCIATE all information with the SPECIFIC CROP it relates to
+2. If fertilizer rates or practices are mentioned for a crop, put them IN that crop's entry
+3. Do NOT create separate flat lists - embed everything within the relevant crop
+4. Use null for missing fields, empty arrays [] for empty lists
+5. Only extract information explicitly stated - do not hallucinate
+6. If text mentions multiple crops, create separate entries for each with their specific data
+7. Use consistent units (prefer kg/ha for nutrients, tonnes/ha for yield)
 
-Return ONLY the JSON object, no additional text."""
+Return ONLY the JSON object, no markdown code blocks or additional text."""
 
         return prompt

@@ -4,6 +4,7 @@ Implements LLM extraction using Google's Gemini API
 """
 import json
 import os
+import re
 from typing import Dict, List, Optional
 import google.generativeai as genai
 
@@ -12,6 +13,154 @@ from ..llm_interface import (
     ExtractionResult,
     ChunkExtractionResult
 )
+
+
+def repair_json(text: str) -> str:
+    """
+    Attempt to repair common JSON issues from LLM output.
+
+    Args:
+        text: Potentially malformed JSON string
+
+    Returns:
+        Repaired JSON string
+    """
+    # Remove any leading/trailing whitespace
+    text = text.strip()
+
+    # Remove markdown code blocks if present
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+
+    # Find the JSON object boundaries
+    start_idx = text.find('{')
+    if start_idx == -1:
+        return text
+
+    # Count brackets to find the proper end
+    bracket_count = 0
+    end_idx = -1
+    in_string = False
+    escape_next = False
+
+    for i, char in enumerate(text[start_idx:], start_idx):
+        if escape_next:
+            escape_next = False
+            continue
+        if char == '\\':
+            escape_next = True
+            continue
+        if char == '"' and not escape_next:
+            in_string = not in_string
+            continue
+        if not in_string:
+            if char == '{':
+                bracket_count += 1
+            elif char == '}':
+                bracket_count -= 1
+                if bracket_count == 0:
+                    end_idx = i
+                    break
+
+    # If we found valid boundaries, extract just that part
+    if end_idx > start_idx:
+        text = text[start_idx:end_idx + 1]
+    else:
+        # Try to fix unclosed JSON by adding closing brackets
+        text = text[start_idx:]
+        # Count open vs close brackets
+        open_braces = text.count('{') - text.count('}')
+        open_brackets = text.count('[') - text.count(']')
+
+        # Add missing closing brackets
+        text = text + (']' * open_brackets) + ('}' * open_braces)
+
+    # Fix common issues
+
+    # Remove trailing commas before ] or }
+    text = re.sub(r',\s*([}\]])', r'\1', text)
+
+    # Fix unescaped quotes inside strings (common LLM issue)
+    # This is tricky - we try to fix obvious cases
+
+    # Fix missing commas between array elements or object properties
+    # Pattern: }" followed by "{ or "[ or string
+    text = re.sub(r'}\s*{', '},{', text)
+    text = re.sub(r']\s*\[', '],[', text)
+    text = re.sub(r'"\s*"', '","', text)
+
+    # Fix missing comma after values before new keys
+    text = re.sub(r'(null|true|false|\d+)\s*"', r'\1,"', text)
+
+    return text
+
+
+def safe_json_parse(text: str) -> Dict:
+    """
+    Safely parse JSON with multiple fallback strategies.
+
+    Args:
+        text: JSON string to parse
+
+    Returns:
+        Parsed dictionary
+
+    Raises:
+        json.JSONDecodeError: If all parsing attempts fail
+    """
+    # Strategy 1: Direct parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: Repair and parse
+    try:
+        repaired = repair_json(text)
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 3: Extract from markdown code block
+    if "```" in text:
+        try:
+            if "```json" in text:
+                json_start = text.find("```json") + 7
+            else:
+                json_start = text.find("```") + 3
+            json_end = text.find("```", json_start)
+            if json_end > json_start:
+                extracted = text[json_start:json_end].strip()
+                repaired = repair_json(extracted)
+                return json.loads(repaired)
+        except json.JSONDecodeError:
+            pass
+
+    # Strategy 4: Find and extract JSON object
+    try:
+        # Find first { and try to extract valid JSON from there
+        start = text.find('{')
+        if start >= 0:
+            # Try progressively shorter substrings
+            for end in range(len(text), start, -1):
+                try:
+                    substr = text[start:end]
+                    repaired = repair_json(substr)
+                    result = json.loads(repaired)
+                    if isinstance(result, dict):
+                        return result
+                except:
+                    continue
+    except:
+        pass
+
+    # All strategies failed, raise the original error
+    raise json.JSONDecodeError("Failed to parse JSON after all repair attempts", text, 0)
 
 
 class GeminiAdapter(BaseLLMExtractor):
@@ -93,10 +242,11 @@ class GeminiAdapter(BaseLLMExtractor):
         try:
             prompt = self.create_extraction_prompt(text)
 
-            # Configure generation settings
+            # Configure generation settings with JSON mode
             generation_config = {
                 'temperature': 0.1,
-                'max_output_tokens': max_tokens or 4096,
+                'max_output_tokens': max_tokens or 8192,
+                'response_mime_type': 'application/json',  # Force JSON output
             }
 
             response = self.client.generate_content(
@@ -107,24 +257,8 @@ class GeminiAdapter(BaseLLMExtractor):
             # Extract the text content from response
             response_text = response.text
 
-            # Parse JSON response
-            try:
-                extracted_data = json.loads(response_text)
-            except json.JSONDecodeError as e:
-                # Try to extract JSON from markdown code blocks
-                if "```json" in response_text:
-                    json_start = response_text.find("```json") + 7
-                    json_end = response_text.find("```", json_start)
-                    response_text = response_text[json_start:json_end].strip()
-                    extracted_data = json.loads(response_text)
-                elif "```" in response_text:
-                    # Try generic code block
-                    json_start = response_text.find("```") + 3
-                    json_end = response_text.find("```", json_start)
-                    response_text = response_text[json_start:json_end].strip()
-                    extracted_data = json.loads(response_text)
-                else:
-                    raise e
+            # Parse JSON response with robust error handling
+            extracted_data = safe_json_parse(response_text)
 
             # Get token usage if available
             usage = {}
