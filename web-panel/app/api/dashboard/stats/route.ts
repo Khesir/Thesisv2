@@ -1,24 +1,28 @@
 import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
-import { ChunkModel } from "@/lib/db/models/chunk.model"
-import { ExtractedDataModel } from "@/lib/db/models/extracted-data.model"
+import { ChunkModel } from "@/lib/entities/chunk"
+import { ExtractedDataModel } from "@/lib/entities/extracted-data"
 
 export async function GET() {
   try {
     await connectDB()
 
-    const [
-      totalChunks,
-      processedChunks,
-      validationChunks,
-      notProcessedChunks,
-      totalExtracted,
-      sources,
-    ] = await Promise.all([
-      ChunkModel.countDocuments(),
-      ChunkModel.countDocuments({ status: "processed" }),
-      ChunkModel.countDocuments({ status: "requires-validation" }),
-      ChunkModel.countDocuments({ status: "not-processed" }),
+    const [chunkStats, totalExtracted, sources] = await Promise.all([
+      ChunkModel.aggregate([
+        {
+          $facet: {
+            total: [{ $count: "count" }],
+            byStatus: [
+              {
+                $group: {
+                  _id: "$status",
+                  count: { $sum: 1 },
+                },
+              },
+            ],
+          },
+        },
+      ]),
       ExtractedDataModel.countDocuments(),
       ChunkModel.aggregate([
         {
@@ -33,6 +37,13 @@ export async function GET() {
         { $sort: { _id: 1 } },
       ]),
     ])
+
+    // Extract counts from aggregation results
+    const totalChunks = chunkStats[0]?.total[0]?.count || 0
+    const statusCounts = chunkStats[0]?.byStatus || []
+    const processedChunks = statusCounts.find((s: any) => s._id === "processed")?.count || 0
+    const validationChunks = statusCounts.find((s: any) => s._id === "requires-validation")?.count || 0
+    const notProcessedChunks = statusCounts.find((s: any) => s._id === "not-processed")?.count || 0
 
     return NextResponse.json({
       success: true,

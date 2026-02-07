@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
-import { ExtractedDataModel } from "@/lib/db/models/extracted-data.model"
+import { ExtractedDataModel } from "@/lib/entities/extracted-data"
 
 export async function GET() {
   try {

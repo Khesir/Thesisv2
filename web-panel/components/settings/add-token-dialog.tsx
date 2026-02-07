@@ -18,8 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, HelpCircle } from "lucide-react"
 import { TokenProvider } from "@/lib/types/api-token"
+import { toast } from "sonner"
 
 interface AddTokenDialogProps {
   open: boolean
@@ -54,14 +55,40 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
     onOpenChange(false)
   }
 
-  const handleTest = () => {
+  const handleTest = async () => {
+    if (!token) {
+      toast.error("Please enter a token first")
+      return
+    }
+
     setTesting(true)
-    setTimeout(() => setTesting(false), 2000)
+    try {
+      const res = await fetch("/api/tokens/test-temp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider,
+          token,
+        }),
+      })
+
+      const result = await res.json()
+
+      if (result.valid) {
+        toast.success(`✓ Token is valid for ${provider}`)
+      } else {
+        toast.error(`✗ Token validation failed: ${result.error || "Invalid token"}`)
+      }
+    } catch (error) {
+      toast.error("Failed to test token connection")
+    } finally {
+      setTesting(false)
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add API Token</DialogTitle>
         </DialogHeader>
@@ -82,12 +109,23 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
           </div>
 
           <div className="space-y-2">
-            <Label>Alias</Label>
+            <div className="flex items-center gap-2">
+              <Label>Alias (Friendly Name)</Label>
+              <span
+                title="A memorable name for this token. Examples: 'Main Key', 'Backup API', 'Team Account'"
+                className="cursor-help"
+              >
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              </span>
+            </div>
             <Input
-              placeholder="e.g., Main Key"
+              placeholder="e.g., Main Key, Backup API, Team Account"
               value={alias}
               onChange={(e) => setAlias(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Use a name that helps you remember what this token is for (e.g., project name, environment, or purpose).
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -120,6 +158,9 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
               value={usageLimit}
               onChange={(e) => setUsageLimit(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Set a maximum number of API calls to prevent accidental overages. Leave empty for unlimited use.
+            </p>
           </div>
         </div>
 

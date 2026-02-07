@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
-import { APITokenModel } from "@/lib/db/models/api-token.model"
+import { APITokenModel, maskToken } from "@/lib/entities/api-token"
 
 export async function PATCH(
   req: NextRequest,
@@ -33,10 +33,7 @@ export async function PATCH(
     // Mask the token before returning
     const masked = {
       ...token,
-      token:
-        token.token.length <= 8
-          ? "****"
-          : token.token.slice(0, 4) + "****" + token.token.slice(-4),
+      token: maskToken(token.token),
     }
 
     return NextResponse.json({ success: true, token: masked })

@@ -6,12 +6,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChevronDown, ChevronRight, CheckCircle, Code } from "lucide-react"
-import { ExtractedData } from "@/lib/types/extracted-data"
-import { Chunk } from "@/lib/types/chunk"
+import { type ExtractedDataResponse } from "@/lib/entities/extracted-data"
+import { type ChunkResponse } from "@/lib/entities/chunk"
 
 interface ExtractionResultsProps {
-  results: ExtractedData[]
-  chunks: Chunk[]
+  results: ExtractedDataResponse[]
+  chunks: ChunkResponse[]
 }
 
 export function ExtractionResults({ results, chunks }: ExtractionResultsProps) {

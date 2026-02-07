@@ -25,23 +25,18 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
-import { APIToken } from "@/lib/types/api-token"
+import { type APITokenResponse } from "@/lib/entities/api-token"
 
 interface TokenListProps {
-  tokens: APIToken[]
-  onEdit: (token: APIToken) => void
-  onDelete: (token: APIToken) => void
+  tokens: APITokenResponse[]
+  onEdit: (token: APITokenResponse) => void
+  onDelete: (token: APITokenResponse) => void
 }
 
 const providerColors: Record<string, string> = {
   google: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   anthropic: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
   openai: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-}
-
-function maskToken(token: string) {
-  if (token.length <= 8) return "****"
-  return token.slice(0, 4) + "..." + token.slice(-4)
 }
 
 export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
@@ -100,7 +95,7 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
                     </TableCell>
                     <TableCell className="font-medium">{token.alias}</TableCell>
                     <TableCell className="font-mono text-sm text-muted-foreground">
-                      {maskToken(token.token)}
+                      {token.maskedToken}
                     </TableCell>
                     <TableCell>
                       {token.usageCount} / {token.usageLimit ?? "\u221E"}

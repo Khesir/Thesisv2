@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
-import { APITokenModel } from "@/lib/db/models/api-token.model"
+import { APITokenModel } from "@/lib/entities/api-token"
 import { testToken } from "@/services/ebr-extractor"
 
 export async function POST(
@@ -11,7 +11,7 @@ export async function POST(
     await connectDB()
     const { id } = await params
 
-    const token = await APITokenModel.findById(id)
+    const token = await APITokenModel.findById(id).lean()
     if (!token) {
       return NextResponse.json(
         { valid: false, error: "Token not found" },

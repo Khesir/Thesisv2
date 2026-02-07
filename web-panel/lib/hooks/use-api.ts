@@ -1,17 +1,26 @@
 "use client"
 
 import useSWR, { mutate } from "swr"
-import type { Chunk } from "@/lib/types/chunk"
-import type { ExtractedData } from "@/lib/types/extracted-data"
-import type { APIToken } from "@/lib/types/api-token"
+import type { ChunkResponse } from "@/lib/entities/chunk"
+import type { ExtractedDataResponse } from "@/lib/entities/extracted-data"
+import type { APITokenResponse } from "@/lib/entities/api-token"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
+
+// SWR cache configuration to prevent unnecessary re-fetches
+const swrConfig = {
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false,
+  dedupingInterval: 60000, // 1 minute - prevent duplicate requests
+  focusThrottleInterval: 300000, // 5 minutes - only revalidate on focus once per 5 mins
+  errorRetryCount: 2,
+}
 
 // --- Chunks ---
 
 interface ChunksResponse {
   success: boolean
-  chunks: Chunk[]
+  chunks: ChunkResponse[]
   total: number
   page: number
   totalPages: number
@@ -34,11 +43,11 @@ export function useChunks(params?: {
   if (params?.limit) searchParams.set("limit", String(params.limit))
 
   const qs = searchParams.toString()
-  return useSWR<ChunksResponse>(`/api/chunks${qs ? `?${qs}` : ""}`, fetcher)
+  return useSWR<ChunksResponse>(`/api/chunks${qs ? `?${qs}` : ""}`, fetcher, swrConfig)
 }
 
 export function useSources() {
-  return useSWR<{ success: boolean; sources: string[] }>("/api/chunks/sources", fetcher)
+  return useSWR<{ success: boolean; sources: string[] }>("/api/chunks/sources", fetcher, swrConfig)
 }
 
 export function mutateChunks() {
@@ -65,16 +74,16 @@ interface CropsResponse {
 }
 
 export function useDashboardStats() {
-  return useSWR<DashboardStatsResponse>("/api/dashboard/stats", fetcher)
+  return useSWR<DashboardStatsResponse>("/api/dashboard/stats", fetcher, swrConfig)
 }
 
 export function useCrops() {
-  return useSWR<CropsResponse>("/api/dashboard/crops", fetcher)
+  return useSWR<CropsResponse>("/api/dashboard/crops", fetcher, swrConfig)
 }
 
 // --- Extracted Data ---
 
-interface PopulatedExtractedData extends Omit<ExtractedData, "chunkId"> {
+interface PopulatedExtractedData extends Omit<ExtractedDataResponse, "chunkId"> {
   chunkId: { _id: string; source: string; chunkIndex: number } | string
 }
 
@@ -101,7 +110,7 @@ export function useExtractedData(params?: {
   if (params?.limit) searchParams.set("limit", String(params.limit))
 
   const qs = searchParams.toString()
-  return useSWR<ExtractedResponse>(`/api/extracted${qs ? `?${qs}` : ""}`, fetcher)
+  return useSWR<ExtractedResponse>(`/api/extracted${qs ? `?${qs}` : ""}`, fetcher, swrConfig)
 }
 
 export function mutateExtracted() {
@@ -112,11 +121,11 @@ export function mutateExtracted() {
 
 interface TokensResponse {
   success: boolean
-  tokens: APIToken[]
+  tokens: APITokenResponse[]
 }
 
 export function useTokens() {
-  return useSWR<TokensResponse>("/api/tokens", fetcher)
+  return useSWR<TokensResponse>("/api/tokens", fetcher, swrConfig)
 }
 
 export async function createToken(data: {

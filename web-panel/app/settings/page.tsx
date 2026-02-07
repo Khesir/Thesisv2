@@ -8,16 +8,16 @@ import { AddTokenDialog } from "@/components/settings/add-token-dialog"
 import { EditTokenDialog } from "@/components/settings/edit-token-dialog"
 import { DeleteTokenDialog } from "@/components/settings/delete-token-dialog"
 import { useTokens, createToken, updateToken, deleteToken } from "@/lib/hooks/use-api"
-import { APIToken } from "@/lib/types/api-token"
+import { type IAPIToken, type APITokenResponse } from "@/lib/entities/api-token"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
 export default function SettingsPage() {
   const { data, isLoading } = useTokens()
-  const tokens = data?.tokens || []
+  const tokens: APITokenResponse[] = data?.tokens || []
   const [addOpen, setAddOpen] = useState(false)
-  const [editToken, setEditToken] = useState<APIToken | null>(null)
-  const [deleteTokenState, setDeleteToken] = useState<APIToken | null>(null)
+  const [editToken, setEditToken] = useState<APITokenResponse | null>(null)
+  const [deleteTokenState, setDeleteToken] = useState<APITokenResponse | null>(null)
 
   return (
     <div className="space-y-6">

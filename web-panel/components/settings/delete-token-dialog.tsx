@@ -9,10 +9,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { APIToken } from "@/lib/types/api-token"
+import { type APITokenResponse } from "@/lib/entities/api-token"
 
 interface DeleteTokenDialogProps {
-  token: APIToken | null
+  token: APITokenResponse | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: (id: string) => void

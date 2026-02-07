@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
-import { ExtractedDataModel } from "@/lib/db/models/extracted-data.model"
-import { ChunkModel } from "@/lib/db/models/chunk.model"
+import { ExtractedDataModel } from "@/lib/entities/extracted-data"
+import { ChunkModel } from "@/lib/entities/chunk"
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     // If filtering by source, find chunk IDs for that source first
     if (source && source !== "all") {
-      const chunkIds = await ChunkModel.find({ source }).distinct("_id")
+      const chunkIds = await ChunkModel.find({ source }).lean().distinct("_id")
       filter.chunkId = { $in: chunkIds }
     }
 

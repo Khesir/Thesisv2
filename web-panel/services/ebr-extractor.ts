@@ -1,4 +1,5 @@
 import { runScript } from "./python-runner"
+import { logger } from "@/lib/logger"
 
 interface ExtractChunkResult {
   success: boolean
@@ -20,7 +21,14 @@ export async function extractChunk(
   model?: string,
   strategy: string = "failover"
 ) {
-  return runScript<ExtractChunkResult>({
+  logger.debug('EBRExtractor', 'Starting chunk extraction', {
+    provider,
+    strategy,
+    contentLength: content.length,
+    hasApiKey: !!apiKey,
+  })
+
+  const result = await runScript<ExtractChunkResult>({
     scriptName: "extract_chunk.py",
     stdin: JSON.stringify({
       content,
@@ -31,10 +39,22 @@ export async function extractChunk(
     }),
     timeout: 180000, // 3 min for LLM calls
   })
+
+  if (!result.success) {
+    logger.error('EBRExtractor', 'Chunk extraction failed', {
+      provider,
+      strategy,
+      error: result.error,
+    })
+  }
+
+  return result
 }
 
 export async function testToken(provider: string, apiKey: string) {
-  return runScript<TestTokenResult>({
+  logger.debug('EBRExtractor', 'Testing token', { provider })
+
+  const result = await runScript<TestTokenResult>({
     scriptName: "test_token.py",
     stdin: JSON.stringify({
       provider,
@@ -42,4 +62,13 @@ export async function testToken(provider: string, apiKey: string) {
     }),
     timeout: 30000,
   })
+
+  if (!result.success) {
+    logger.warn('EBRExtractor', 'Token test failed', {
+      provider,
+      error: result.error,
+    })
+  }
+
+  return result
 }

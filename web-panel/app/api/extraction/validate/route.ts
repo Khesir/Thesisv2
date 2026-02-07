@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
-import { ChunkModel } from "@/lib/db/models/chunk.model"
+import { ChunkModel } from "@/lib/entities/chunk"
 import { extractChunk } from "@/services/ebr-extractor"
 
 export async function POST(req: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { chunkId, provider, apiKey, strategy } = body
 
-    const chunk = await ChunkModel.findById(chunkId)
+    const chunk = await ChunkModel.findById(chunkId).lean()
     if (!chunk) {
       return NextResponse.json(
         { success: false, error: "Chunk not found" },

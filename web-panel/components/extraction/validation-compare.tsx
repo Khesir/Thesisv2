@@ -1,11 +1,11 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ExtractedData } from "@/lib/types/extracted-data"
+import { type ExtractedDataResponse } from "@/lib/entities/extracted-data"
 
 interface ValidationCompareProps {
-  original: ExtractedData | null
-  newExtraction: ExtractedData | null
+  original: ExtractedDataResponse | null
+  newExtraction: ExtractedDataResponse | null
 }
 
 interface FieldRowProps {

@@ -1,8 +1,8 @@
-import { Chunk } from "@/lib/types/chunk"
-import { ExtractedData } from "@/lib/types/extracted-data"
-import { APIToken } from "@/lib/types/api-token"
+import type { ChunkResponse } from "@/lib/entities/chunk"
+import type { ExtractedDataResponse } from "@/lib/entities/extracted-data"
+import type { APITokenResponse } from "@/lib/entities/api-token"
 
-export const mockChunks: Chunk[] = [
+export const mockChunks: ChunkResponse[] = [
   {
     _id: "c1",
     source: "FAO-Crop Soil Requirements.pdf",
@@ -101,7 +101,7 @@ export const mockChunks: Chunk[] = [
   },
 ]
 
-export const mockExtractedData: ExtractedData[] = [
+export const mockExtractedData: ExtractedDataResponse[] = [
   {
     _id: "ed1",
     chunkId: "c1",
@@ -278,11 +278,11 @@ export const mockExtractedData: ExtractedData[] = [
   },
 ]
 
-export const mockTokens: APIToken[] = [
+export const mockTokens: APITokenResponse[] = [
   {
     _id: "t1",
     provider: "google",
-    token: "AIzaSyB1234567890abcdefghijklmnopqrst4x2Q",
+    maskedToken: "AIza...t4x2Q",
     alias: "Main Key",
     usageCount: 45,
     usageLimit: 100,
@@ -294,7 +294,7 @@ export const mockTokens: APIToken[] = [
   {
     _id: "t2",
     provider: "google",
-    token: "AIzaSyC0987654321zyxwvutsrqponmlkjihg8k1P",
+    maskedToken: "AIza...8k1P",
     alias: "Backup",
     usageCount: 0,
     usageLimit: 100,
@@ -306,7 +306,7 @@ export const mockTokens: APIToken[] = [
   {
     _id: "t3",
     provider: "anthropic",
-    token: "sk-ant-1234567890abcdefghijklmnopqrstuvwxyz9xF3",
+    maskedToken: "sk-a...9xF3",
     alias: "Personal",
     usageCount: 12,
     usageLimit: null,
@@ -318,7 +318,7 @@ export const mockTokens: APIToken[] = [
   {
     _id: "t4",
     provider: "google",
-    token: "AIzaSyD5555555555aaaabbbbccccddddeeee2m5N",
+    maskedToken: "AIza...2m5N",
     alias: "Old Key",
     usageCount: 100,
     usageLimit: 100,

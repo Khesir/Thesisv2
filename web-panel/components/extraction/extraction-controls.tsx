@@ -20,6 +20,7 @@ interface ExtractionControlsProps {
   onStrategyChange: (v: string) => void
   onStartExtraction: () => void
   isProcessing: boolean
+  isDisabled?: boolean
 }
 
 export function ExtractionControls({
@@ -30,6 +31,7 @@ export function ExtractionControls({
   onStrategyChange,
   onStartExtraction,
   isProcessing,
+  isDisabled = false,
 }: ExtractionControlsProps) {
   return (
     <Card>
@@ -69,7 +71,7 @@ export function ExtractionControls({
           </span>
           <Button
             onClick={onStartExtraction}
-            disabled={selectedCount === 0 || isProcessing}
+            disabled={selectedCount === 0 || isProcessing || isDisabled}
           >
             <Play className="mr-2 h-4 w-4" />
             Start Extraction

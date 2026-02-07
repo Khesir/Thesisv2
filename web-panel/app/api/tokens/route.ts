@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
-import { APITokenModel } from "@/lib/db/models/api-token.model"
-
-function maskToken(token: string): string {
-  if (token.length <= 8) return "****"
-  return token.slice(0, 4) + "****" + token.slice(-4)
-}
+import { APITokenModel, maskToken } from "@/lib/entities/api-token"
 
 export async function GET() {
   try {

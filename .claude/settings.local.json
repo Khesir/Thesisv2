@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(npx create-next-app@latest web-panel --typescript --tailwind --eslint --app --src-dir=false --import-alias=\"@/*\" --use-npm --no-turbopack)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add button card table dialog select tabs badge progress toast dropdown-menu checkbox input label sidebar separator scroll-area chart sonner sheet tooltip -y)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest add switch -y)",
+      "Bash(npx next build)"
+    ]
+  }
+}

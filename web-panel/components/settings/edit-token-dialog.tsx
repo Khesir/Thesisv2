@@ -12,10 +12,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { APIToken } from "@/lib/types/api-token"
+import { type APITokenResponse } from "@/lib/entities/api-token"
 
 interface EditTokenDialogProps {
-  token: APIToken | null
+  token: APITokenResponse | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (id: string, data: { alias: string; usageLimit: number | null; isActive: boolean }) => void
