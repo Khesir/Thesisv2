@@ -1,27 +1,28 @@
-# Agricultural Data Extraction System
+# Thesis
 
-A system for extracting structured agricultural data from PDF documents using LLM-powered analysis. Includes a web dashboard for managing the extraction pipeline.
+A comprehensive system for extracting, managing, and serving agricultural crop data through multiple interfaces. Features PDF document processing with LLM-powered analysis, a web dashboard for data management, and a conversational API gateway for client applications.
 
 ## Architecture
 
 ```
-┌─────────────────────┐    ┌─────────────────────┐
-│    Web Panel         │    │   MongoDB            │
-│    (Next.js)         │◄──►│   (Docker/Cloud)     │
-│    Port: 3000        │    │   Port: 27017        │
-└──────────┬──────────┘    └─────────────────────┘
-           │ child_process
-           ▼
-┌─────────────────────┐
-│   finder_system      │
-│   (Python Scripts)   │
-└─────────────────────┘
+┌────────────────────────┐    ┌────────────────────────┐    ┌──────────────┐
+│   Web Panel            │    │   Chatbot API          │    │   MongoDB    │
+│   (Next.js)            │    │   (FastAPI)            │    │  (Docker)    │
+│   Port: 3000           │───►│   Port: 8000           │◄──►│  Port 27017  │
+└────────┬───────────────┘    └────────────────────────┘    └──────────────┘
+         │ child_process
+         ▼
+┌────────────────────────┐
+│   finder_system        │
+│   (Python Scripts)     │
+└────────────────────────┘
 ```
 
 ## Components
 
 - **finder_system/** - Python backend for PDF processing and LLM extraction
 - **web-panel/** - Next.js dashboard for managing the extraction pipeline
+- **chatbot/** - FastAPI RAG chatbot for crop information queries (gateway for frontends)
 - **docs/** - Source PDF documents
 
 ## Prerequisites
@@ -125,10 +126,16 @@ Thesisv2/
 │   ├── app/                # Pages and API routes
 │   ├── components/         # UI components
 │   ├── lib/                # Types, DB models, hooks
+│   ├── lib/entities/       # Entity definitions (types + models)
 │   ├── services/           # Python runner, token rotation
-│   └── scripts/            # Seed and migration scripts
+│   └── scripts/            # Migrations and seed scripts
+├── chatbot/                # FastAPI chatbot (RAG-based)
+│   ├── api.py              # FastAPI endpoints
+│   ├── crop_store.py       # Crop data loading and search
+│   └── rag_engine.py       # RAG logic and LLM integration
 ├── docs/                   # Source PDF documents
-├── docker-compose.yml      # Dev MongoDB
+├── extracted/              # Extracted crop data (JSON)
+├── docker-compose.yml      # Dev MongoDB container
 └── requirements.txt        # Python dependencies
 ```
 
@@ -142,3 +149,101 @@ Check Docker is running: `docker compose ps`
 
 ### Python import errors
 Ensure virtual environment is activated and dependencies installed.
+
+---
+
+## Chatbot API (Optional)
+
+A lightweight FastAPI-based agricultural chatbot using Retrieval-Augmented Generation (RAG) for crop information and farming recommendations. **This is the gateway for frontend applications to access crop data via a conversational interface.**
+
+### Architecture
+
+```
+┌─────────────────┐    ┌───────────────────┐
+│   Frontend/     │    │  Chatbot API      │
+│   Mobile App    │───►│  (FastAPI)        │
+│                 │    │  Port: 8000       │
+└─────────────────┘    └────────┬──────────┘
+                                │
+                                ▼
+                        ┌───────────────────┐
+                        │   MongoDB         │
+                        │   (Crop Data)     │
+                        └───────────────────┘
+```
+
+### Quick Start
+
+```bash
+# Run the chatbot API (from project root)
+python -m uvicorn chatbot.api:app --reload
+
+# Access API documentation
+# Swagger UI: http://localhost:8000/docs
+# ReDoc: http://localhost:8000/redoc
+```
+
+### Environment Setup
+
+```bash
+# Root .env (for chatbot LLM usage)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+# OR
+GOOGLE_API_KEY=your_google_api_key_here
+```
+
+### Available Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Health check (status, crops loaded, LLM available) |
+| `POST` | `/chat` | Chat with agricultural advisor |
+| `GET` | `/crops` | List all available crops |
+| `GET` | `/crops/{crop_name}` | Get detailed crop information |
+| `POST` | `/search` | Search crops by keyword |
+| `GET` | `/sources` | List source documents used |
+
+### Example: Chat Request
+
+```bash
+curl -X POST "http://localhost:8000/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What are the best conditions for growing wheat?",
+    "top_k": 3,
+    "include_context": false
+  }'
+```
+
+### Response Example
+
+```json
+{
+  "answer": "Wheat thrives in temperate climates with moderate rainfall...",
+  "crops_used": ["Wheat"],
+  "context": null,
+  "llm_used": true
+}
+```
+
+### Data Requirements
+
+The chatbot API requires extracted crop data to function. Ensure you have:
+
+1. **Run the extraction pipeline** via the web panel to generate crop data
+2. **Extracted data in `extracted/` directory** as JSON files (auto-loaded on startup)
+3. **MongoDB available** (same connection as web panel)
+
+The API will:
+- Load all crop data from extracted JSON files on startup
+- Provide RAG-based responses using the extracted agricultural data
+- Use your configured LLM (Claude, Gemini, or Ollama) to enhance responses with conversational AI
+
+### Notes
+
+- **Embedded, not separate**: Since the chatbot API is small and only requires database access, it's included in this repository rather than as a separate service
+- **Complements web panel**: Works alongside the web panel for data extraction and validation
+- **Production ready**: Can be deployed independently or alongside the web panel
+- **CORS enabled**: Configured to accept requests from any origin (configure for production)
+
+For detailed API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
