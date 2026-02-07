@@ -1,0 +1,13 @@
+services:
+  web-panel:
+    build:
+      context: ./web-panel
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - PYTHON_PATH=${PYTHON_PATH:-python}
+    volumes:
+      - ./finder_system:/app/finder_system
+    restart: unless-stopped
