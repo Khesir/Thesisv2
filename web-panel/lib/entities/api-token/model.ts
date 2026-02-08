@@ -37,6 +37,16 @@ const APITokenSchema = new Schema<IAPIToken>(
       default: null,
       description: "Maximum requests allowed (null = unlimited)",
     },
+    quotaLimit: {
+      type: Number,
+      default: null,
+      description: "Provider daily quota limit (null = unlimited)",
+    },
+    cooldownMinutes: {
+      type: Number,
+      default: 60,
+      description: "Cooldown minutes after rate limit hit",
+    },
     isActive: {
       type: Boolean,
       default: true,

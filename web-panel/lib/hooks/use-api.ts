@@ -51,7 +51,7 @@ export function useSources() {
 }
 
 export function mutateChunks() {
-  mutate((key: string) => typeof key === "string" && key.startsWith("/api/chunks"), undefined, { revalidate: true })
+  mutate((key: string) => typeof key === "string" && key.startsWith("/api/chunks"))
 }
 
 // --- Dashboard ---
@@ -114,7 +114,7 @@ export function useExtractedData(params?: {
 }
 
 export function mutateExtracted() {
-  mutate((key: string) => typeof key === "string" && key.startsWith("/api/extracted"), undefined, { revalidate: true })
+  mutate((key: string) => typeof key === "string" && key.startsWith("/api/extracted"))
 }
 
 // --- Tokens ---
@@ -124,8 +124,15 @@ interface TokensResponse {
   tokens: APITokenResponse[]
 }
 
-export function useTokens() {
-  return useSWR<TokensResponse>("/api/tokens", fetcher, swrConfig)
+export function useTokens(options?: { refreshInterval?: number }) {
+  return useSWR<TokensResponse>("/api/tokens", fetcher, {
+    ...swrConfig,
+    ...(options?.refreshInterval ? { refreshInterval: options.refreshInterval } : {}),
+  })
+}
+
+export function mutateTokens() {
+  mutate("/api/tokens")
 }
 
 export async function createToken(data: {
@@ -133,6 +140,8 @@ export async function createToken(data: {
   token: string
   alias: string
   usageLimit: number | null
+  quotaLimit?: number | null
+  cooldownMinutes?: number
 }) {
   const res = await fetch("/api/tokens", {
     method: "POST",

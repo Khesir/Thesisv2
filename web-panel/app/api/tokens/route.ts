@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
 import { APITokenModel, maskToken } from "@/lib/entities/api-token"
+import { tokenCooldown } from "@/services/token-cooldown"
 
 export async function GET() {
   try {
@@ -8,10 +9,14 @@ export async function GET() {
 
     const tokens = await APITokenModel.find().sort({ createdAt: -1 }).lean()
 
-    // Mask tokens in response
+    // Mask tokens and enrich with cooldown status
     const masked = tokens.map((t) => ({
       ...t,
       token: maskToken(t.token),
+      rateLimited: tokenCooldown.isRateLimited(String(t._id)),
+      cooldownRemaining: tokenCooldown.getCooldownRemaining(String(t._id)),
+      cooldownTotal: tokenCooldown.getCooldownTotal(String(t._id)),
+      quotaUsed: tokenCooldown.getQuotaUsed(String(t._id)),
     }))
 
     return NextResponse.json({ success: true, tokens: masked })
@@ -27,7 +32,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB()
     const body = await req.json()
-    const { provider, token, alias, usageLimit } = body
+    const { provider, token, alias, usageLimit, quotaLimit, cooldownMinutes } = body
 
     if (!provider || !token || !alias) {
       return NextResponse.json(
@@ -41,6 +46,8 @@ export async function POST(req: NextRequest) {
       token,
       alias,
       usageLimit: usageLimit || null,
+      quotaLimit: quotaLimit ?? null,
+      cooldownMinutes: cooldownMinutes ?? 60,
     })
 
     return NextResponse.json({

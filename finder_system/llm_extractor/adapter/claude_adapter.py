@@ -47,8 +47,8 @@ class ClaudeAdapter(BaseLLMExtractor):
         if self.api_key:
             try:
                 self.client = Anthropic(api_key=self.api_key)
-            except Exception as e:
-                print(f"Warning: Failed to initialize Claude client: {e}")
+            except Exception:
+                pass
 
     def get_provider_name(self) -> str:
         """Get provider name"""
@@ -167,8 +167,6 @@ class ClaudeAdapter(BaseLLMExtractor):
             chunk_text = chunk.get('text', '')
             chunk_id = chunk.get('chunk_id', 0)
 
-            print(f"[Claude] Processing chunk {chunk_id + 1}/{len(chunks)}...")
-
             extraction_result = self.extract_from_text(chunk_text)
 
             if extraction_result.success:
@@ -179,8 +177,6 @@ class ClaudeAdapter(BaseLLMExtractor):
                 })
                 total_input_tokens += extraction_result.usage['input_tokens']
                 total_output_tokens += extraction_result.usage['output_tokens']
-            else:
-                print(f"Warning: Chunk {chunk_id} extraction failed: {extraction_result.error}")
 
         if not results:
             return ChunkExtractionResult(

@@ -33,6 +33,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
   "requires-validation": "secondary",
   processing: "outline",
   "not-processed": "outline",
+  rejected: "destructive",
 }
 
 export function ChunkSelector({
@@ -42,20 +43,18 @@ export function ChunkSelector({
   onSelectionChange,
 }: ChunkSelectorProps) {
   const [sourceFilter, setSourceFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
   const sources = [...new Set(allChunks.map((c) => c.source))]
 
   const filtered = chunks.filter((c) => {
     if (sourceFilter !== "all" && c.source !== sourceFilter) return false
-    if (statusFilter !== "all" && c.status !== statusFilter) return false
     return true
   })
 
-  // Progress: processed out of total based on data visible in the table (respects source filter)
-  const sourceFiltered = chunks.filter((c) => sourceFilter === "all" || c.source === sourceFilter)
-  const processedCount = sourceFiltered.filter((c) => c.status === "processed").length
+  // Progress: extracted (processed + requires-validation) out of total
+  const sourceFiltered = allChunks.filter((c) => sourceFilter === "all" || c.source === sourceFilter)
+  const extractedCount = sourceFiltered.filter((c) => c.status === "processed" || c.status === "requires-validation").length
   const totalCount = sourceFiltered.length
-  const progressPercent = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0
+  const progressPercent = totalCount > 0 ? Math.round((extractedCount / totalCount) * 100) : 0
 
   const allSelected = filtered.length > 0 && filtered.every((c) => selectedIds.includes(c._id))
 
@@ -92,22 +91,9 @@ export function ChunkSelector({
           </SelectContent>
         </Select>
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="not-processed">Not Processed</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="requires-validation">Requires Validation</SelectItem>
-            <SelectItem value="processed">Processed</SelectItem>
-          </SelectContent>
-        </Select>
-
         <div className="ml-auto flex items-center gap-3 min-w-[200px]">
           <span className="text-sm text-muted-foreground whitespace-nowrap">
-            {processedCount}/{totalCount} processed
+            {extractedCount}/{totalCount} extracted
           </span>
           <Progress value={progressPercent} className="w-[120px]" />
         </div>

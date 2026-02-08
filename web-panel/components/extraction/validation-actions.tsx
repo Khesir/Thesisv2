@@ -7,6 +7,7 @@ interface ValidationActionsProps {
   hasSelection: boolean
   hasNewExtraction: boolean
   isValidating: boolean
+  hasAvailableTokens?: boolean
   onRunValidation: () => void
   onAcceptOriginal: () => void
   onAcceptNew: () => void
@@ -18,6 +19,7 @@ export function ValidationActions({
   hasSelection,
   hasNewExtraction,
   isValidating,
+  hasAvailableTokens = true,
   onRunValidation,
   onAcceptOriginal,
   onAcceptNew,
@@ -28,7 +30,8 @@ export function ValidationActions({
     <div className="flex flex-wrap gap-2">
       <Button
         onClick={onRunValidation}
-        disabled={!hasSelection || isValidating}
+        disabled={!hasSelection || isValidating || !hasAvailableTokens}
+        title={!hasAvailableTokens ? "No available tokens for validation" : ""}
       >
         {isValidating ? (
           <RefreshCw className="mr-2 h-4 w-4 animate-spin" />

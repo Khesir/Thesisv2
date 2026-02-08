@@ -199,8 +199,6 @@ class OllamaAdapter(BaseLLMExtractor):
             chunk_text = chunk.get('text', '')
             chunk_id = chunk.get('chunk_id', 0)
 
-            print(f"[Ollama] Processing chunk {chunk_id + 1}/{len(chunks)}...")
-
             extraction_result = self.extract_from_text(chunk_text)
 
             if extraction_result.success:
@@ -211,8 +209,6 @@ class OllamaAdapter(BaseLLMExtractor):
                 })
                 total_input_tokens += extraction_result.usage['input_tokens']
                 total_output_tokens += extraction_result.usage['output_tokens']
-            else:
-                print(f"Warning: Chunk {chunk_id} extraction failed: {extraction_result.error}")
 
         if not results:
             return ChunkExtractionResult(

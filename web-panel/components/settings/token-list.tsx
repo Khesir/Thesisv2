@@ -39,6 +39,37 @@ const providerColors: Record<string, string> = {
   openai: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
 }
 
+function formatCooldown(seconds: number): string {
+  if (seconds <= 0) return ""
+  const mins = Math.ceil(seconds / 60)
+  if (mins >= 60) {
+    const hrs = Math.floor(mins / 60)
+    const remainMins = mins % 60
+    return remainMins > 0 ? `${hrs}h ${remainMins}m` : `${hrs}h`
+  }
+  return `${mins}m`
+}
+
+function getTokenStatus(token: APITokenResponse): {
+  label: string
+  variant: "default" | "destructive" | "secondary" | "outline"
+} {
+  if (!token.isActive) {
+    return { label: "Inactive", variant: "secondary" }
+  }
+  if (token.rateLimited) {
+    const remaining = formatCooldown(token.cooldownRemaining)
+    return { label: `Rate Limited (${remaining} left)`, variant: "destructive" }
+  }
+  if (token.quotaLimit !== null && token.quotaUsed >= token.quotaLimit) {
+    return { label: "Quota Reached (resets midnight)", variant: "destructive" }
+  }
+  if (token.usageLimit !== null && token.usageCount >= token.usageLimit) {
+    return { label: "Exhausted", variant: "destructive" }
+  }
+  return { label: "Active", variant: "default" }
+}
+
 export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
   const [filter, setFilter] = useState("all")
 
@@ -66,6 +97,7 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
               <TableHead>Alias</TableHead>
               <TableHead>Token</TableHead>
               <TableHead>Usage</TableHead>
+              <TableHead>Quota</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-16">Actions</TableHead>
             </TableRow>
@@ -73,18 +105,13 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No tokens found
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((token) => {
-                const exhausted = token.usageLimit !== null && token.usageCount >= token.usageLimit
-                const status = !token.isActive
-                  ? "inactive"
-                  : exhausted
-                    ? "exhausted"
-                    : "active"
+                const status = getTokenStatus(token)
 
                 return (
                   <TableRow key={token._id}>
@@ -100,17 +127,14 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
                     <TableCell>
                       {token.usageCount} / {token.usageLimit ?? "\u221E"}
                     </TableCell>
+                    <TableCell className="text-sm">
+                      {token.quotaLimit !== null
+                        ? `${token.quotaUsed}/${token.quotaLimit}`
+                        : "\u221E"}
+                    </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          status === "active"
-                            ? "default"
-                            : status === "exhausted"
-                              ? "destructive"
-                              : "secondary"
-                        }
-                      >
-                        {status}
+                      <Badge variant={status.variant}>
+                        {status.label}
                       </Badge>
                     </TableCell>
                     <TableCell>

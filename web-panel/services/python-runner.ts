@@ -1,8 +1,30 @@
 import { spawn } from "child_process"
 import path from "path"
+import fs from "fs"
 import { logger } from "@/lib/logger"
 
-const PYTHON_CMD = process.platform === "win32" ? "python" : "python3"
+// Determine Python command - prefer venv if available
+function getPythonCmd(): string {
+  const projectRoot = path.resolve(process.cwd(), "..")
+  
+  // Check for virtual environment
+  const isWindows = process.platform === "win32"
+  const venvPythonPath = isWindows
+    ? path.join(projectRoot, "venv", "Scripts", "python.exe")
+    : path.join(projectRoot, "venv", "bin", "python")
+  
+  if (fs.existsSync(venvPythonPath)) {
+    logger.debug('PythonRunner', `Using virtual environment Python: ${venvPythonPath}`)
+    return venvPythonPath
+  }
+  
+  // Fall back to system Python
+  const fallback = isWindows ? "python" : "python3"
+  logger.debug('PythonRunner', `No venv found, using system Python: ${fallback}`)
+  return fallback
+}
+
+const PYTHON_CMD = getPythonCmd()
 const SCRIPTS_DIR = path.resolve(process.cwd(), "..", "finder_system", "web_scripts")
 
 interface RunScriptOptions {
@@ -75,7 +97,18 @@ export async function runScript<T = unknown>({
       }
 
       try {
-        const parsed = JSON.parse(stdout)
+        // Try to extract JSON from output (handles cases where there's extra text)
+        let jsonStr = stdout.trim()
+        
+        // Look for JSON object in output
+        const jsonStartIdx = jsonStr.indexOf('{')
+        const jsonEndIdx = jsonStr.lastIndexOf('}')
+        
+        if (jsonStartIdx >= 0 && jsonEndIdx > jsonStartIdx) {
+          jsonStr = jsonStr.substring(jsonStartIdx, jsonEndIdx + 1)
+        }
+
+        const parsed = JSON.parse(jsonStr)
         const success = parsed.success !== false && parsed.valid !== false
 
         if (success) {

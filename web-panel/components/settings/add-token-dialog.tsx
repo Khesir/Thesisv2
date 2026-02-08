@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Eye, EyeOff, Loader2, HelpCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, HelpCircle, Info } from "lucide-react"
 import { TokenProvider } from "@/lib/types/api-token"
 import { toast } from "sonner"
 
@@ -30,6 +30,8 @@ interface AddTokenDialogProps {
     alias: string
     token: string
     usageLimit: number | null
+    quotaLimit: number | null
+    cooldownMinutes: number
   }) => void
 }
 
@@ -38,8 +40,11 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
   const [alias, setAlias] = useState("")
   const [token, setToken] = useState("")
   const [usageLimit, setUsageLimit] = useState("")
+  const [quotaLimit, setQuotaLimit] = useState("")
+  const [cooldownMinutes, setCooldownMinutes] = useState("60")
   const [showToken, setShowToken] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [detectedInfo, setDetectedInfo] = useState<string | null>(null)
 
   const handleSave = () => {
     onSave({
@@ -47,12 +52,21 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
       alias,
       token,
       usageLimit: usageLimit ? parseInt(usageLimit) : null,
+      quotaLimit: quotaLimit ? parseInt(quotaLimit) : null,
+      cooldownMinutes: cooldownMinutes ? parseInt(cooldownMinutes) : 60,
     })
+    resetForm()
+    onOpenChange(false)
+  }
+
+  const resetForm = () => {
     setProvider("google")
     setAlias("")
     setToken("")
     setUsageLimit("")
-    onOpenChange(false)
+    setQuotaLimit("")
+    setCooldownMinutes("60")
+    setDetectedInfo(null)
   }
 
   const handleTest = async () => {
@@ -75,19 +89,32 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
       const result = await res.json()
 
       if (result.valid) {
-        toast.success(`✓ Token is valid for ${provider}`)
+        toast.success(`Token is valid for ${provider}`)
+
+        // Auto-fill quota settings from provider defaults
+        if (result.suggestedQuotaLimit !== undefined) {
+          setQuotaLimit(result.suggestedQuotaLimit !== null ? String(result.suggestedQuotaLimit) : "")
+        }
+        if (result.suggestedCooldownMinutes !== undefined) {
+          setCooldownMinutes(String(result.suggestedCooldownMinutes))
+        }
+        if (result.providerDescription) {
+          setDetectedInfo(result.providerDescription)
+        }
       } else {
-        toast.error(`✗ Token validation failed: ${result.error || "Invalid token"}`)
+        toast.error(`Token validation failed: ${result.error || "Invalid token"}`)
+        setDetectedInfo(null)
       }
     } catch (error) {
       toast.error("Failed to test token connection")
+      setDetectedInfo(null)
     } finally {
       setTesting(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetForm() }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add API Token</DialogTitle>
@@ -96,7 +123,7 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Provider</Label>
-            <Select value={provider} onValueChange={(v) => setProvider(v as TokenProvider)}>
+            <Select value={provider} onValueChange={(v) => { setProvider(v as TokenProvider); setDetectedInfo(null) }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -150,6 +177,41 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
             </div>
           </div>
 
+          {detectedInfo && (
+            <div className="flex items-start gap-2 rounded-md bg-blue-50 dark:bg-blue-950 p-3 text-sm text-blue-700 dark:text-blue-300">
+              <Info className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{detectedInfo}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Daily Quota</Label>
+              <Input
+                type="number"
+                placeholder="Unlimited"
+                value={quotaLimit}
+                onChange={(e) => setQuotaLimit(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Provider daily limit (resets at midnight)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cooldown (min)</Label>
+              <Input
+                type="number"
+                placeholder="60"
+                value={cooldownMinutes}
+                onChange={(e) => setCooldownMinutes(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Wait time after rate limit
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Usage Limit (optional)</Label>
             <Input
@@ -159,7 +221,7 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
               onChange={(e) => setUsageLimit(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Set a maximum number of API calls to prevent accidental overages. Leave empty for unlimited use.
+              Hard cap on total requests. Different from daily quota.
             </p>
           </div>
         </div>

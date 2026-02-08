@@ -1,31 +1,13 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
 import { type ExtractedDataResponse } from "@/lib/entities/extracted-data"
 
 interface ValidationCompareProps {
   original: ExtractedDataResponse | null
   newExtraction: ExtractedDataResponse | null
-}
-
-interface FieldRowProps {
-  label: string
-  original: string
-  newValue: string
-}
-
-function FieldRow({ label, original, newValue }: FieldRowProps) {
-  const isDiff = original !== newValue
-  return (
-    <div className="grid grid-cols-[120px_1fr_1fr] gap-2 py-1 text-sm">
-      <span className="font-medium text-muted-foreground">{label}</span>
-      <span>{original || "-"}</span>
-      <span className={isDiff ? "text-red-600 dark:text-red-400 font-medium" : ""}>
-        {newValue || "-"}
-        {isDiff && " *"}
-      </span>
-    </div>
-  )
 }
 
 export function ValidationCompare({
@@ -42,47 +24,83 @@ export function ValidationCompare({
     )
   }
 
-  const fields = [
-    { label: "Crop", orig: original.cropName, new: newExtraction?.cropName || "-" },
-    { label: "Scientific", orig: original.scientificName || "-", new: newExtraction?.scientificName || "-" },
-    { label: "Category", orig: original.category, new: newExtraction?.category || "-" },
-    { label: "Soil pH", orig: original.soilRequirements.ph_range, new: newExtraction?.soilRequirements.ph_range || "-" },
-    { label: "Drainage", orig: original.soilRequirements.drainage, new: newExtraction?.soilRequirements.drainage || "-" },
-    { label: "Temperature", orig: original.climateRequirements.temperature, new: newExtraction?.climateRequirements.temperature || "-" },
-    { label: "Rainfall", orig: original.climateRequirements.rainfall, new: newExtraction?.climateRequirements.rainfall || "-" },
-    { label: "Humidity", orig: original.climateRequirements.humidity, new: newExtraction?.climateRequirements.humidity || "-" },
-    { label: "Season", orig: original.plantingInfo.season, new: newExtraction?.plantingInfo.season || "-" },
-    { label: "Duration", orig: original.plantingInfo.duration, new: newExtraction?.plantingInfo.duration || "-" },
-    { label: "Avg Yield", orig: `${original.yieldInfo.average} ${original.yieldInfo.unit}`, new: newExtraction ? `${newExtraction.yieldInfo.average} ${newExtraction.yieldInfo.unit}` : "-" },
-  ]
-
-  const matchCount = fields.filter((f) => f.orig === f.new).length
+  // Calculate consistency if both exist
   const consistency = newExtraction
-    ? Math.round((matchCount / fields.length) * 100)
+    ? calculateConsistency(original, newExtraction)
     : null
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Comparison</CardTitle>
+          <CardTitle className="text-base">JSON Comparison</CardTitle>
           {consistency !== null && (
-            <span className={`text-sm font-medium ${consistency >= 80 ? "text-green-600" : "text-yellow-600"}`}>
-              Consistency: {consistency}%
-            </span>
+            <Badge
+              variant={consistency >= 80 ? "default" : "secondary"}
+              className={consistency >= 80 ? "bg-green-600" : "bg-yellow-600"}
+            >
+              {consistency}% Match
+            </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-[120px_1fr_1fr] gap-2 border-b pb-2 mb-2 text-sm font-medium">
-          <span>Field</span>
-          <span>Original</span>
-          <span>New Extraction</span>
+        <div className="grid grid-cols-2 gap-4 h-96">
+          {/* Original */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-muted-foreground border-b pb-2">
+              Original Extraction
+            </div>
+            <ScrollArea className="h-80 rounded border bg-muted p-3">
+              <pre className="text-xs font-mono whitespace-pre-wrap">
+                {JSON.stringify(original, null, 2)}
+              </pre>
+            </ScrollArea>
+          </div>
+
+          {/* New Extraction */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-muted-foreground border-b pb-2">
+              {newExtraction ? "New Extraction" : "No new extraction yet"}
+            </div>
+            {newExtraction ? (
+              <ScrollArea className="h-80 rounded border bg-muted p-3">
+                <pre className="text-xs font-mono whitespace-pre-wrap">
+                  {JSON.stringify(newExtraction, null, 2)}
+                </pre>
+              </ScrollArea>
+            ) : (
+              <div className="h-80 rounded border bg-muted p-3 flex items-center justify-center text-muted-foreground">
+                Run validation to see new extraction
+              </div>
+            )}
+          </div>
         </div>
-        {fields.map((f) => (
-          <FieldRow key={f.label} label={f.label} original={f.orig} newValue={f.new} />
-        ))}
       </CardContent>
     </Card>
   )
+}
+
+function calculateConsistency(
+  original: ExtractedDataResponse,
+  newExtraction: ExtractedDataResponse
+): number {
+  const originalJson = JSON.stringify(original)
+  const newJson = JSON.stringify(newExtraction)
+  
+  // Simple comparison: calculate how many fields match
+  const originalStr = JSON.stringify(original, Object.keys(original).sort())
+  const newStr = JSON.stringify(newExtraction, Object.keys(newExtraction).sort())
+  
+  if (originalStr === newStr) return 100
+  
+  // Count matching keys/values
+  const origKeys = new Set(Object.keys(original))
+  const newKeys = new Set(Object.keys(newExtraction))
+  const commonKeys = [...origKeys].filter(k => newKeys.has(k))
+  const matchingFields = commonKeys.filter(
+    k => JSON.stringify((original as any)[k]) === JSON.stringify((newExtraction as any)[k])
+  )
+  
+  return Math.round((matchingFields.length / commonKeys.length) * 100)
 }

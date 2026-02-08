@@ -202,8 +202,8 @@ class GeminiAdapter(BaseLLMExtractor):
             try:
                 genai.configure(api_key=self.api_key)
                 self.client = genai.GenerativeModel(self.model_name)
-            except Exception as e:
-                print(f"Warning: Failed to initialize Gemini client: {e}")
+            except Exception:
+                pass
 
     def get_provider_name(self) -> str:
         """Get provider name"""
@@ -343,8 +343,6 @@ class GeminiAdapter(BaseLLMExtractor):
             chunk_text = chunk.get('text', '')
             chunk_id = chunk.get('chunk_id', 0)
 
-            print(f"[Gemini] Processing chunk {chunk_id + 1}/{len(chunks)}...")
-
             extraction_result = self.extract_from_text(chunk_text)
 
             if extraction_result.success:
@@ -353,10 +351,8 @@ class GeminiAdapter(BaseLLMExtractor):
                     'data': extraction_result.data,
                     'usage': extraction_result.usage
                 })
-                total_input_tokens += extraction_result.usage.get('input_tokens', 0)
-                total_output_tokens += extraction_result.usage.get('output_tokens', 0)
-            else:
-                print(f"Warning: Chunk {chunk_id} extraction failed: {extraction_result.error}")
+                total_input_tokens += extraction_result.usage['input_tokens']
+                total_output_tokens += extraction_result.usage['output_tokens']
 
         if not results:
             return ChunkExtractionResult(

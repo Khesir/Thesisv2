@@ -22,7 +22,8 @@ const ExtractedDataSchema = new Schema<IExtractedData>(
     },
     cropName: {
       type: String,
-      required: true,
+      default: null,
+      description: "Crop name if identified (optional for incomplete extractions)",
     },
     scientificName: {
       type: String,
@@ -30,7 +31,8 @@ const ExtractedDataSchema = new Schema<IExtractedData>(
     },
     category: {
       type: String,
-      required: true,
+      default: "other",
+      description: "Crop category (cereal|vegetable|fruit|legume|oilseed|tuber|other)",
     },
     soilRequirements: {
       types: [String],

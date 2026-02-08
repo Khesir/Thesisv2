@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 interface RecentActivityProps {
-  extractedData: { _id: string; cropName: string; scientificName: string | null; category: string; validatedAt: string | null; createdAt: string }[]
+  extractedData: { _id: string; cropName: string | null; scientificName: string | null; category: string; validatedAt: string | null; createdAt: string }[]
 }
 
 export function RecentActivity({ extractedData }: RecentActivityProps) {
@@ -24,7 +24,7 @@ export function RecentActivity({ extractedData }: RecentActivityProps) {
                 className="flex items-center justify-between rounded-lg border p-3"
               >
                 <div>
-                  <p className="font-medium">{data.cropName}</p>
+                  <p className="font-medium">{data.cropName || <span className="text-amber-600">[Incomplete Data]</span>}</p>
                   <p className="text-sm text-muted-foreground">
                     {data.scientificName || data.category}
                   </p>

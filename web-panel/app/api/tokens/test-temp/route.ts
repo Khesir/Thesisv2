@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { testToken } from "@/services/ebr-extractor"
+import type { TokenProvider } from "@/lib/entities/api-token"
+
+const PROVIDER_DEFAULTS: Record<TokenProvider, { quotaLimit: number | null; cooldownMinutes: number; description: string }> = {
+  google: { quotaLimit: 1500, cooldownMinutes: 60, description: "Google free tier: ~1500 requests/day, 60min cooldown" },
+  anthropic: { quotaLimit: null, cooldownMinutes: 5, description: "Anthropic: usage-based billing, 5min cooldown" },
+  openai: { quotaLimit: null, cooldownMinutes: 5, description: "OpenAI: usage-based billing, 5min cooldown" },
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,10 +21,17 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await testToken(provider, token)
+    const isValid = result.success && result.data?.valid
+    const defaults = PROVIDER_DEFAULTS[provider as TokenProvider]
 
     return NextResponse.json({
-      valid: result.success && result.data?.valid,
+      valid: isValid,
       error: result.data?.error || result.error,
+      ...(isValid && defaults ? {
+        suggestedQuotaLimit: defaults.quotaLimit,
+        suggestedCooldownMinutes: defaults.cooldownMinutes,
+        providerDescription: defaults.description,
+      } : {}),
     })
   } catch (error) {
     return NextResponse.json(

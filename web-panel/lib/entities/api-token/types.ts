@@ -17,6 +17,8 @@ export interface CreateTokenInput {
   token: string
   alias: string
   usageLimit?: number | null
+  quotaLimit?: number | null
+  cooldownMinutes?: number
 }
 
 /**
@@ -25,6 +27,8 @@ export interface CreateTokenInput {
 export interface UpdateTokenInput {
   alias?: string
   usageLimit?: number | null
+  quotaLimit?: number | null
+  cooldownMinutes?: number
   isActive?: boolean
 }
 
@@ -38,6 +42,8 @@ export interface IAPIToken {
   alias: string
   usageCount: number
   usageLimit: number | null
+  quotaLimit: number | null
+  cooldownMinutes: number
   isActive: boolean
   lastUsedAt: Date | null
   createdAt: Date
@@ -54,10 +60,17 @@ export interface APITokenResponse {
   maskedToken: string // Only first 4 and last 4 chars visible
   usageCount: number
   usageLimit: number | null
+  quotaLimit: number | null
+  cooldownMinutes: number
   isActive: boolean
   lastUsedAt: string | null
   createdAt: string
   updatedAt: string
+  // Cooldown status (enriched from in-memory cache)
+  rateLimited: boolean
+  cooldownRemaining: number
+  cooldownTotal: number
+  quotaUsed: number
 }
 
 // ============= CONSTANTS =============

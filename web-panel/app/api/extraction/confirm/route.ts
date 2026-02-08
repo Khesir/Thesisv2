@@ -17,12 +17,20 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "accept" && data) {
-      // Update or create extracted data
+      // Strip immutable/meta fields before saving
+      const { _id, createdAt, updatedAt, __v, ...cleanData } = data
+
+      // If accepting a specific extraction by its _id, use that; otherwise find by chunkId
+      const filter = _id ? { _id } : { chunkId }
+
       const extractedData = await ExtractedDataModel.findOneAndUpdate(
-        { chunkId },
-        { ...data, chunkId, validatedAt: new Date() },
+        filter,
+        { ...cleanData, chunkId, validatedAt: new Date() },
         { upsert: true, new: true, runValidators: true }
       )
+
+      // Remove other extractions for this chunk (keep only the accepted one)
+      await ExtractedDataModel.deleteMany({ chunkId, _id: { $ne: extractedData._id } })
 
       // Update chunk status
       await ChunkModel.findByIdAndUpdate(chunkId, {

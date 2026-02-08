@@ -1,107 +1,69 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ChevronDown, ChevronRight, CheckCircle, Code } from "lucide-react"
+import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react"
 import { type ExtractedDataResponse } from "@/lib/entities/extracted-data"
-import { type ChunkResponse } from "@/lib/entities/chunk"
 
 interface ExtractionResultsProps {
   results: ExtractedDataResponse[]
-  chunks: ChunkResponse[]
 }
 
-export function ExtractionResults({ results, chunks }: ExtractionResultsProps) {
+export function ExtractionResults({ results }: ExtractionResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [showJson, setShowJson] = useState<string | null>(null)
 
   if (results.length === 0) return null
 
-  const getSource = (chunkId: string) => {
-    const chunk = chunks.find((c) => c._id === chunkId)
-    return chunk?.source || "Unknown"
-  }
-
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Results</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardTitle className="text-base">Recent Results</CardTitle>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/extracted" className="gap-1">
+            View all <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {results.map((result) => (
-          <div key={result._id} className="rounded-lg border">
-            <button
-              className="flex w-full items-center justify-between p-3 text-left hover:bg-muted/50"
-              onClick={() =>
-                setExpandedId(expandedId === result._id ? null : result._id)
-              }
-            >
-              <div className="flex items-center gap-2">
-                {expandedId === result._id ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-                <span className="font-medium">{result.cropName}</span>
-                <Badge variant="secondary">{result.category}</Badge>
-                <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                  {getSource(result.chunkId)}
+      <CardContent>
+        <div className="space-y-2">
+          {results.map((result) => (
+            <div key={result._id} className="rounded-lg border">
+              <button
+                className="flex w-full items-center justify-between p-3 text-left hover:bg-muted/50"
+                onClick={() => setExpandedId(expandedId === result._id ? null : result._id)}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {expandedId === result._id ? (
+                    <ChevronDown className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 shrink-0" />
+                  )}
+                  <span className="font-medium truncate">
+                    {result.cropName || <span className="text-amber-600">[No crop name]</span>}
+                  </span>
+                  <Badge variant="secondary" className="shrink-0">{result.category}</Badge>
+                </div>
+                <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                  {new Date(result.createdAt).toLocaleDateString()}
                 </span>
-              </div>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </button>
+              </button>
 
-            {expandedId === result._id && (
-              <div className="border-t p-3 space-y-2 text-sm">
-                <div>
-                  <strong>Source:</strong> {getSource(result.chunkId)}
-                </div>
-                <div>
-                  <strong>Soil:</strong>{" "}
-                  {result.soilRequirements.types.join(", ")}, pH{" "}
-                  {result.soilRequirements.ph_range}
-                </div>
-                <div>
-                  <strong>Climate:</strong>{" "}
-                  {result.climateRequirements.temperature},{" "}
-                  {result.climateRequirements.rainfall}
-                </div>
-                <div>
-                  <strong>Planting:</strong> {result.plantingInfo.season},{" "}
-                  {result.plantingInfo.duration}
-                </div>
-                <div>
-                  <strong>Yield:</strong> {result.yieldInfo.average}{" "}
-                  {result.yieldInfo.unit} (range: {result.yieldInfo.range})
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setShowJson(showJson === result._id ? null : result._id)
-                    }
-                  >
-                    <Code className="mr-1 h-3 w-3" />
-                    {showJson === result._id ? "Hide" : "View"} JSON
-                  </Button>
-                </div>
-
-                {showJson === result._id && (
-                  <ScrollArea className="h-[200px] rounded border bg-muted p-2">
-                    <pre className="text-xs">
+              {expandedId === result._id && (
+                <div className="border-t p-3">
+                  <ScrollArea className="h-[250px] rounded border bg-muted p-3">
+                    <pre className="text-xs font-mono whitespace-pre-wrap">
                       {JSON.stringify(result, null, 2)}
                     </pre>
                   </ScrollArea>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   )

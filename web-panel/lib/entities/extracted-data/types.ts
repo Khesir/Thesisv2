@@ -12,9 +12,9 @@
  */
 export interface CreateExtractedDataInput {
   chunkId: string
-  cropName: string
+  cropName?: string | null   // Optional - incomplete extractions may not have crop name
   scientificName?: string | null
-  category: string
+  category?: string  // Defaults to "other" if not provided
   soilRequirements?: {
     types: string[]
     ph_range: string
@@ -63,9 +63,9 @@ export interface UpdateExtractedDataInput extends Partial<CreateExtractedDataInp
 export interface IExtractedData {
   _id: string
   chunkId: string
-  cropName: string
+  cropName: string | null  // Optional - incomplete data may lack crop name
   scientificName: string | null
-  category: string
+  category: string  // Defaults to "other"
   soilRequirements: {
     types: string[]
     ph_range: string

@@ -25,18 +25,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Eye, ArrowUpDown, Code } from "lucide-react"
+import { Eye, ArrowUpDown } from "lucide-react"
 import { useExtractedData, useSources } from "@/lib/hooks/use-api"
 import { Skeleton } from "@/components/ui/skeleton"
+
+interface PopulatedChunk {
+  _id: string
+  source: string
+  chunkIndex: number
+}
 
 export default function ExtractedDataPage() {
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [sourceFilter, setSourceFilter] = useState("all")
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc")
-  const [detailData, setDetailData] = useState<Record<string, unknown> | null>(null)
-  const [showJson, setShowJson] = useState(false)
+  const [detailData, setDetailData] = useState<any | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 10
 
@@ -55,23 +61,20 @@ export default function ExtractedDataPage() {
   const total = data?.total || 0
   const totalPages = data?.totalPages || 1
 
-  // Extract unique categories from results
   const categories = [...new Set(results.map((d) => d.category).filter(Boolean))]
 
-  const getSource = (item: Record<string, unknown>) => {
-    const chunkId = item.chunkId as { source?: string } | string | null
-    if (chunkId && typeof chunkId === "object" && "source" in chunkId) {
-      return chunkId.source || "Unknown"
+  const getChunk = (item: any): PopulatedChunk | null => {
+    if (item.chunkId && typeof item.chunkId === "object" && "_id" in item.chunkId) {
+      return item.chunkId as PopulatedChunk
     }
-    return "Unknown"
+    return null
   }
 
-  // Client-side search filter
   const filtered = search
     ? results.filter((d) => {
         const q = search.toLowerCase()
         return (
-          d.cropName.toLowerCase().includes(q) ||
+          (d.cropName || "").toLowerCase().includes(q) ||
           (d.scientificName || "").toLowerCase().includes(q)
         )
       })
@@ -132,53 +135,54 @@ export default function ExtractedDataPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Crop</TableHead>
-                <TableHead>Scientific Name</TableHead>
                 <TableHead className="w-28">Category</TableHead>
                 <TableHead>Source</TableHead>
-                <TableHead className="w-28">Soil pH</TableHead>
-                <TableHead className="w-28">Temp</TableHead>
-                <TableHead className="w-28">Yield</TableHead>
+                <TableHead className="w-20">Chunk #</TableHead>
                 <TableHead className="w-28">Validated</TableHead>
+                <TableHead className="w-28">Date</TableHead>
                 <TableHead className="w-16">View</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     No extracted data found
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((item) => (
-                  <TableRow key={item._id}>
-                    <TableCell className="font-medium">{item.cropName}</TableCell>
-                    <TableCell className="text-muted-foreground italic">
-                      {item.scientificName || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{item.category}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[180px] truncate text-sm">
-                      {getSource(item as unknown as Record<string, unknown>)}
-                    </TableCell>
-                    <TableCell className="text-sm">{item.soilRequirements?.ph_range}</TableCell>
-                    <TableCell className="text-sm">{item.climateRequirements?.temperature}</TableCell>
-                    <TableCell className="text-sm">
-                      {item.yieldInfo?.average} {item.yieldInfo?.unit}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={item.validatedAt ? "default" : "outline"}>
-                        {item.validatedAt ? "Yes" : "No"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => { setDetailData(item as unknown as Record<string, unknown>); setShowJson(false) }}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filtered.map((item) => {
+                  const chunk = getChunk(item)
+                  return (
+                    <TableRow key={item._id}>
+                      <TableCell className="font-medium">
+                        {item.cropName || <span className="text-amber-600">[No crop name]</span>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{item.category}</Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[180px] truncate text-sm">
+                        {chunk?.source || "Unknown"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {chunk ? `#${chunk.chunkIndex}` : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={item.validatedAt ? "default" : "outline"}>
+                          {item.validatedAt ? "Yes" : "No"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {item.validatedAt ? new Date(item.validatedAt).toLocaleDateString() : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => setDetailData(item)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
@@ -204,52 +208,65 @@ export default function ExtractedDataPage() {
 
       {detailData && (
         <Dialog open={!!detailData} onOpenChange={(open) => !open && setDetailData(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>
-                {(detailData as { cropName?: string }).cropName} ({(detailData as { scientificName?: string }).scientificName || (detailData as { category?: string }).category})
+              <DialogTitle className="flex items-center gap-2">
+                {detailData.cropName || "[No crop name]"}
+                <Badge variant="secondary">{detailData.category}</Badge>
+                {detailData.validatedAt && <Badge>Validated</Badge>}
               </DialogTitle>
             </DialogHeader>
-            <ScrollArea className="max-h-[500px]">
-              <div className="space-y-4 pr-4">
-                <div className="text-sm">
-                  <span className="text-muted-foreground">Source: </span>
-                  <span>{getSource(detailData)}</span>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <h4 className="font-medium mb-1">Soil Requirements</h4>
-                    <p>Types: {((detailData as { soilRequirements?: { types?: string[] } }).soilRequirements?.types || []).join(", ")}</p>
-                    <p>pH: {(detailData as { soilRequirements?: { ph_range?: string } }).soilRequirements?.ph_range}</p>
-                    <p>Drainage: {(detailData as { soilRequirements?: { drainage?: string } }).soilRequirements?.drainage}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-1">Climate Requirements</h4>
-                    <p>Temp: {(detailData as { climateRequirements?: { temperature?: string } }).climateRequirements?.temperature}</p>
-                    <p>Rainfall: {(detailData as { climateRequirements?: { rainfall?: string } }).climateRequirements?.rainfall}</p>
-                    <p>Humidity: {(detailData as { climateRequirements?: { humidity?: string } }).climateRequirements?.humidity}</p>
-                  </div>
-                </div>
+            <Tabs defaultValue="extracted">
+              <TabsList>
+                <TabsTrigger value="extracted">Extracted Data</TabsTrigger>
+                <TabsTrigger value="chunk">Chunk Info</TabsTrigger>
+              </TabsList>
 
-                <div className="pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowJson(!showJson)}
-                  >
-                    <Code className="mr-1 h-3 w-3" />
-                    {showJson ? "Hide" : "View"} JSON
-                  </Button>
-                </div>
+              <TabsContent value="extracted" className="mt-3">
+                <ScrollArea className="h-[400px] rounded border bg-muted p-3">
+                  <pre className="text-xs font-mono whitespace-pre-wrap">
+                    {JSON.stringify(detailData, null, 2)}
+                  </pre>
+                </ScrollArea>
+              </TabsContent>
 
-                {showJson && (
-                  <ScrollArea className="h-[200px] rounded border bg-muted p-2">
-                    <pre className="text-xs">{JSON.stringify(detailData, null, 2)}</pre>
-                  </ScrollArea>
-                )}
-              </div>
-            </ScrollArea>
+              <TabsContent value="chunk" className="mt-3">
+                {(() => {
+                  const chunk = getChunk(detailData)
+                  if (!chunk) {
+                    return (
+                      <div className="py-8 text-center text-muted-foreground">
+                        No chunk data available
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Source: </span>
+                          <span className="font-medium">{chunk.source}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Chunk Index: </span>
+                          <span className="font-medium">#{chunk.chunkIndex}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Chunk ID: </span>
+                          <span className="font-mono text-xs">{chunk._id}</span>
+                        </div>
+                      </div>
+                      <ScrollArea className="h-[300px] rounded border bg-muted p-3">
+                        <pre className="text-xs font-mono whitespace-pre-wrap">
+                          {JSON.stringify(chunk, null, 2)}
+                        </pre>
+                      </ScrollArea>
+                    </div>
+                  )
+                })()}
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       )}

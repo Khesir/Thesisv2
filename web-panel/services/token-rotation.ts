@@ -1,5 +1,6 @@
 import { type IAPIToken, type TokenProvider } from "@/lib/entities/api-token"
 import { extractChunk } from "./ebr-extractor"
+import { tokenCooldown } from "./token-cooldown"
 import { logger } from "@/lib/logger"
 
 interface TokenPoolEntry {
@@ -34,18 +35,23 @@ class TokenRotationService {
       candidates = candidates.filter((e) => e.token.provider === provider)
     }
 
-    // Filter out exhausted tokens
+    // Filter out exhausted, rate-limited, and quota-exhausted tokens
     const before = candidates.length
     candidates = candidates.filter((e) => {
-      if (e.token.usageLimit === null) return true
-      return e.token.usageCount < e.token.usageLimit
+      // Check hard usage limit
+      if (e.token.usageLimit !== null && e.token.usageCount >= e.token.usageLimit) return false
+      // Check in-memory rate limit cooldown
+      if (tokenCooldown.isRateLimited(e.token._id)) return false
+      // Check daily quota
+      if (tokenCooldown.isQuotaExhausted(e.token._id, e.token.quotaLimit)) return false
+      return true
     })
 
     if (candidates.length === 0) {
       logger.warn('TokenRotation', `No available tokens${provider ? ` for ${provider}` : ""}`, {
         totalInPool: this.pool.size,
         checkedProvider: provider,
-        exhaustedTokens: before - candidates.length,
+        filteredOut: before - candidates.length,
       })
       return null
     }
@@ -75,14 +81,23 @@ class TokenRotationService {
       entry.inFlight = Math.max(0, entry.inFlight - 1)
       entry.token.lastUsedAt = new Date()
       entry.token.updatedAt = new Date()
+      // Track daily quota usage
+      tokenCooldown.markQuotaUsed(tokenId)
     }
   }
 
   markExhausted(tokenId: string) {
     const entry = this.pool.get(tokenId)
     if (entry) {
-      entry.token.isActive = false
+      // Use cooldown instead of permanently disabling
+      const cooldownSeconds = (entry.token.cooldownMinutes || 60) * 60
+      tokenCooldown.markRateLimitedWithTotal(tokenId, cooldownSeconds)
       entry.inFlight = 0
+      logger.info('TokenRotation', `Token rate-limited for ${entry.token.cooldownMinutes || 60}m`, {
+        tokenId,
+        alias: entry.token.alias,
+        cooldownSeconds,
+      })
     }
   }
 
@@ -162,7 +177,7 @@ class TokenRotationService {
         const errorMsg = result.error || "Unknown error"
 
         if (this.isRateLimitError(String(errorMsg))) {
-          logger.warn('TokenRotation', `Rate limit detected, marking token as exhausted`, {
+          logger.warn('TokenRotation', `Rate limit detected, marking token as rate-limited`, {
             tokenId: entry.token._id,
             error: errorMsg,
           })

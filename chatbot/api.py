@@ -31,17 +31,21 @@ app.add_middleware(
 )
 
 # Initialize crop store and RAG engine
-crop_store = CropStore(extracted_dir="extracted")
+crop_store = CropStore()
 rag_engine: Optional[RAGEngine] = None
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Load crop data on startup"""
+    """Load crop data from MongoDB on startup"""
     global rag_engine
-    count = crop_store.load_all()
-    rag_engine = RAGEngine(crop_store)
-    print(f"Loaded {count} crops. LLM available: {rag_engine.is_available()}")
+    try:
+        count = crop_store.load_all()
+        rag_engine = RAGEngine(crop_store)
+        print(f"Loaded {count} crops from MongoDB. LLM available: {rag_engine.is_available()}")
+    except Exception as e:
+        print(f"Error during startup: {e}")
+        raise
 
 
 # Request/Response Models
@@ -94,7 +98,7 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "crops_loaded": len(crop_store.crops),
+        "crops_loaded": len(crop_store.crop_index),
         "llm_available": rag_engine.is_available() if rag_engine else False
     }
 

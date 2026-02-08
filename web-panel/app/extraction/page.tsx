@@ -10,10 +10,11 @@ import { ValidationQueue } from "@/components/extraction/validation-queue"
 import { ValidationCompare } from "@/components/extraction/validation-compare"
 import { ValidationActions } from "@/components/extraction/validation-actions"
 import { ExtractionSessionLog } from "@/components/extraction/extraction-session-log"
-import { useChunks, useExtractedData, processChunk, confirmExtraction, mutateChunks, mutateExtracted, useTokens } from "@/lib/hooks/use-api"
+
+import { useChunks, useExtractedData, processChunk, confirmExtraction, mutateChunks, mutateExtracted, useTokens, mutateTokens } from "@/lib/hooks/use-api"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { AlertCircle, Clock } from "lucide-react"
 import { toast } from "sonner"
 
 interface ProcessedChunk {
@@ -27,6 +28,7 @@ interface ProcessedChunk {
 }
 
 export default function ExtractionPage() {
+  const [activeTab, setActiveTab] = useState("extraction")
   const [provider, setProvider] = useState("auto")
   const [strategy, setStrategy] = useState("failover")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -42,21 +44,33 @@ export default function ExtractionPage() {
   // Validation state
   const [selectedValidationId, setSelectedValidationId] = useState<string | null>(null)
   const [isValidating, setIsValidating] = useState(false)
+  // Snapshot of original extraction so it doesn't change on SWR refetch
+  const [snapshotOriginal, setSnapshotOriginal] = useState<Record<string, unknown> | null>(null)
 
-  const { data: chunksData, isLoading: chunksLoading } = useChunks({ limit: 50 })
-  const { data: extractedRes } = useExtractedData({ limit: 50 })
-  const { data: tokensData } = useTokens()
+  const { data: chunksData, isLoading: chunksLoading } = useChunks({ limit: 500 })
+  const { data: extractedRes } = useExtractedData({ limit: 500 })
+  const { data: tokensData } = useTokens({ refreshInterval: 15000 })
 
   const allChunks = chunksData?.chunks || []
   const notProcessedChunks = allChunks.filter((c) => c.status === "not-processed")
   const validationChunks = allChunks.filter((c) => c.status === "requires-validation")
   const extractedData = extractedRes?.data || []
 
-  // Calculate available tokens
+  // Calculate available tokens (accounting for rate limits and quota)
   const allTokens = tokensData?.tokens || []
-  const availableTokens = allTokens.filter((t) => t.isActive && (t.usageLimit === null || t.usageCount < t.usageLimit))
-  const exhaustedTokens = allTokens.filter((t) => !t.isActive || (t.usageLimit !== null && t.usageCount >= t.usageLimit))
+  const availableTokens = allTokens.filter((t) =>
+    t.isActive &&
+    !t.rateLimited &&
+    (t.usageLimit === null || t.usageCount < t.usageLimit) &&
+    (t.quotaLimit === null || t.quotaUsed < t.quotaLimit)
+  )
+  const rateLimitedTokens = allTokens.filter((t) => t.isActive && t.rateLimited)
   const hasAvailableTokens = availableTokens.length > 0
+
+  // Find the minimum cooldown remaining for "next available" message
+  const minCooldownRemaining = rateLimitedTokens.length > 0
+    ? Math.min(...rateLimitedTokens.map((t) => t.cooldownRemaining))
+    : 0
 
   // Real-time elapsed timer
   useEffect(() => {
@@ -161,6 +175,7 @@ export default function ExtractionPage() {
     setSelectedIds([])
     mutateChunks()
     mutateExtracted()
+    mutateTokens()
 
     if (failureCount === 0 && successCount > 0) {
       toast.success(`All ${successCount} chunks extracted successfully!`)
@@ -171,17 +186,26 @@ export default function ExtractionPage() {
     }
   }
 
-  const selectedOriginal = selectedValidationId
-    ? extractedData.find((d) => {
-        const chunkId = typeof d.chunkId === "string" ? d.chunkId : d.chunkId?._id
-        return chunkId === selectedValidationId
-      }) || null
-    : null
+  // Get all extractions for selected chunk, sorted by creation date
+  const selectedChunkExtractions = selectedValidationId
+    ? extractedData
+        .filter((d) => {
+          const chunkId = typeof d.chunkId === "string" ? d.chunkId : d.chunkId?._id
+          return chunkId === selectedValidationId
+        })
+        .sort((a, b) => {
+          const aTime = new Date(a.createdAt || 0).getTime()
+          const bTime = new Date(b.createdAt || 0).getTime()
+          return aTime - bTime // ascending: oldest to newest
+        })
+    : []
+
+  const selectedOriginal = selectedChunkExtractions[0] || null
+  const selectedNewExtraction = selectedChunkExtractions.length > 1 ? selectedChunkExtractions[selectedChunkExtractions.length - 1] : null
 
   const handleRunValidation = async () => {
     if (!selectedValidationId) return
     setIsValidating(true)
-    toast.info("Running re-extraction for validation...")
 
     const chunk = allChunks.find((c) => c._id === selectedValidationId)
     if (!chunk) {
@@ -189,14 +213,31 @@ export default function ExtractionPage() {
       return
     }
 
+    // Snapshot the original extraction before running so it won't change on refetch
+    if (selectedOriginal) {
+      setSnapshotOriginal(JSON.parse(JSON.stringify(selectedOriginal)))
+    }
+
+    // Check if this is first validation or re-validation
+    const isFirstValidation = selectedChunkExtractions.length === 1
+
+    toast.info(
+      isFirstValidation
+        ? `Validating chunk #${chunk.chunkIndex} with initial extraction...`
+        : `Re-validating chunk #${chunk.chunkIndex}...`
+    )
+
     try {
       const result = await processChunk({
+        chunkId: chunk._id,
         content: chunk.content,
         provider: provider === "auto" ? undefined : provider,
         strategy,
       })
       if (result.success) {
-        toast.success("Validation extraction complete")
+        toast.success("Validation extraction complete - review both versions")
+        // Refresh extracted data to get the new extraction
+        await mutateExtracted()
       } else {
         toast.error(result.error || "Validation failed")
       }
@@ -207,16 +248,32 @@ export default function ExtractionPage() {
     }
   }
 
-  const handleAccept = async () => {
+  const handleValidationDecisionOriginal = async () => {
     if (!selectedValidationId || !selectedOriginal) return
+    const dataToSend = snapshotOriginal || (selectedOriginal as unknown as Record<string, unknown>)
     const result = await confirmExtraction({
       chunkId: selectedValidationId,
-      data: selectedOriginal as unknown as Record<string, unknown>,
+      data: dataToSend,
       action: "accept",
     })
     if (result.success) {
-      toast.success("Extraction accepted and validated")
+      toast.success("Original extraction accepted and validated")
       setSelectedValidationId(null)
+      setSnapshotOriginal(null)
+    }
+  }
+
+  const handleValidationDecisionNew = async () => {
+    if (!selectedValidationId || !selectedNewExtraction) return
+    const result = await confirmExtraction({
+      chunkId: selectedValidationId,
+      data: selectedNewExtraction as unknown as Record<string, unknown>,
+      action: "accept",
+    })
+    if (result.success) {
+      toast.success("New extraction accepted and validated")
+      setSelectedValidationId(null)
+      setSnapshotOriginal(null)
     }
   }
 
@@ -229,6 +286,7 @@ export default function ExtractionPage() {
     if (result.success) {
       toast.info("Chunk rejected, moved back to not-processed")
       setSelectedValidationId(null)
+      setSnapshotOriginal(null)
     }
   }
 
@@ -245,43 +303,38 @@ export default function ExtractionPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">EBR Filter</h1>
 
-      <Tabs defaultValue="extraction">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="extraction">Extraction</TabsTrigger>
           <TabsTrigger value="validation">Validation</TabsTrigger>
         </TabsList>
 
         <TabsContent value="extraction" className="space-y-6 mt-4">
-          {!hasAvailableTokens && allTokens.length > 0 && (
-            <Alert variant="destructive">
+          {!hasAvailableTokens && (
+            <div className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>No Available Tokens</AlertTitle>
-              <AlertDescription>
-                You have {allTokens.length} token(s) total, but {exhaustedTokens.length} are exhausted or inactive.
-                Please add new tokens or increase usage limits in Settings before extracting.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {allTokens.length === 0 && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>No API Tokens Found</AlertTitle>
-              <AlertDescription>
-                You need to add at least one API token in Settings before you can start extraction.
-              </AlertDescription>
-            </Alert>
+              <span>
+                {allTokens.length === 0
+                  ? "No API tokens found. Add tokens in Settings."
+                  : rateLimitedTokens.length > 0
+                    ? `All tokens rate-limited. Next available in ~${Math.ceil(minCooldownRemaining / 60)}m.`
+                    : `All ${allTokens.length} token(s) exhausted or inactive. Update in Settings.`}
+              </span>
+            </div>
           )}
 
           {hasAvailableTokens && (
-            <Alert className="border-green-200 bg-green-50">
-              <AlertCircle className="h-4 w-4 text-green-700" />
-              <AlertTitle className="text-green-900">Available Tokens</AlertTitle>
-              <AlertDescription className="text-green-800">
-                {availableTokens.length}/{allTokens.length} tokens available for extraction
-                {exhaustedTokens.length > 0 && ` (${exhaustedTokens.length} exhausted or inactive)`}
-              </AlertDescription>
-            </Alert>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
+                {availableTokens.length}/{allTokens.length} tokens available
+              </Badge>
+              {rateLimitedTokens.length > 0 && (
+                <span className="flex items-center gap-1 text-xs text-amber-600">
+                  <Clock className="h-3 w-3" />
+                  {rateLimitedTokens.length} rate-limited
+                </span>
+              )}
+            </div>
           )}
 
           <ExtractionControls
@@ -325,7 +378,7 @@ export default function ExtractionPage() {
             />
           )}
 
-          <ExtractionResults results={extractedData.slice(0, 10) as unknown as import("@/lib/types/extracted-data").ExtractedData[]} chunks={allChunks} />
+          <ExtractionResults results={extractedData.slice(0, 10) as any} />
         </TabsContent>
 
         <TabsContent value="validation" className="space-y-6 mt-4">
@@ -333,25 +386,33 @@ export default function ExtractionPage() {
             chunks={validationChunks}
             allChunks={allChunks}
             selectedId={selectedValidationId}
-            onSelect={setSelectedValidationId}
+            onSelect={(id) => {
+              setSelectedValidationId(id)
+              setSnapshotOriginal(null)
+            }}
           />
 
           <ValidationActions
             hasSelection={!!selectedValidationId}
-            hasNewExtraction={false}
+            hasNewExtraction={!!selectedNewExtraction}
             isValidating={isValidating}
+            hasAvailableTokens={hasAvailableTokens}
             onRunValidation={handleRunValidation}
-            onAcceptOriginal={handleAccept}
-            onAcceptNew={() => toast.success("New extraction accepted")}
+            onAcceptOriginal={handleValidationDecisionOriginal}
+            onAcceptNew={handleValidationDecisionNew}
             onReject={handleReject}
             onSkip={() => {
               const idx = validationChunks.findIndex((c) => c._id === selectedValidationId)
               const next = validationChunks[idx + 1]
               setSelectedValidationId(next?._id || null)
+              setSnapshotOriginal(null)
             }}
           />
 
-          <ValidationCompare original={selectedOriginal as unknown as import("@/lib/types/extracted-data").ExtractedData | null} newExtraction={null} />
+          <ValidationCompare
+            original={(snapshotOriginal || selectedOriginal) as any}
+            newExtraction={selectedNewExtraction as any}
+          />
         </TabsContent>
       </Tabs>
     </div>

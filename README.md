@@ -186,10 +186,14 @@ python -m uvicorn chatbot.api:app --reload
 ### Environment Setup
 
 ```bash
-# Root .env (for chatbot LLM usage)
+# Root .env (for chatbot LLM usage and MongoDB connection)
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 # OR
 GOOGLE_API_KEY=your_google_api_key_here
+
+# MongoDB connection (required)
+MONGODB_URI=mongodb://localhost:27017/thesis_panel
+MONGODB_NAME=thesis_panel
 ```
 
 ### Available Endpoints

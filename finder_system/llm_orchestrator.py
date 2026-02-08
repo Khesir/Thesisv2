@@ -57,47 +57,30 @@ class LLMOrchestrator:
 
     def _auto_configure_providers(self):
         """Automatically configure available providers based on environment"""
-        print("Auto-configuring LLM providers...")
-
+        import sys
         # Try to initialize Claude
         try:
             claude = ClaudeAdapter()
             if claude.is_available():
                 self.providers.append(claude)
-                print(f"  ✓ Claude configured (model: {claude.model})")
-            else:
-                print("  ✗ Claude not available (missing API key)")
-        except Exception as e:
-            print(f"  ✗ Claude initialization failed: {e}")
+        except Exception:
+            pass
 
         # Try to initialize Gemini
         try:
             gemini = GeminiAdapter()
             if gemini.is_available():
                 self.providers.append(gemini)
-                print(f"  ✓ Gemini configured (model: {gemini.model_name})")
-            else:
-                print("  ✗ Gemini not available (missing API key)")
-        except Exception as e:
-            print(f"  ✗ Gemini initialization failed: {e}")
+        except Exception:
+            pass
 
         # Try to initialize Ollama
         try:
             ollama = OllamaAdapter()
             if ollama.is_available():
                 self.providers.append(ollama)
-                print(f"  ✓ Ollama configured (model: {ollama.model})")
-            else:
-                print("  ✗ Ollama not available (service not running)")
-        except Exception as e:
-            print(f"  ✗ Ollama initialization failed: {e}")
-
-        if not self.providers:
-            print("\n⚠️  Warning: No LLM providers available!")
-            print("Please configure at least one provider:")
-            print("  - Claude: Set ANTHROPIC_API_KEY environment variable")
-            print("  - Gemini: Set GOOGLE_API_KEY environment variable")
-            print("  - Ollama: Install and start Ollama service")
+        except Exception:
+            pass
 
     def add_provider(self, provider: LLMExtractorInterface):
         """

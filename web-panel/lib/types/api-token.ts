@@ -7,6 +7,8 @@ export interface APIToken {
   alias: string
   usageCount: number
   usageLimit: number | null
+  quotaLimit: number | null
+  cooldownMinutes: number
   isActive: boolean
   lastUsedAt: string | null
   createdAt: string
