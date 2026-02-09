@@ -44,9 +44,18 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
   const [cooldownMinutes, setCooldownMinutes] = useState("60")
   const [showToken, setShowToken] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<"untested" | "valid" | "invalid">("untested")
   const [detectedInfo, setDetectedInfo] = useState<string | null>(null)
 
   const handleSave = () => {
+    if (testResult === "invalid") {
+      toast.error("Cannot save an invalid token. Please fix the API key and test again.")
+      return
+    }
+    if (testResult === "untested") {
+      toast.warning("Token has not been tested. Please test the connection first.")
+      return
+    }
     onSave({
       provider,
       alias,
@@ -66,6 +75,7 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
     setUsageLimit("")
     setQuotaLimit("")
     setCooldownMinutes("60")
+    setTestResult("untested")
     setDetectedInfo(null)
   }
 
@@ -90,6 +100,7 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
 
       if (result.valid) {
         toast.success(`Token is valid for ${provider}`)
+        setTestResult("valid")
 
         // Auto-fill quota settings from provider defaults
         if (result.suggestedQuotaLimit !== undefined) {
@@ -103,10 +114,12 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
         }
       } else {
         toast.error(`Token validation failed: ${result.error || "Invalid token"}`)
+        setTestResult("invalid")
         setDetectedInfo(null)
       }
     } catch (error) {
       toast.error("Failed to test token connection")
+      setTestResult("invalid")
       setDetectedInfo(null)
     } finally {
       setTesting(false)
@@ -123,7 +136,7 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Provider</Label>
-            <Select value={provider} onValueChange={(v) => { setProvider(v as TokenProvider); setDetectedInfo(null) }}>
+            <Select value={provider} onValueChange={(v) => { setProvider(v as TokenProvider); setTestResult("untested"); setDetectedInfo(null) }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -162,7 +175,7 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
                 type={showToken ? "text" : "password"}
                 placeholder="Enter API token"
                 value={token}
-                onChange={(e) => setToken(e.target.value)}
+                onChange={(e) => { setToken(e.target.value); setTestResult("untested"); setDetectedInfo(null) }}
                 className="pr-10"
               />
               <Button
@@ -227,12 +240,20 @@ export function AddTokenDialog({ open, onOpenChange, onSave }: AddTokenDialogPro
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleTest} disabled={!token || testing}>
+          <Button
+            variant={testResult === "valid" ? "outline" : testResult === "invalid" ? "destructive" : "outline"}
+            onClick={handleTest}
+            disabled={!token || testing}
+          >
             {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Test Connection
+            {testResult === "valid" ? "✓ Tested" : testResult === "invalid" ? "Retry Test" : "Test Connection"}
           </Button>
-          <Button onClick={handleSave} disabled={!alias || !token}>
-            Save
+          <Button
+            onClick={handleSave}
+            disabled={!alias || !token || testResult !== "valid"}
+            variant={testResult === "invalid" ? "destructive" : "default"}
+          >
+            {testResult === "untested" ? "Test First" : testResult === "invalid" ? "Invalid Token" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -11,14 +11,19 @@ import {
   X,
   Clock,
   AlertCircle,
+  Eye,
+  Ban,
 } from "lucide-react"
 
-interface ProcessedChunk {
+export interface ProcessedChunk {
   chunkIndex: number
+  chunkId?: string
   status: "success" | "failed" | "processing"
   error?: string
+  traceback?: string
   tokensUsed?: number
   provider?: string
+  tokenAlias?: string
   requestId?: string
   details?: Record<string, unknown>
 }
@@ -28,6 +33,8 @@ interface ExtractionSessionLogProps {
   isProcessing: boolean
   successCount: number
   failureCount: number
+  onRejectChunk?: (chunkId: string) => void
+  onViewChunk?: (chunkId: string) => void
 }
 
 export function ExtractionSessionLog({
@@ -35,6 +42,8 @@ export function ExtractionSessionLog({
   isProcessing,
   successCount,
   failureCount,
+  onRejectChunk,
+  onViewChunk,
 }: ExtractionSessionLogProps) {
   const [expandedChunkId, setExpandedChunkId] = useState<number | null>(null)
   const [minimized, setMinimized] = useState(false)
@@ -115,15 +124,15 @@ export function ExtractionSessionLog({
                     {chunk.tokensUsed} tokens
                   </span>
                 )}
-                {chunk.provider && (
+                {(chunk.provider || chunk.tokenAlias) && (
                   <span className="text-xs text-muted-foreground">
-                    • {chunk.provider}
+                    • {chunk.provider}{chunk.tokenAlias ? ` (${chunk.tokenAlias})` : ""}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 {getStatusBadge(chunk.status)}
-                {(chunk.error || chunk.tokensUsed || chunk.details) && (
+                {(chunk.error || chunk.traceback || chunk.tokensUsed || chunk.details) && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -145,7 +154,7 @@ export function ExtractionSessionLog({
             </div>
 
             {/* Expanded Details (Success/Error) */}
-            {expandedChunkId === chunk.chunkIndex && (chunk.error || chunk.tokensUsed || chunk.details) && (
+            {expandedChunkId === chunk.chunkIndex && (chunk.error || chunk.traceback || chunk.tokensUsed || chunk.details) && (
               <div className="mt-2 space-y-2 border-t pt-2 pl-7">
                 {/* Error Section */}
                 {chunk.error && (
@@ -157,6 +166,17 @@ export function ExtractionSessionLog({
                   </div>
                 )}
 
+                {chunk.traceback && (
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-red-600 hover:text-red-800 font-medium">
+                      Python Traceback
+                    </summary>
+                    <pre className="mt-2 bg-red-50 text-red-800 rounded p-2 font-mono text-xs whitespace-pre-wrap break-words max-h-64 overflow-y-auto">
+                      {chunk.traceback}
+                    </pre>
+                  </details>
+                )}
+
                 {/* Success Details */}
                 {chunk.status === "success" && chunk.tokensUsed && (
                   <div className="space-y-1 text-xs">
@@ -164,6 +184,9 @@ export function ExtractionSessionLog({
                     <p className="text-muted-foreground">Tokens used: <span className="font-mono">{chunk.tokensUsed}</span></p>
                     {chunk.provider && (
                       <p className="text-muted-foreground">Provider: <span className="font-mono">{chunk.provider}</span></p>
+                    )}
+                    {chunk.tokenAlias && (
+                      <p className="text-muted-foreground">Token: <span className="font-mono">{chunk.tokenAlias}</span></p>
                     )}
                   </div>
                 )}
@@ -185,27 +208,55 @@ export function ExtractionSessionLog({
                   </details>
                 )}
 
-                {chunk.error && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs h-6"
-                    onClick={() => {
-                      const errorText = [
-                        `Chunk ${chunk.chunkIndex} Error:`,
-                        chunk.error,
-                        chunk.requestId ? `Request ID: ${chunk.requestId}` : "",
-                        chunk.details ? `\nDetails:\n${JSON.stringify(chunk.details, null, 2)}` : "",
-                      ]
-                        .filter(Boolean)
-                        .join("\n")
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 pt-1">
+                  {chunk.chunkId && onViewChunk && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-7"
+                      onClick={() => onViewChunk(chunk.chunkId!)}
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1" />
+                      View
+                    </Button>
+                  )}
 
-                      navigator.clipboard.writeText(errorText)
-                    }}
-                  >
-                    Copy Error
-                  </Button>
-                )}
+                  {chunk.status === "failed" && chunk.chunkId && onRejectChunk && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-7 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => onRejectChunk(chunk.chunkId!)}
+                    >
+                      <Ban className="h-3.5 w-3.5 mr-1" />
+                      Reject
+                    </Button>
+                  )}
+
+                  {chunk.error && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        const errorText = [
+                          `Chunk ${chunk.chunkIndex} Error:`,
+                          chunk.error,
+                          chunk.requestId ? `Request ID: ${chunk.requestId}` : "",
+                          chunk.traceback ? `\nPython Traceback:\n${chunk.traceback}` : "",
+                          chunk.details ? `\nDetails:\n${JSON.stringify(chunk.details, null, 2)}` : "",
+                        ]
+                          .filter(Boolean)
+                          .join("\n")
+
+                        navigator.clipboard.writeText(errorText)
+                      }}
+                    >
+                      Copy Error
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </div>

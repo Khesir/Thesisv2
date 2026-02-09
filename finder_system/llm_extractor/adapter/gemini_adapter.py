@@ -300,10 +300,10 @@ class GeminiAdapter(BaseLLMExtractor):
             # Provide helpful error messages for common issues
             if '404' in error_msg and 'not found' in error_msg:
                 error_msg = f"Model '{self.model_name}' not found. Try 'gemini-2.5-flash', 'gemini-2.5-pro', or 'gemini-2.0-flash'. Run 'python check_gemini_models.py' to see available models."
-            elif 'API key' in error_msg:
-                error_msg = "Invalid or missing API key. Check GOOGLE_API_KEY in .env file."
-            elif 'quota' in error_msg.lower():
-                error_msg = "API quota exceeded. Check your usage at https://console.cloud.google.com/apis/api/generativelanguage.googleapis.com"
+            elif 'API key' in error_msg or '401' in error_msg or 'authentication' in error_msg.lower():
+                error_msg = f"Invalid or expired API key: {error_msg}"
+            elif 'quota' in error_msg.lower() or '429' in error_msg or 'resource_exhausted' in error_msg.lower():
+                error_msg = f"API quota exceeded or rate limited: {error_msg}"
             else:
                 error_msg = f'Gemini extraction failed: {error_msg}'
 
@@ -336,6 +336,7 @@ class GeminiAdapter(BaseLLMExtractor):
             )
 
         results = []
+        errors = []
         total_input_tokens = 0
         total_output_tokens = 0
 
@@ -353,11 +354,14 @@ class GeminiAdapter(BaseLLMExtractor):
                 })
                 total_input_tokens += extraction_result.usage['input_tokens']
                 total_output_tokens += extraction_result.usage['output_tokens']
+            else:
+                errors.append(f"chunk {chunk_id}: {extraction_result.error}")
 
         if not results:
+            last_error = errors[-1] if errors else "Unknown error"
             return ChunkExtractionResult(
                 success=False,
-                error="Failed to extract data from any chunks",
+                error=f"Failed to extract data from any chunks. {last_error}",
                 provider=self.get_provider_name()
             )
 

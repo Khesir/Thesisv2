@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
 import { APITokenModel, maskToken } from "@/lib/entities/api-token"
+import { tokenCooldown } from "@/services/token-cooldown"
 
 export async function PATCH(
   req: NextRequest,
@@ -29,6 +30,9 @@ export async function PATCH(
         { status: 404 }
       )
     }
+
+    // Clear invalid key flag when token is updated (user may have fixed it)
+    tokenCooldown.clearInvalidKey(id)
 
     // Mask the token before returning
     const masked = {

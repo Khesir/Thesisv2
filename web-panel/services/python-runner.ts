@@ -3,21 +3,39 @@ import path from "path"
 import fs from "fs"
 import { logger } from "@/lib/logger"
 
+// Electron injects resourcesPath on the process object in packaged apps
+declare global {
+  namespace NodeJS {
+    interface Process {
+      resourcesPath?: string
+    }
+  }
+}
+
+function isPackaged(): boolean {
+  return process.env.ELECTRON_PACKAGED === "true"
+}
+
 // Determine Python command - prefer venv if available
 function getPythonCmd(): string {
+  if (isPackaged()) {
+    // In packaged mode, we run .exe directly — no Python interpreter needed
+    return ""
+  }
+
   const projectRoot = path.resolve(process.cwd(), "..")
-  
+
   // Check for virtual environment
   const isWindows = process.platform === "win32"
   const venvPythonPath = isWindows
     ? path.join(projectRoot, "venv", "Scripts", "python.exe")
     : path.join(projectRoot, "venv", "bin", "python")
-  
+
   if (fs.existsSync(venvPythonPath)) {
     logger.debug('PythonRunner', `Using virtual environment Python: ${venvPythonPath}`)
     return venvPythonPath
   }
-  
+
   // Fall back to system Python
   const fallback = isWindows ? "python" : "python3"
   logger.debug('PythonRunner', `No venv found, using system Python: ${fallback}`)
@@ -38,6 +56,7 @@ interface ScriptResult<T = unknown> {
   success: boolean
   data: T
   error?: string
+  traceback?: string
 }
 
 export async function runScript<T = unknown>({
@@ -52,8 +71,26 @@ export async function runScript<T = unknown>({
 
   return new Promise((resolve) => {
     const startTime = Date.now()
-    const proc = spawn(PYTHON_CMD, [scriptPath, ...args], {
-      cwd: path.resolve(process.cwd(), ".."),
+
+    let cmd: string
+    let spawnArgs: string[]
+    let cwd: string
+
+    if (isPackaged()) {
+      // In packaged mode, run the frozen .exe directly
+      const exeName = scriptName.replace(/\.py$/, ".exe")
+      cmd = path.join(process.resourcesPath!, "app", "python", exeName)
+      spawnArgs = [...args]
+      cwd = path.dirname(cmd)
+      logger.debug('PythonRunner', `Running packaged exe: ${cmd}`)
+    } else {
+      cmd = PYTHON_CMD
+      spawnArgs = [scriptPath, ...args]
+      cwd = path.resolve(process.cwd(), "..")
+    }
+
+    const proc = spawn(cmd, spawnArgs, {
+      cwd,
       env: { ...process.env, PYTHONIOENCODING: "utf-8" },
       timeout,
     })
@@ -91,7 +128,8 @@ export async function runScript<T = unknown>({
         resolve({
           success: false,
           data: null as T,
-          error: stderr || `Process exited with code ${code}`,
+          error: `Process exited with code ${code}`,
+          traceback: stderr || undefined,
         })
         return
       }
@@ -122,24 +160,35 @@ export async function runScript<T = unknown>({
             scriptName,
             duration: `${duration}ms`,
             error: parsed.error || 'Unknown error',
+            errorType: parsed.errorType,
+            traceback: parsed.traceback?.slice(0, 1000),
+            stderr: stderr?.slice(0, 500),
           })
         }
 
         resolve({
           success,
           data: parsed as T,
+          ...(!success && {
+            error: parsed.error
+              ? `${parsed.error}${parsed.errorType ? ` (${parsed.errorType})` : ''}`
+              : 'Unknown error',
+            traceback: parsed.traceback || stderr || undefined,
+          }),
         })
       } catch {
         logger.error('PythonRunner', `Failed to parse script output`, {
           scriptName,
           duration: `${duration}ms`,
           rawOutput: stdout.slice(0, 300),
+          stderr: stderr?.slice(0, 500),
         })
 
         resolve({
           success: false,
           data: null as T,
-          error: `Failed to parse output: ${stdout.slice(0, 200)}`,
+          error: `Failed to parse Python output: ${stdout.slice(0, 200)}`,
+          traceback: stderr || undefined,
         })
       }
     })

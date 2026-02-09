@@ -8,7 +8,10 @@ import sys
 import json
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+if getattr(sys, 'frozen', False):
+    sys.path.insert(0, sys._MEIPASS)
+else:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 
 def test_anthropic(api_key):
@@ -73,14 +76,21 @@ def main():
         tester(api_key)
         json.dump({"valid": True}, sys.stdout)
     except Exception as e:
+        import traceback
         error_msg = str(e)
-        # Extract useful error messages from API errors
-        if "401" in error_msg or "invalid" in error_msg.lower() or "unauthorized" in error_msg.lower():
-            json.dump({"valid": False, "error": "Invalid API key"}, sys.stdout)
-        elif "429" in error_msg or "rate" in error_msg.lower():
-            json.dump({"valid": True, "error": "Key valid but rate limited"}, sys.stdout)
+        error_lower = error_msg.lower()
+
+        # Rate limit = key is valid, just throttled
+        if "429" in error_msg or "rate" in error_lower or "resource_exhausted" in error_lower or "too many requests" in error_lower:
+            json.dump({"valid": True, "error": f"Key valid but rate limited: {error_msg}"}, sys.stdout)
+        # Invalid/expired key
+        elif "401" in error_msg or "invalid" in error_lower or "unauthorized" in error_lower or "api_key_invalid" in error_lower or "not valid" in error_lower:
+            json.dump({"valid": False, "error": f"Invalid API key: {error_msg}", "errorType": type(e).__name__}, sys.stdout)
+        # Quota/billing issues - key exists but can't be used
+        elif "quota" in error_lower or "billing" in error_lower or "credit" in error_lower:
+            json.dump({"valid": False, "error": f"Quota or billing issue: {error_msg}", "errorType": type(e).__name__}, sys.stdout)
         else:
-            json.dump({"valid": False, "error": error_msg}, sys.stdout)
+            json.dump({"valid": False, "error": error_msg, "errorType": type(e).__name__, "traceback": traceback.format_exc()}, sys.stdout)
 
 
 if __name__ == "__main__":

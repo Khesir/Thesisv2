@@ -35,6 +35,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
   "requires-validation": "secondary",
   processing: "outline",
   "not-processed": "outline",
+  rejected: "destructive",
 }
 
 export function ChunksTable({
@@ -113,6 +114,7 @@ export function ChunksTable({
             <SelectItem value="processing">Processing</SelectItem>
             <SelectItem value="requires-validation">Requires Validation</SelectItem>
             <SelectItem value="processed">Processed</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
           </SelectContent>
         </Select>
 

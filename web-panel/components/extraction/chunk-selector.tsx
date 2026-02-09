@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import {
   Select,
@@ -19,7 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Eye } from "lucide-react"
 import { Chunk } from "@/lib/types/chunk"
+import { ChunkDetailDialog } from "@/components/processing/chunk-detail-dialog"
 
 interface ChunkSelectorProps {
   chunks: Chunk[]
@@ -43,6 +46,7 @@ export function ChunkSelector({
   onSelectionChange,
 }: ChunkSelectorProps) {
   const [sourceFilter, setSourceFilter] = useState("all")
+  const [detailChunk, setDetailChunk] = useState<Chunk | null>(null)
   const sources = [...new Set(allChunks.map((c) => c.source))]
 
   const filtered = chunks.filter((c) => {
@@ -111,12 +115,13 @@ export function ChunkSelector({
               <TableHead>Preview</TableHead>
               <TableHead className="w-20">Tokens</TableHead>
               <TableHead className="w-36">Status</TableHead>
+              <TableHead className="w-16">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-4">
                   No chunks available
                 </TableCell>
               </TableRow>
@@ -138,12 +143,23 @@ export function ChunkSelector({
                   <TableCell>
                     <Badge variant={statusVariant[chunk.status]}>{chunk.status}</Badge>
                   </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={() => setDetailChunk(chunk)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      <ChunkDetailDialog
+        chunk={detailChunk}
+        open={!!detailChunk}
+        onOpenChange={(open) => !open && setDetailChunk(null)}
+      />
     </div>
   )
 }

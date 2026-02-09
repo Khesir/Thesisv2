@@ -1,4 +1,4 @@
-export type ChunkStatus = "not-processed" | "processing" | "requires-validation" | "processed"
+export type ChunkStatus = "not-processed" | "processing" | "requires-validation" | "processed" | "rejected"
 
 export interface Chunk {
   _id: string

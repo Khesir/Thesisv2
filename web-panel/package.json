@@ -2,6 +2,7 @@
   "name": "web-panel",
   "version": "0.1.0",
   "private": true,
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +13,11 @@
     "docker:prod": "docker compose -f ../docker-compose.prod.yml up -d",
     "db:migrate": "npx tsx scripts/migration-runner.ts",
     "db:migrate:down": "npx tsx scripts/migration-runner.ts down",
-    "db:seed": "npx tsx scripts/seed.ts"
+    "db:seed": "npx tsx scripts/seed.ts",
+    "electron:dev": "concurrently -k \"next dev\" \"tsc -p electron/tsconfig.json && electron .\"",
+    "build:electron": "next build && tsc -p electron/tsconfig.json",
+    "electron:build": "npm run build:electron && electron-builder",
+    "build:python": "python ../build_python.py"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -36,6 +41,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.1.0",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
     "eslint": "^9",
     "eslint-config-next": "^15.5.12",
     "tailwindcss": "^4",

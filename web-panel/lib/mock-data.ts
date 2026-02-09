@@ -296,6 +296,7 @@ export const mockTokens: APITokenResponse[] = [
     cooldownRemaining: 0,
     cooldownTotal: 0,
     quotaUsed: 45,
+    invalidKey: false,
   },
   {
     _id: "t2",
@@ -314,6 +315,7 @@ export const mockTokens: APITokenResponse[] = [
     cooldownRemaining: 0,
     cooldownTotal: 0,
     quotaUsed: 0,
+    invalidKey: false,
   },
   {
     _id: "t3",
@@ -332,6 +334,7 @@ export const mockTokens: APITokenResponse[] = [
     cooldownRemaining: 0,
     cooldownTotal: 0,
     quotaUsed: 12,
+    invalidKey: false,
   },
   {
     _id: "t4",
@@ -350,5 +353,6 @@ export const mockTokens: APITokenResponse[] = [
     cooldownRemaining: 0,
     cooldownTotal: 0,
     quotaUsed: 100,
+    invalidKey: false,
   },
 ]

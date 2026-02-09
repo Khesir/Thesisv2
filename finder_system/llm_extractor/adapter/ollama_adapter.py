@@ -192,6 +192,7 @@ class OllamaAdapter(BaseLLMExtractor):
             )
 
         results = []
+        errors = []
         total_input_tokens = 0
         total_output_tokens = 0
 
@@ -209,11 +210,14 @@ class OllamaAdapter(BaseLLMExtractor):
                 })
                 total_input_tokens += extraction_result.usage['input_tokens']
                 total_output_tokens += extraction_result.usage['output_tokens']
+            else:
+                errors.append(f"chunk {chunk_id}: {extraction_result.error}")
 
         if not results:
+            last_error = errors[-1] if errors else "Unknown error"
             return ChunkExtractionResult(
                 success=False,
-                error="Failed to extract data from any chunks",
+                error=f"Failed to extract data from any chunks. {last_error}",
                 provider=self.get_provider_name()
             )
 

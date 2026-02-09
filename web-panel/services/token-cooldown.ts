@@ -2,6 +2,7 @@ import NodeCache from "node-cache"
 
 class TokenCooldownService {
   private cache: NodeCache
+  private invalidKeys: Set<string> = new Set()
 
   constructor() {
     this.cache = new NodeCache({ checkperiod: 30 })
@@ -75,6 +76,28 @@ class TokenCooldownService {
   isQuotaExhausted(tokenId: string, quotaLimit: number | null): boolean {
     if (quotaLimit === null) return false
     return this.getQuotaUsed(tokenId) >= quotaLimit
+  }
+
+  /**
+   * Mark a token as having an invalid API key.
+   * Persists in memory across loadTokens() calls until server restart.
+   */
+  markInvalidKey(tokenId: string) {
+    this.invalidKeys.add(String(tokenId))
+  }
+
+  /**
+   * Check if a token has been flagged as having an invalid key.
+   */
+  isInvalidKey(tokenId: string): boolean {
+    return this.invalidKeys.has(String(tokenId))
+  }
+
+  /**
+   * Clear invalid key flag (e.g., after user updates the token).
+   */
+  clearInvalidKey(tokenId: string) {
+    this.invalidKeys.delete(String(tokenId))
   }
 }
 

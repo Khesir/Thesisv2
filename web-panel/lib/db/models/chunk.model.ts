@@ -20,7 +20,7 @@ const ChunkSchema = new Schema<IChunk>(
     tokenCount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["not-processed", "processing", "requires-validation", "processed"],
+      enum: ["not-processed", "processing", "requires-validation", "processed", "rejected"],
       default: "not-processed",
     },
     processedDataId: { type: Schema.Types.ObjectId, ref: "ExtractedData", default: null },

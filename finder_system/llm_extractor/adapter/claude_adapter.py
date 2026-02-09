@@ -131,9 +131,19 @@ class ClaudeAdapter(BaseLLMExtractor):
                 raw_response=response_text if 'response_text' in locals() else None
             )
         except Exception as e:
+            error_msg = str(e)
+            # Provide helpful error messages for common issues
+            if '429' in error_msg or 'rate' in error_msg.lower() or 'overloaded' in error_msg.lower():
+                error_msg = f"Rate limit or overloaded: {error_msg}"
+            elif 'quota' in error_msg.lower() or 'billing' in error_msg.lower() or 'credit' in error_msg.lower():
+                error_msg = f"API quota exceeded or billing issue: {error_msg}"
+            elif 'authentication' in error_msg.lower() or 'api key' in error_msg.lower() or '401' in error_msg:
+                error_msg = f"Invalid or expired API key: {error_msg}"
+            else:
+                error_msg = f'Claude extraction failed: {error_msg}'
             return ExtractionResult(
                 success=False,
-                error=f'Claude extraction failed: {str(e)}',
+                error=error_msg,
                 provider=self.get_provider_name()
             )
 
@@ -160,6 +170,7 @@ class ClaudeAdapter(BaseLLMExtractor):
             )
 
         results = []
+        errors = []
         total_input_tokens = 0
         total_output_tokens = 0
 
@@ -177,11 +188,14 @@ class ClaudeAdapter(BaseLLMExtractor):
                 })
                 total_input_tokens += extraction_result.usage['input_tokens']
                 total_output_tokens += extraction_result.usage['output_tokens']
+            else:
+                errors.append(f"chunk {chunk_id}: {extraction_result.error}")
 
         if not results:
+            last_error = errors[-1] if errors else "Unknown error"
             return ChunkExtractionResult(
                 success=False,
-                error="Failed to extract data from any chunks",
+                error=f"Failed to extract data from any chunks. {last_error}",
                 provider=self.get_provider_name()
             )
 

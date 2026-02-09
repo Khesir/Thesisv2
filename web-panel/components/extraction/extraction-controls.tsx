@@ -13,22 +13,14 @@ import { Label } from "@/components/ui/label"
 import { Play } from "lucide-react"
 
 interface ExtractionControlsProps {
-  provider: string
-  strategy: string
   selectedCount: number
-  onProviderChange: (v: string) => void
-  onStrategyChange: (v: string) => void
   onStartExtraction: () => void
   isProcessing: boolean
   isDisabled?: boolean
 }
 
 export function ExtractionControls({
-  provider,
-  strategy,
   selectedCount,
-  onProviderChange,
-  onStrategyChange,
   onStartExtraction,
   isProcessing,
   isDisabled = false,
@@ -37,30 +29,16 @@ export function ExtractionControls({
     <Card>
       <CardContent className="flex flex-wrap items-end gap-4 pt-6">
         <div className="space-y-2">
-          <Label>Provider</Label>
-          <Select value={provider} onValueChange={onProviderChange}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Auto</SelectItem>
-              <SelectItem value="anthropic">Claude</SelectItem>
-              <SelectItem value="google">Gemini</SelectItem>
-              <SelectItem value="ollama">Ollama</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Strategy</Label>
-          <Select value={strategy} onValueChange={onStrategyChange}>
-            <SelectTrigger className="w-[170px]">
+          <Label className="text-muted-foreground">Strategy</Label>
+          <Select value="failover" disabled>
+            <SelectTrigger
+              className="w-[170px] opacity-50 cursor-not-allowed"
+              title="Strategy is not available — requires token rotation system (in development)"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="failover">Failover</SelectItem>
-              <SelectItem value="round-robin">Round Robin</SelectItem>
-              <SelectItem value="cost-optimized">Cost Optimized</SelectItem>
             </SelectContent>
           </Select>
         </div>

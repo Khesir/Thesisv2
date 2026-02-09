@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
 import { ChunkModel } from "@/lib/entities/chunk"
 import { ExtractedDataModel } from "@/lib/entities/extracted-data"
-import { APITokenModel } from "@/lib/entities/api-token"
-import { tokenRotation } from "@/services/token-rotation"
+import { extractChunk } from "@/services/ebr-extractor"
 import { logger } from "@/lib/logger"
 
 /**
@@ -16,7 +15,7 @@ function transformExtractionData(
   chunkId: string
 ): Record<string, any>[] {
   const crops = llmData.crops || []
-  
+
   // If no crops found, create a single record with general agricultural info
   if (!Array.isArray(crops) || crops.length === 0) {
     return [{
@@ -37,7 +36,7 @@ function transformExtractionData(
   // Create a document for each crop found
   return crops.map((crop: any, index: number) => {
     const cropName = crop.name || crop.common_name
-    
+
     return {
       chunkId,
       cropName: cropName ? String(cropName).trim() || null : null,  // Use null if empty
@@ -63,13 +62,14 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB()
     const body = await req.json()
-    const { chunkId, content, provider, strategy } = body
+    const { chunkId, content, provider, apiKey, strategy } = body
 
     logger.debug('ExtractionAPI', `[${requestId}] Request parsed`, {
       hasChunkId: !!chunkId,
       contentLength: content?.length || 0,
       provider,
       strategy,
+      hasApiKey: !!apiKey,
     })
 
     if (!content) {
@@ -77,16 +77,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "No content provided" }, { status: 400 })
     }
 
-    // Load tokens from database for token rotation
-    const tokens = await APITokenModel.find({ isActive: true }).lean()
-    if (tokens.length === 0) {
-      logger.error('ExtractionAPI', `[${requestId}] No active tokens found`)
+    if (!apiKey) {
+      logger.warn('ExtractionAPI', `[${requestId}] No API key provided`)
       return NextResponse.json(
-        { success: false, error: "No active API tokens configured. Please add tokens in Settings." },
+        { success: false, error: "No API key provided. Please enter and test your token." },
         { status: 400 }
       )
     }
-    tokenRotation.loadTokens(tokens)
 
     // Mark chunk as processing
     if (chunkId) {
@@ -99,34 +96,25 @@ export async function POST(req: NextRequest) {
       strategy: strategy || "failover",
     })
 
-    const result = await tokenRotation.processWithRotation(
+    const result = await extractChunk(
       content,
-      provider as any,
+      provider || "auto",
+      apiKey,
+      undefined,
       strategy || "failover"
     )
 
     if (result.success && result.data) {
       logger.info('ExtractionAPI', `[${requestId}] Extraction successful`, {
         chunkId,
-        provider: result.provider,
-        tokenId: result.tokenId,
-        tokensUsed: (result.usage as any)?.input_tokens + (result.usage as any)?.output_tokens,
+        provider: result.data.provider || provider,
       })
-
-      // Update token usage in database (1 request count per extraction call)
-      if (result.tokenId) {
-        logger.debug('ExtractionAPI', `[${requestId}] Recording token usage`, { tokenId: result.tokenId })
-        await APITokenModel.findByIdAndUpdate(result.tokenId, {
-          $inc: { usageCount: 1 },
-          lastUsedAt: new Date(),
-        })
-      }
 
       // Save extracted data to DB if we have a chunkId
       if (chunkId && result.data) {
         logger.debug('ExtractionAPI', `[${requestId}] Transforming and saving extracted data`)
         const transformedDocs = transformExtractionData(result.data as Record<string, any>, chunkId)
-        
+
         try {
           const savedDocs = await ExtractedDataModel.insertMany(transformedDocs)
           logger.info('ExtractionAPI', `[${requestId}] Saved ${savedDocs.length} extracted records`, {
@@ -157,8 +145,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         data: result.data,
-        usage: result.usage,
-        provider: result.provider,
+        usage: result.data.usage || (result as any).usage,
+        provider: result.data.provider || provider,
       })
     }
 
@@ -176,19 +164,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: false,
       error: result.error || "Extraction failed",
+      traceback: result.traceback,
       requestId,
     }, { status: 500 })
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : "Unknown error"
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    const errorType = error instanceof Error ? error.constructor.name : typeof error
 
     logger.error('ExtractionAPI', `[${requestId}] Unexpected error`, {
       error: errorMsg,
+      errorType,
       stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
     })
 
     return NextResponse.json({
       success: false,
-      error: errorMsg,
+      error: errorMsg || "An unexpected server error occurred",
+      errorType,
       requestId,
     }, { status: 500 })
   }

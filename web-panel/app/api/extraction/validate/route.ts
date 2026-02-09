@@ -40,8 +40,13 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Validation failed" },
+      {
+        success: false,
+        error: errorMsg || "An unexpected error occurred during validation",
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+      },
       { status: 500 }
     )
   }

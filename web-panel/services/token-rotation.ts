@@ -38,6 +38,8 @@ class TokenRotationService {
     // Filter out exhausted, rate-limited, and quota-exhausted tokens
     const before = candidates.length
     candidates = candidates.filter((e) => {
+      // Check if key was flagged as invalid during this session
+      if (tokenCooldown.isInvalidKey(e.token._id)) return false
       // Check hard usage limit
       if (e.token.usageLimit !== null && e.token.usageCount >= e.token.usageLimit) return false
       // Check in-memory rate limit cooldown
@@ -106,8 +108,27 @@ class TokenRotationService {
     return (
       lower.includes("429") ||
       lower.includes("rate limit") ||
+      lower.includes("rate_limit") ||
+      lower.includes("ratelimit") ||
       lower.includes("quota") ||
-      lower.includes("too many requests")
+      lower.includes("too many requests") ||
+      lower.includes("overloaded") ||
+      lower.includes("resource_exhausted") ||
+      lower.includes("billing") ||
+      lower.includes("credit")
+    )
+  }
+
+  isInvalidKeyError(error: string): boolean {
+    const lower = error.toLowerCase()
+    return (
+      lower.includes("api_key_invalid") ||
+      lower.includes("invalid api key") ||
+      lower.includes("invalid or expired api key") ||
+      lower.includes("api key not valid") ||
+      lower.includes("401") ||
+      lower.includes("unauthorized") ||
+      lower.includes("authentication")
     )
   }
 
@@ -122,22 +143,46 @@ class TokenRotationService {
     usage?: { input_tokens: number; output_tokens: number }
     provider?: string
     tokenId?: string
+    tokenAlias?: string
     error?: string
+    traceback?: string
   }> {
+    // Ensure we can try at least as many times as tokens in pool
+    const effectiveMaxAttempts = Math.max(maxAttempts, this.pool.size)
     logger.debug('TokenRotation', `Starting processWithRotation`, {
       provider,
       strategy,
-      maxAttempts,
+      maxAttempts: effectiveMaxAttempts,
+      poolSize: this.pool.size,
       contentLength: content.length,
     })
 
     let attempts = 0
 
-    while (attempts < maxAttempts) {
+    while (attempts < effectiveMaxAttempts) {
       const entry = this.getNextToken(provider)
 
       if (!entry) {
-        const error = `No available API tokens${provider ? ` for ${provider}` : ""}`
+        // Build a descriptive error explaining why no tokens are available
+        const allEntries = [...this.pool.values()]
+        const reasons: string[] = []
+        for (const e of allEntries) {
+          if (provider && e.token.provider !== provider) continue
+          const tokenLabel = e.token.alias || e.token.provider
+          if (tokenCooldown.isInvalidKey(e.token._id)) {
+            reasons.push(`${tokenLabel}: invalid API key`)
+          } else if (e.token.usageLimit !== null && e.token.usageCount >= e.token.usageLimit) {
+            reasons.push(`${tokenLabel}: usage limit reached (${e.token.usageCount}/${e.token.usageLimit})`)
+          } else if (tokenCooldown.isRateLimited(e.token._id)) {
+            const remaining = tokenCooldown.getCooldownRemaining(e.token._id)
+            reasons.push(`${tokenLabel}: rate-limited (${Math.ceil(remaining / 60)}m remaining)`)
+          } else if (tokenCooldown.isQuotaExhausted(e.token._id, e.token.quotaLimit)) {
+            const used = tokenCooldown.getQuotaUsed(e.token._id)
+            reasons.push(`${tokenLabel}: daily quota exhausted (${used}/${e.token.quotaLimit})`)
+          }
+        }
+        const reasonStr = reasons.length > 0 ? ` Reasons: ${reasons.join("; ")}` : ""
+        const error = `No available API tokens${provider ? ` for ${provider}` : ""}.${reasonStr}`
         logger.error('TokenRotation', error)
         return { success: false, error }
       }
@@ -161,6 +206,7 @@ class TokenRotationService {
           this.recordUsage(entry.token._id)
           logger.info('TokenRotation', `Extraction successful on attempt ${attempts + 1}`, {
             tokenId: entry.token._id,
+            tokenAlias: entry.token.alias,
             provider: result.data.provider,
           })
           return {
@@ -171,6 +217,7 @@ class TokenRotationService {
               | undefined,
             provider: result.data.provider as string | undefined,
             tokenId: entry.token._id,
+            tokenAlias: entry.token.alias,
           }
         }
 
@@ -186,12 +233,26 @@ class TokenRotationService {
           continue
         }
 
+        if (this.isInvalidKeyError(String(errorMsg))) {
+          logger.warn('TokenRotation', `Invalid API key detected, disabling token and trying next`, {
+            tokenId: entry.token._id,
+            alias: entry.token.alias,
+            error: errorMsg,
+          })
+          // Mark as invalid in cooldown cache — persists across loadTokens() calls
+          tokenCooldown.markInvalidKey(entry.token._id)
+          attempts++
+          continue
+        }
+
         entry.inFlight = Math.max(0, entry.inFlight - 1)
+        const tokenLabel = entry.token.alias || entry.token.provider
         logger.error('TokenRotation', `Extraction failed, not retrying`, {
           attempt: attempts + 1,
+          token: tokenLabel,
           error: errorMsg,
         })
-        return { success: false, error: String(errorMsg) }
+        return { success: false, error: `[${tokenLabel}] ${errorMsg}`, traceback: result.traceback }
       } catch (err) {
         entry.inFlight = Math.max(0, entry.inFlight - 1)
         const errorMsg = err instanceof Error ? err.message : String(err)
@@ -210,12 +271,23 @@ class TokenRotationService {
           continue
         }
 
-        return { success: false, error: errorMsg }
+        if (this.isInvalidKeyError(errorMsg)) {
+          logger.warn('TokenRotation', `Invalid API key in exception, disabling token and trying next`, {
+            tokenId: entry.token._id,
+            alias: entry.token.alias,
+          })
+          this.pool.delete(entry.token._id)
+          attempts++
+          continue
+        }
+
+        const tokenLabel = entry.token.alias || entry.token.provider
+        return { success: false, error: `[${tokenLabel}] ${errorMsg}` }
       }
     }
 
-    const finalError = "All tokens exhausted"
-    logger.error('TokenRotation', finalError, { attempts: maxAttempts })
+    const finalError = "All tokens exhausted after " + attempts + " attempts (all rate-limited, invalid, or quota exceeded)"
+    logger.error('TokenRotation', finalError, { attempts })
     return { success: false, error: finalError }
   }
 

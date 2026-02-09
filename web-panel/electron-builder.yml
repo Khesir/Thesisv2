@@ -1,0 +1,56 @@
+appId: com.thesis.panel
+productName: Thesis Againn
+copyright: Copyright 2025
+
+directories:
+  output: dist
+  buildResources: build_resources
+
+files:
+  - dist-electron/**/*
+  - electron/connect.html
+  - electron/connect.css
+  - electron/connect.js
+
+extraResources:
+  - from: .next/standalone
+    to: app/standalone
+    filter:
+      - "**/*"
+  - from: .next/static
+    to: app/standalone/.next/static
+    filter:
+      - "**/*"
+  - from: public
+    to: app/standalone/public
+    filter:
+      - "**/*"
+  - from: ../python_dist
+    to: app/python
+    filter:
+      - "*.exe"
+  - from: electron/connect.html
+    to: app/electron/connect.html
+  - from: electron/connect.css
+    to: app/electron/connect.css
+  - from: electron/connect.js
+    to: app/electron/connect.js
+
+win:
+  icon: build_resources/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Thesis Againn
+  installerIcon: build_resources/icon.ico
+
+asar: true
+
+npmRebuild: false

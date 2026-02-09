@@ -71,6 +71,7 @@ export interface APITokenResponse {
   cooldownRemaining: number
   cooldownTotal: number
   quotaUsed: number
+  invalidKey: boolean
 }
 
 // ============= CONSTANTS =============

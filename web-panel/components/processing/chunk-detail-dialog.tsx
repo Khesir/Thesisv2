@@ -21,6 +21,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
   "requires-validation": "secondary",
   processing: "outline",
   "not-processed": "outline",
+  rejected: "destructive",
 }
 
 export function ChunkDetailDialog({

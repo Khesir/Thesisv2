@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { connectDB } from "@/lib/db/connection"
 import { APITokenModel } from "@/lib/entities/api-token"
 import { testToken } from "@/services/ebr-extractor"
+import { tokenCooldown } from "@/services/token-cooldown"
 
 export async function POST(
   _req: NextRequest,
@@ -22,6 +23,10 @@ export async function POST(
     const result = await testToken(token.provider, token.token)
 
     if (result.success && result.data) {
+      // Clear invalid flag if test passes
+      if (result.data.valid) {
+        tokenCooldown.clearInvalidKey(id)
+      }
       return NextResponse.json({
         valid: result.data.valid,
         error: result.data.error,

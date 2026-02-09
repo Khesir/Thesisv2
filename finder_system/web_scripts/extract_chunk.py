@@ -8,7 +8,10 @@ import sys
 import json
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+if getattr(sys, 'frozen', False):
+    sys.path.insert(0, sys._MEIPASS)
+else:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from finder_system.llm_extractor.adapter import ClaudeAdapter, GeminiAdapter, OllamaAdapter
 from finder_system.llm_orchestrator import create_orchestrator
@@ -76,7 +79,13 @@ def main():
                 "provider": result.provider,
             }, sys.stdout)
     except Exception as e:
-        json.dump({"success": False, "error": str(e)}, sys.stdout)
+        import traceback
+        json.dump({
+            "success": False,
+            "error": str(e),
+            "errorType": type(e).__name__,
+            "traceback": traceback.format_exc(),
+        }, sys.stdout)
 
 
 if __name__ == "__main__":

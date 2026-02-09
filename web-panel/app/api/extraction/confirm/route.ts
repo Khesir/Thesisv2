@@ -49,7 +49,20 @@ export async function POST(req: NextRequest) {
       })
 
       // Remove extracted data if exists
-      await ExtractedDataModel.deleteOne({ chunkId })
+      await ExtractedDataModel.deleteMany({ chunkId })
+
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === "reject-permanent") {
+      // Mark chunk as rejected permanently
+      await ChunkModel.findByIdAndUpdate(chunkId, {
+        status: "rejected",
+        processedDataId: null,
+      })
+
+      // Remove extracted data if exists
+      await ExtractedDataModel.deleteMany({ chunkId })
 
       return NextResponse.json({ success: true })
     }
@@ -59,8 +72,13 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     )
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Confirmation failed" },
+      {
+        success: false,
+        error: errorMsg || "An unexpected error occurred during confirmation",
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+      },
       { status: 500 }
     )
   }

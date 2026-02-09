@@ -17,6 +17,7 @@ export async function GET() {
       cooldownRemaining: tokenCooldown.getCooldownRemaining(String(t._id)),
       cooldownTotal: tokenCooldown.getCooldownTotal(String(t._id)),
       quotaUsed: tokenCooldown.getQuotaUsed(String(t._id)),
+      invalidKey: tokenCooldown.isInvalidKey(String(t._id)),
     }))
 
     return NextResponse.json({ success: true, tokens: masked })

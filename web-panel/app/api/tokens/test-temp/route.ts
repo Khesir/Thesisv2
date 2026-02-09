@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { testToken } from "@/services/ebr-extractor"
 import type { TokenProvider } from "@/lib/entities/api-token"
+import { logger } from "@/lib/logger"
 
 const PROVIDER_DEFAULTS: Record<TokenProvider, { quotaLimit: number | null; cooldownMinutes: number; description: string }> = {
   google: { quotaLimit: 1500, cooldownMinutes: 60, description: "Google free tier: ~1500 requests/day, 60min cooldown" },
@@ -23,6 +24,13 @@ export async function POST(req: NextRequest) {
     const result = await testToken(provider, token)
     const isValid = result.success && result.data?.valid
     const defaults = PROVIDER_DEFAULTS[provider as TokenProvider]
+
+    logger.info('TokenTest', `Test result for ${provider}`, {
+      valid: isValid,
+      error: result.data?.error || result.error || null,
+      scriptSuccess: result.success,
+      dataValid: result.data?.valid,
+    })
 
     return NextResponse.json({
       valid: isValid,

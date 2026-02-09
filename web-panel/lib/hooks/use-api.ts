@@ -212,7 +212,7 @@ export async function processChunk(data: {
 export async function confirmExtraction(data: {
   chunkId: string
   data?: Record<string, unknown>
-  action: "accept" | "reject"
+  action: "accept" | "reject" | "reject-permanent"
 }) {
   const res = await fetch("/api/extraction/confirm", {
     method: "POST",

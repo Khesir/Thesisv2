@@ -23,9 +23,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, FlaskConical, Loader2, Construction } from "lucide-react"
 import { useState } from "react"
 import { type APITokenResponse } from "@/lib/entities/api-token"
+import { toast } from "sonner"
 
 interface TokenListProps {
   tokens: APITokenResponse[]
@@ -57,6 +58,9 @@ function getTokenStatus(token: APITokenResponse): {
   if (!token.isActive) {
     return { label: "Inactive", variant: "secondary" }
   }
+  if (token.invalidKey) {
+    return { label: "Invalid Key", variant: "destructive" }
+  }
   if (token.rateLimited) {
     const remaining = formatCooldown(token.cooldownRemaining)
     return { label: `Rate Limited (${remaining} left)`, variant: "destructive" }
@@ -72,11 +76,39 @@ function getTokenStatus(token: APITokenResponse): {
 
 export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
   const [filter, setFilter] = useState("all")
+  const [testingId, setTestingId] = useState<string | null>(null)
+
+  const handleTestToken = async (token: APITokenResponse) => {
+    setTestingId(token._id)
+    try {
+      const res = await fetch(`/api/tokens/${token._id}/test`, {
+        method: "POST",
+      })
+      const result = await res.json()
+
+      if (result.valid) {
+        toast.success(`${token.alias}: Token is valid`)
+      } else {
+        toast.error(`${token.alias}: ${result.error || "Invalid token"}`)
+      }
+    } catch {
+      toast.error(`Failed to test ${token.alias}`)
+    } finally {
+      setTestingId(null)
+    }
+  }
 
   const filtered = filter === "all" ? tokens : tokens.filter((t) => t.provider === filter)
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+        <Construction className="h-4 w-4 shrink-0" />
+        <span>
+          <strong>In Development</strong> — Token rotation and management is being reworked. Use the manual token input on the EBR Filter page for now.
+        </span>
+      </div>
+
       <Select value={filter} onValueChange={setFilter}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="All Providers" />
@@ -145,6 +177,15 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleTestToken(token)}
+                            disabled={testingId === token._id}
+                          >
+                            {testingId === token._id
+                              ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              : <FlaskConical className="mr-2 h-4 w-4" />}
+                            {testingId === token._id ? "Testing..." : "Test"}
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onEdit(token)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit

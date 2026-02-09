@@ -8,7 +8,10 @@ import sys
 import json
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+if getattr(sys, 'frozen', False):
+    sys.path.insert(0, sys._MEIPASS)
+else:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from finder_system.text_processor import TextProcessor
 

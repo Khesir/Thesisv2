@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thesis Againn</title>
+  <link rel="stylesheet" href="connect.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Thesis Againn</h1>
+      <p class="subtitle">Connect to your MongoDB database to get started.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="uri-input">MongoDB Connection URI</label>
+      <input
+        type="text"
+        id="uri-input"
+        placeholder="mongodb://localhost:27017/thesis"
+        spellcheck="false"
+        autocomplete="off"
+      />
+      <div class="help-text">
+        <p>Examples:</p>
+        <code>mongodb://localhost:27017/thesis</code>
+        <code>mongodb+srv://user:pass@cluster.mongodb.net/thesis</code>
+      </div>
+    </div>
+
+    <div id="status-banner" class="status-banner hidden"></div>
+
+    <div class="actions">
+      <button id="btn-test" class="btn btn-secondary">Test Connection</button>
+      <button id="btn-connect" class="btn btn-primary">Connect &amp; Start</button>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <p id="loading-text">Connecting...</p>
+    </div>
+  </div>
+
+  <script src="connect.js"></script>
+</body>
+</html>
