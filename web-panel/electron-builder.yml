@@ -35,6 +35,10 @@ extraResources:
     to: app/electron/connect.css
   - from: electron/connect.js
     to: app/electron/connect.js
+  - from: dist-scripts
+    to: app/scripts
+    filter:
+      - "**/*"
 
 win:
   icon: build_resources/icon.ico

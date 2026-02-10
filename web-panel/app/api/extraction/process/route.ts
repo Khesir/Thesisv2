@@ -8,49 +8,55 @@ import { logger } from "@/lib/logger"
 /**
  * Transform LLM extraction output to database schema format.
  * LLM returns crops array, but database expects separate records per crop.
+ * Creates one ExtractedData document per crop found.
  * Handles incomplete data gracefully - saves potential data even with missing fields.
  */
 function transformExtractionData(
   llmData: Record<string, any>,
   chunkId: string
 ): Record<string, any>[] {
-  const crops = llmData.crops || []
+  // Unwrap nested data structure from Python script output
+  // llmData is { success, data: { crops: [...] }, usage, provider }
+  const inner = llmData.data || llmData
+  const crops = inner.crops || llmData.crops || []
 
   // If no crops found, create a single record with general agricultural info
   if (!Array.isArray(crops) || crops.length === 0) {
     return [{
       chunkId,
-      cropName: null,  // No specific crop identified
+      cropName: null,
       category: "other",
       scientificName: null,
-      soilRequirements: llmData.soil_types ? { types: llmData.soil_types } : undefined,
-      climateRequirements: llmData.climate_conditions || undefined,
-      plantingInfo: llmData.growing_conditions || undefined,
-      farmingPractices: llmData.farming_practices || [],
-      pestsDiseases: llmData.pests_diseases || [],
-      recommendations: llmData.recommendations || [],
+      soilRequirements: inner.soil_types ? { types: inner.soil_types } : undefined,
+      climateRequirements: inner.climate_conditions || undefined,
+      plantingInfo: inner.growing_conditions || undefined,
+      farmingPractices: inner.farming_practices || [],
+      pestsDiseases: inner.pests_diseases || [],
+      recommendations: inner.recommendations || [],
       rawResponse: llmData,
     }]
   }
 
   // Create a document for each crop found
+  // Only store rawResponse on the first crop to avoid redundant copies
   return crops.map((crop: any, index: number) => {
     const cropName = crop.name || crop.common_name
 
     return {
       chunkId,
-      cropName: cropName ? String(cropName).trim() || null : null,  // Use null if empty
+      cropName: cropName ? String(cropName).trim() || null : null,
       scientificName: crop.scientific_name ? String(crop.scientific_name).trim() : null,
-      category: crop.category || "other",  // Default to "other" if not specified
-      soilRequirements: llmData.soil_types ? { types: llmData.soil_types } : undefined,
-      climateRequirements: llmData.climate_conditions || undefined,
-      plantingInfo: llmData.growing_conditions || undefined,
-      farmingPractices: llmData.farming_practices || [],
-      pestsDiseases: llmData.pests_diseases || [],
-      yieldInfo: llmData.yield_information || undefined,
-      regionalData: llmData.regional_data ? [llmData.regional_data] : undefined,
-      recommendations: llmData.recommendations || [],
-      rawResponse: llmData,
+      category: crop.category || "other",
+      soilRequirements: crop.soil_requirements || undefined,
+      climateRequirements: crop.climate_requirements || undefined,
+      nutrients: crop.nutrients || undefined,
+      plantingInfo: crop.planting_info || undefined,
+      farmingPractices: crop.farming_practices || [],
+      pestsDiseases: crop.pests_diseases || [],
+      yieldInfo: crop.yield_info || undefined,
+      regionalData: crop.regional_data || [],
+      recommendations: crop.recommendations || [],
+      rawResponse: index === 0 ? llmData : {},
     }
   })
 }

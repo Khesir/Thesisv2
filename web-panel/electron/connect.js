@@ -5,6 +5,13 @@ const statusBanner = document.getElementById("status-banner");
 const loadingOverlay = document.getElementById("loading-overlay");
 const loadingText = document.getElementById("loading-text");
 
+// Listen for startup progress updates from main process
+window.electronAPI.onStartupProgress((message) => {
+  if (loadingText) {
+    loadingText.textContent = message;
+  }
+});
+
 // Pre-fill saved URI on load
 window.addEventListener("DOMContentLoaded", async () => {
   const savedUri = await window.electronAPI.getSavedUri();
@@ -64,7 +71,7 @@ btnConnect.addEventListener("click", async () => {
   }
 
   hideStatus();
-  setLoading(true, "Starting application...");
+  setLoading(true, "Connecting to database...");
 
   const result = await window.electronAPI.connect(uri);
 

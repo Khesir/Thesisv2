@@ -33,6 +33,7 @@ def build_script(script_path: str) -> bool:
     print(f"\n{'='*60}")
     print(f"Building: {script_name}")
     print(f"{'='*60}")
+    finder_system_path = os.path.join(PROJECT_ROOT, "finder_system")
 
     cmd = [
         sys.executable, "-m", "PyInstaller",
@@ -42,7 +43,7 @@ def build_script(script_path: str) -> bool:
         "--distpath", OUTPUT_DIR,
         "--workpath", os.path.join(PROJECT_ROOT, "build", script_name),
         "--specpath", os.path.join(PROJECT_ROOT, "build"),
-        "--add-data", f"finder_system{os.pathsep}finder_system",
+        "--add-data", f"{finder_system_path}:finder_system",
     ]
 
     for imp in HIDDEN_IMPORTS:

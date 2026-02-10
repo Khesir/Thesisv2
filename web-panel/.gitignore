@@ -10,6 +10,10 @@
 !.yarn/releases
 !.yarn/versions
 
+
+dist-electron
+dist-scripts
+
 # testing
 /coverage
 
