@@ -1,9 +1,16 @@
 """
 Crop Data Store (MongoDB-backed)
 Loads and indexes crop data from MongoDB for RAG retrieval.
+Uses Gemini embeddings for semantic vector search with keyword fallback.
 """
+import hashlib
 import logging
+import os
 from typing import Dict, List, Optional
+
+import numpy as np
+import google.generativeai as genai
+
 from .db_connection import get_db
 
 logger = logging.getLogger(__name__)
@@ -16,10 +23,117 @@ class CropStore:
         """Initialize crop store with MongoDB connection"""
         self.db = get_db()
         self.extracted_data_collection = self.db['extracteddatas']
+        self.embeddings_collection = self.db['crop_embeddings']
         self.crop_index: Dict[str, Dict] = {}  # name -> crop data (in-memory cache)
         self.crop_texts: Dict[str, str] = {}  # name -> searchable text
+        self.crop_embeddings: Dict[str, np.ndarray] = {}  # name -> embedding vector
         self.sources: List[str] = []  # For compatibility with API
         self.loaded = False
+        self.embedding_search_available = False
+        self._init_embedding_client()
+
+    def _init_embedding_client(self):
+        """Configure Gemini for embedding generation"""
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if api_key:
+            try:
+                genai.configure(api_key=api_key)
+                logger.info("Gemini embedding client initialized")
+            except Exception as e:
+                logger.warning(f"Failed to init Gemini embedding client: {e}")
+
+    def _hash_text(self, text: str) -> str:
+        """SHA256 hash of text to detect data changes"""
+        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+    def _embed_text(self, text: str) -> Optional[np.ndarray]:
+        """Embed text using Gemini (for documents)"""
+        try:
+            result = genai.embed_content(
+                model="models/text-embedding-004",
+                content=text,
+                task_type="retrieval_document"
+            )
+            return np.array(result['embedding'], dtype=np.float32)
+        except Exception as e:
+            logger.error(f"Embedding error: {e}")
+            return None
+
+    def _embed_query(self, query: str) -> Optional[np.ndarray]:
+        """Embed text using Gemini (for queries)"""
+        try:
+            result = genai.embed_content(
+                model="models/text-embedding-004",
+                content=query,
+                task_type="retrieval_query"
+            )
+            return np.array(result['embedding'], dtype=np.float32)
+        except Exception as e:
+            logger.error(f"Query embedding error: {e}")
+            return None
+
+    def _load_cached_embeddings(self) -> Dict[str, Dict]:
+        """Load cached embeddings from MongoDB"""
+        cache = {}
+        try:
+            for doc in self.embeddings_collection.find({}):
+                cache[doc['crop_key']] = {
+                    'hash': doc['text_hash'],
+                    'embedding': np.array(doc['embedding'], dtype=np.float32)
+                }
+        except Exception as e:
+            logger.warning(f"Failed to load embedding cache: {e}")
+        return cache
+
+    def _cache_embedding(self, key: str, text_hash: str, embedding: np.ndarray):
+        """Upsert embedding to MongoDB cache"""
+        try:
+            self.embeddings_collection.update_one(
+                {'crop_key': key},
+                {'$set': {
+                    'crop_key': key,
+                    'text_hash': text_hash,
+                    'embedding': embedding.tolist()
+                }},
+                upsert=True
+            )
+        except Exception as e:
+            logger.warning(f"Failed to cache embedding for {key}: {e}")
+
+    def _generate_embeddings(self):
+        """Generate embeddings for all crops, using cache when possible"""
+        if not os.getenv('GOOGLE_API_KEY'):
+            logger.info("No GOOGLE_API_KEY set, skipping embedding generation")
+            return
+
+        cached = self._load_cached_embeddings()
+        to_embed = []  # (key, text, hash) tuples for new/changed crops
+
+        for key, text in self.crop_texts.items():
+            text_hash = self._hash_text(text)
+            if key in cached and cached[key]['hash'] == text_hash:
+                # Use cached embedding
+                self.crop_embeddings[key] = cached[key]['embedding']
+            else:
+                to_embed.append((key, text, text_hash))
+
+        if not to_embed:
+            logger.info(f"All {len(self.crop_embeddings)} embeddings loaded from cache")
+            self.embedding_search_available = len(self.crop_embeddings) > 0
+            return
+
+        logger.info(f"Generating embeddings for {len(to_embed)} crops ({len(self.crop_embeddings)} cached)...")
+
+        for key, text, text_hash in to_embed:
+            embedding = self._embed_text(text)
+            if embedding is not None:
+                self.crop_embeddings[key] = embedding
+                self._cache_embedding(key, text_hash, embedding)
+            else:
+                logger.warning(f"Failed to embed crop: {key}")
+
+        self.embedding_search_available = len(self.crop_embeddings) > 0
+        logger.info(f"Embedding generation complete. {len(self.crop_embeddings)} crops embedded.")
 
     def load_all(self) -> int:
         """
@@ -83,6 +197,10 @@ class CropStore:
             self.loaded = True
             self.sources = f"MongoDB ({crop_count} documents)"  # For tracking
             logger.info(f"Loaded {crop_count} crops from MongoDB")
+
+            # Generate embeddings for semantic search
+            self._generate_embeddings()
+
             return crop_count
 
         except Exception as e:
@@ -178,14 +296,14 @@ class CropStore:
             parts.append(crop['category'])
 
         # Soil
-        soil = crop.get('soil_requirements', {})
+        soil = crop.get('soil_requirements') or {}
         if soil.get('types'):
             parts.extend(soil['types'])
         if soil.get('ph_range'):
             parts.append(f"pH {soil['ph_range']}")
 
         # Climate
-        climate = crop.get('climate_requirements', {})
+        climate = crop.get('climate_requirements') or {}
         if climate.get('temperature'):
             parts.append(climate['temperature'])
         if climate.get('rainfall'):
@@ -194,7 +312,7 @@ class CropStore:
             parts.extend(climate['conditions'])
 
         # Growing conditions
-        growing = crop.get('growing_conditions', {})
+        growing = crop.get('growing_conditions') or {}
         if growing.get('season'):
             parts.append(growing['season'])
         if growing.get('method'):
@@ -224,9 +342,71 @@ class CropStore:
 
         return ' '.join(str(p) for p in parts if p).lower()
 
+    def _keyword_search(self, query: str, top_k: int = 3) -> List[Dict]:
+        """
+        Keyword-based search for crops (fallback).
+
+        Args:
+            query: Search query
+            top_k: Number of results to return
+
+        Returns:
+            List of matching crops with scores
+        """
+        query_terms = query.lower().split()
+        results = []
+
+        for key, text in self.crop_texts.items():
+            score = sum(1 for term in query_terms if term in text)
+            if score > 0:
+                results.append({
+                    'crop': self.crop_index[key],
+                    'score': float(score),
+                    'name': self.crop_index[key].get('name')
+                })
+
+        results.sort(key=lambda x: x['score'], reverse=True)
+        return results[:top_k]
+
+    def _vector_search(self, query_embedding: np.ndarray, top_k: int = 3) -> List[Dict]:
+        """
+        Cosine similarity search over in-memory crop embeddings.
+
+        Args:
+            query_embedding: Query embedding vector
+            top_k: Number of results to return
+
+        Returns:
+            List of matching crops with cosine similarity scores
+        """
+        scores = []
+        query_norm = np.linalg.norm(query_embedding)
+        if query_norm == 0:
+            return []
+
+        for key, crop_emb in self.crop_embeddings.items():
+            crop_norm = np.linalg.norm(crop_emb)
+            if crop_norm == 0:
+                continue
+            similarity = float(np.dot(query_embedding, crop_emb) / (query_norm * crop_norm))
+            scores.append((key, similarity))
+
+        scores.sort(key=lambda x: x[1], reverse=True)
+
+        results = []
+        for key, similarity in scores[:top_k]:
+            if similarity > 0:
+                results.append({
+                    'crop': self.crop_index[key],
+                    'score': similarity,
+                    'name': self.crop_index[key].get('name')
+                })
+
+        return results
+
     def search(self, query: str, top_k: int = 3) -> List[Dict]:
         """
-        Keyword-based search for crops.
+        Search for crops using vector search with keyword fallback.
 
         Args:
             query: Search query
@@ -238,22 +418,16 @@ class CropStore:
         if not self.loaded:
             self.load_all()
 
-        query_terms = query.lower().split()
-        results = []
+        # Try vector search first
+        if self.embedding_search_available:
+            query_embedding = self._embed_query(query)
+            if query_embedding is not None:
+                results = self._vector_search(query_embedding, top_k)
+                if results:
+                    return results
 
-        for key, text in self.crop_texts.items():
-            # Score: number of matching query terms
-            score = sum(1 for term in query_terms if term in text)
-            if score > 0:
-                results.append({
-                    'crop': self.crop_index[key],
-                    'score': score,
-                    'name': self.crop_index[key].get('name')
-                })
-
-        # Sort by score descending
-        results.sort(key=lambda x: x['score'], reverse=True)
-        return results[:top_k]
+        # Fall back to keyword search
+        return self._keyword_search(query, top_k)
 
     def get_crop(self, crop_name: str) -> Optional[Dict]:
         """Get a specific crop by name"""

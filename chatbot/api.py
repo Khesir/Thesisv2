@@ -82,7 +82,7 @@ class SearchRequest(BaseModel):
 
 class SearchResult(BaseModel):
     name: str
-    score: int
+    score: float
     category: Optional[str]
 
 
@@ -90,6 +90,7 @@ class HealthResponse(BaseModel):
     status: str
     crops_loaded: int
     llm_available: bool
+    embedding_search: bool
 
 
 # Endpoints
@@ -99,7 +100,8 @@ async def health_check():
     return {
         "status": "healthy",
         "crops_loaded": len(crop_store.crop_index),
-        "llm_available": rag_engine.is_available() if rag_engine else False
+        "llm_available": rag_engine.is_available() if rag_engine else False,
+        "embedding_search": crop_store.embedding_search_available
     }
 
 

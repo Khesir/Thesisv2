@@ -11,6 +11,9 @@ requests==2.32.3
 # Text Processing
 nltk==3.8.1
 
+# Embeddings / Vector Search
+numpy==1.26.4
+
 # Data Handling
 python-dotenv==1.0.0
 

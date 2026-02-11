@@ -1,0 +1,11 @@
+
+Copy the thesis_panel.dump file to the other device, then run:
+mongorestore --archive=thesis_panel.dump --db thesis_panel
+
+If MongoDB is running in Docker on that device:
+
+docker cp thesis_panel.dump <container_name>:/tmp/thesis_panel.dump
+docker exec <container_name> bash -c "mongorestore --archive=/tmp/thesis_panel.dump   --db thesis_panel"
+
+If the database already has data and you want to overwrite it, add --drop:
+mongorestore --archive=thesis_panel.dump --db thesis_panel --drop
