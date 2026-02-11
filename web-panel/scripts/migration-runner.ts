@@ -2,7 +2,6 @@
 import mongoose from "mongoose"
 import fs from "fs"
 import path from "path"
-import { pathToFileURL } from "url"
 import type { Migration, MigrationDatabase, MigrationRecord } from "./migrations/types"
 import type { Collection } from "mongodb"
 
@@ -30,19 +29,18 @@ async function loadMigrations(): Promise<Migration[]> {
     return []
   }
 
+  const ext = __filename.endsWith(".js") ? ".js" : ".ts"
   const files = fs
     .readdirSync(migrationsDir)
-    .filter((f) => f.endsWith(".ts") && f !== "types.ts")
+    .filter((f) => f.endsWith(ext) && f !== `types${ext}`)
     .sort()
 
   const migrations: Migration[] = []
 
   for (const file of files) {
     const modulePath = path.join(migrationsDir, file)
-    // Convert Windows paths to file:// URLs for ESM import
-    const moduleUrl = pathToFileURL(modulePath).href
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const module = await import(moduleUrl) as any
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+    const module = require(modulePath) as any
 
     // Skip if this is not a valid migration file (check for required exports)
     if (!module.name || !module.up) {
