@@ -17,11 +17,31 @@ SCRIPTS = [
 HIDDEN_IMPORTS = [
     "anthropic",
     "google.generativeai",
+    "google",
+    "google.ai",
+    "google.ai.generativelanguage",
+    "google.api_core",
+    "google.auth",
+    "google.protobuf",
     "openai",
     "pdfplumber",
     "nltk",
     "pdfminer",
     "pdfminer.high_level",
+    "requests",
+]
+
+# Packages that need ALL submodules/data files collected
+COLLECT_ALL = [
+    "pdfplumber",
+    "pdfminer",
+    "google.generativeai",
+    "google.ai",
+    "google.api_core",
+    "google.auth",
+    "google.protobuf",
+    "anthropic",
+    "openai",
 ]
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "python_dist")
@@ -48,6 +68,9 @@ def build_script(script_path: str) -> bool:
 
     for imp in HIDDEN_IMPORTS:
         cmd.extend(["--hidden-import", imp])
+
+    for pkg in COLLECT_ALL:
+        cmd.extend(["--collect-all", pkg])
 
     cmd.append(script_path)
 

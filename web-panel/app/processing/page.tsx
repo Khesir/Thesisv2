@@ -7,7 +7,9 @@ import { ChunksTable } from "@/components/processing/chunks-table"
 import { ProcessingProgress } from "@/components/processing/processing-progress"
 import { useChunks, uploadPDF, mutateChunks } from "@/lib/hooks/use-api"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
+import { AlertCircle, X } from "lucide-react"
 
 export default function ProcessingPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -16,6 +18,7 @@ export default function ProcessingPage() {
   const [uploading, setUploading] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [stage, setStage] = useState<"uploading" | "extracting" | "chunking" | "saving" | "done">("uploading")
+  const [error, setError] = useState<{ message: string; traceback?: string } | null>(null)
 
   const { data, isLoading } = useChunks({ limit: 200 })
   const chunks = data?.chunks || []
@@ -50,6 +53,7 @@ export default function ProcessingPage() {
     }
     setUploading(true)
     setStage("uploading")
+    setError(null)
     try {
       const result = await uploadPDF(selectedFile, chunkSize)
       if (result.success) {
@@ -60,10 +64,10 @@ export default function ProcessingPage() {
         setSelectedFile(null)
         mutateChunks()
       } else {
-        toast.error(result.error || "Upload failed")
+        setError({ message: result.error || "Upload failed", traceback: result.traceback })
       }
-    } catch {
-      toast.error("Upload failed")
+    } catch (err) {
+      setError({ message: err instanceof Error ? err.message : "Upload failed" })
     } finally {
       setUploading(false)
     }
@@ -97,6 +101,28 @@ export default function ProcessingPage() {
           elapsedSeconds={elapsed}
           stage="done"
         />
+      )}
+
+      {error && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6 space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertCircle className="h-5 w-5 shrink-0" />
+                <span className="font-medium">Processing failed</span>
+              </div>
+              <button onClick={() => setError(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-destructive">{error.message}</p>
+            {error.traceback && (
+              <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap">
+                {error.traceback}
+              </pre>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {isLoading ? (

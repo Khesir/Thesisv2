@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: false,
           error: extractResult.data?.error || extractResult.error || "Failed to extract text",
+          traceback: extractResult.traceback,
         }, { status: 500 })
       }
 
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: false,
           error: chunksResult.data?.error || chunksResult.error || "Failed to create chunks",
+          traceback: chunksResult.traceback,
         }, { status: 500 })
       }
 

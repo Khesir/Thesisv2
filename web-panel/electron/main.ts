@@ -118,6 +118,7 @@ async function startNextServer(uri: string): Promise<void> {
 
     if (!isDev) {
       env.ELECTRON_PACKAGED = "true";
+      env.RESOURCES_PATH = process.resourcesPath;
     }
 
     nextProcess = spawn(serverCmd, serverArgs, {

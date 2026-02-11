@@ -18,7 +18,8 @@
     "build:scripts": "tsc -p scripts/tsconfig.json",
     "build:electron": "next build && tsc -p electron/tsconfig.json && npm run build:scripts",
     "electron:build": "npm run build:electron && electron-builder",
-    "build:python": "python ../build_python.py"
+    "build:python": "python ../build_python.py",
+    "start:prod": "set ELECTRON_PACKAGED=true&& set RESOURCES_PATH=%cd%&& node .next/standalone/server.js"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

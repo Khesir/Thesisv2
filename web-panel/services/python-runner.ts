@@ -3,17 +3,12 @@ import path from "path"
 import fs from "fs"
 import { logger } from "@/lib/logger"
 
-// Electron injects resourcesPath on the process object in packaged apps
-declare global {
-  namespace NodeJS {
-    interface Process {
-      resourcesPath?: string
-    }
-  }
-}
-
 function isPackaged(): boolean {
   return process.env.ELECTRON_PACKAGED === "true"
+}
+
+function getResourcesPath(): string {
+  return process.env.RESOURCES_PATH || ""
 }
 
 // Determine Python command - prefer venv if available
@@ -79,7 +74,8 @@ export async function runScript<T = unknown>({
     if (isPackaged()) {
       // In packaged mode, run the frozen .exe directly
       const exeName = scriptName.replace(/\.py$/, ".exe")
-      cmd = path.join(process.resourcesPath!, "app", "python", exeName)
+      const pythonDir = process.env.PYTHON_DIST_PATH || path.join(getResourcesPath(), "app", "python")
+      cmd = path.join(pythonDir, exeName)
       spawnArgs = [...args]
       cwd = path.dirname(cmd)
       logger.debug('PythonRunner', `Running packaged exe: ${cmd}`)
