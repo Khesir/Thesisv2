@@ -62,6 +62,46 @@ uvicorn chatbot.api:app --reload
 uvicorn chatbot.api:app --host 0.0.0.0 --port 8000
 ```
 
+### Running with Docker
+
+#### Quick Start (standalone)
+
+1. Create a `.env` file inside the `chatbot/` directory:
+
+```env
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net
+MONGODB_NAME=thesis_panel
+GOOGLE_API_KEY=your-google-api-key
+```
+
+> **Note:** `GOOGLE_API_KEY` is optional. Without it, the chatbot falls back to keyword-based search instead of embedding/LLM-powered responses.
+
+2. Build and run:
+
+```bash
+docker compose -f chatbot/docker-compose.standalone.yml up --build
+```
+
+#### As part of the full project
+
+From the **project root** directory:
+
+```bash
+docker compose up chatbot-api
+```
+
+This builds the image from source and uses your root `.env` file.
+
+#### Verify it's running
+
+```bash
+# Health check
+curl http://localhost:8000/
+
+# Swagger docs available at
+http://localhost:8000/docs
+```
+
 ---
 
 ## Base URL

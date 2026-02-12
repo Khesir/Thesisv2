@@ -1,0 +1,14 @@
+# LLM Integration
+google-generativeai==0.8.3
+
+# Embeddings / Vector Search
+numpy==1.26.4
+
+# Data Handling
+python-dotenv==1.0.0
+
+# API Backend
+fastapi==0.115.0
+uvicorn==0.30.0
+pydantic==2.9.0
+pymongo==4.6.0
