@@ -22,7 +22,8 @@ class CropStore:
     def __init__(self):
         """Initialize crop store with MongoDB connection"""
         self.db = get_db()
-        self.extracted_data_collection = self.db['extracteddatas']
+        self.extracted_data_collection = self.db['extracteddatas']  # Layer 1: Raw data (deprecated for loading)
+        self.merged_data_collection = self.db['mergeddata']  # Layer 2: Production data (used for loading)
         self.embeddings_collection = self.db['crop_embeddings']
         self.crop_index: Dict[str, Dict] = {}  # name -> crop data (in-memory cache)
         self.crop_texts: Dict[str, str] = {}  # name -> searchable text
@@ -137,38 +138,56 @@ class CropStore:
 
     def load_all(self) -> int:
         """
-        Load all extracted crops from MongoDB.
+        Load all merged crops from MongoDB (Layer 2: Production data).
+        Loads parent crops and links varieties for consolidated embeddings.
 
         Returns:
-            Number of crops loaded
+            Number of parent crops loaded
         """
         if self.loaded:
             return len(self.crop_index)
 
         try:
-            # Query all extracted data documents
-            documents = list(self.extracted_data_collection.find({}))
-            logger.info(f"Found {len(documents)} extracted data documents in MongoDB")
+            # Query parent crops only (isVariety = false or not set)
+            parent_crops = list(self.merged_data_collection.find({
+                '$or': [
+                    {'isVariety': {'$exists': False}},
+                    {'isVariety': False}
+                ]
+            }))
+
+            # Query all varieties
+            varieties = list(self.merged_data_collection.find({'isVariety': True}))
+
+            logger.info(f"Found {len(parent_crops)} parent crops and {len(varieties)} varieties in mergeddata")
+
+            # Index varieties by parent crop ID
+            varieties_by_parent = {}
+            for variety in varieties:
+                parent_id = str(variety.get('parentCrop'))
+                if parent_id:
+                    if parent_id not in varieties_by_parent:
+                        varieties_by_parent[parent_id] = []
+                    varieties_by_parent[parent_id].append(variety)
 
             crop_count = 0
-            for doc in documents:
-                # Create a crop record from extracted data
+            for doc in parent_crops:
                 crop_name = doc.get('cropName')
                 if not crop_name:
-                    # Create fallback identifier for incomplete data
-                    crop_name = self._create_fallback_id(doc)
-
-                if not crop_name:
+                    logger.warning(f"Skipping merged data document without cropName: {doc.get('_id')}")
                     continue
 
                 # Normalize name for indexing
                 key = crop_name.lower()
 
-                # Build crop record from extracted data (MongoDB field names)
+                # Build parent crop record from merged data (MongoDB field names)
                 crop_record = {
                     'name': crop_name,
                     'scientific_name': doc.get('scientificName'),
                     'category': doc.get('category', 'other'),
+                    'varieties': doc.get('varieties', []),  # Array of variety names
+                    'alternative_names': doc.get('alternativeNames', []),  # Alternative names
+                    'is_variety': False,
                     'soil_requirements': self._format_soil(doc.get('soilRequirements')),
                     'climate_requirements': self._format_climate(doc.get('climateRequirements')),
                     'growing_conditions': doc.get('plantingInfo'),
@@ -179,32 +198,31 @@ class CropStore:
                     'regional_data': doc.get('regionalData', []),
                     '_source': {
                         'doc_id': str(doc['_id']),
-                        'chunk_id': doc.get('chunkId'),
-                        'created_at': doc.get('createdAt'),
-                        'is_incomplete': doc.get('cropName') is None
-                    }
+                        'validated_by': doc.get('validatedBy'),
+                        'validated_at': doc.get('validatedAt'),
+                        'source_documents': doc.get('sourceDocuments', []),
+                        'merged_from': doc.get('mergedFrom', [])
+                    },
+                    # Store variety documents for RAG retrieval expansion
+                    '_variety_docs': varieties_by_parent.get(str(doc['_id']), [])
                 }
 
-                if key in self.crop_index:
-                    # Merge with existing crop data
-                    self._merge_crop(key, crop_record)
-                else:
-                    self.crop_index[key] = crop_record
-                    self.crop_texts[key] = self._create_searchable_text(crop_record)
-
+                self.crop_index[key] = crop_record
+                # Create consolidated searchable text (includes variety keywords)
+                self.crop_texts[key] = self._create_searchable_text(crop_record)
                 crop_count += 1
 
             self.loaded = True
-            self.sources = f"MongoDB ({crop_count} documents)"  # For tracking
-            logger.info(f"Loaded {crop_count} crops from MongoDB")
+            self.sources = f"MongoDB mergeddata ({crop_count} parent crops, {len(varieties)} varieties)"
+            logger.info(f"Loaded {crop_count} crops from mergeddata collection")
 
-            # Generate embeddings for semantic search
+            # Generate consolidated embeddings (one per parent, includes variety keywords)
             self._generate_embeddings()
 
             return crop_count
 
         except Exception as e:
-            logger.error(f"Error loading crops from MongoDB: {e}")
+            logger.error(f"Error loading crops from mergeddata: {e}")
             return 0
 
     def _create_fallback_id(self, doc: Dict) -> Optional[str]:
@@ -286,14 +304,32 @@ class CropStore:
         self.crop_texts[key] = self._create_searchable_text(existing)
 
     def _create_searchable_text(self, crop: Dict) -> str:
-        """Create a searchable text representation of crop data"""
+        """
+        Create a searchable text representation of crop data.
+        For parent crops, includes variety names and alternative names for consolidated embedding.
+        """
         parts = [crop.get('name', '')]
+
+        # Add alternative names (e.g., "Palay", "Bigas" for Rice)
+        if crop.get('alternative_names'):
+            parts.extend(crop['alternative_names'])
 
         if crop.get('scientific_name'):
             parts.append(crop['scientific_name'])
 
         if crop.get('category'):
             parts.append(crop['category'])
+
+        # Add variety names for consolidated parent embedding
+        if crop.get('varieties'):
+            parts.extend(crop['varieties'])
+            # Extract variety type keywords (e.g., "Wetland" from "Wetland Rice")
+            for variety_name in crop['varieties']:
+                variety_words = set(variety_name.lower().split())
+                base_words = set(crop.get('name', '').lower().split())
+                variety_type = ' '.join(variety_words - base_words)
+                if variety_type.strip():
+                    parts.append(variety_type)
 
         # Soil
         soil = crop.get('soil_requirements') or {}

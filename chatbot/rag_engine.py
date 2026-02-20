@@ -56,15 +56,51 @@ class RAGEngine:
                 'context': None
             }
 
-        # Step 2: Build context from retrieved crops
+        # Step 2: Build context from retrieved crops (with variety expansion)
         context_parts = []
         crops_used = []
 
         for result in search_results:
             crop = result['crop']
             crops_used.append(result['name'])
-            summary = self.crop_store.get_crop_summary(crop)
-            context_parts.append(summary)
+
+            # Add parent crop summary
+            parent_summary = self.crop_store.get_crop_summary(crop)
+            context_parts.append(f"# {crop['name']} (Main Information)\n{parent_summary}")
+
+            # Check if this parent has varieties - expand them into context
+            if crop.get('varieties') and len(crop.get('varieties', [])) > 0:
+                variety_docs = crop.get('_variety_docs', [])
+
+                if variety_docs:
+                    context_parts.append(f"\n## Varieties of {crop['name']}:\n")
+
+                    for variety_doc in variety_docs:
+                        # Format variety record from MongoDB document
+                        variety_record = {
+                            'name': variety_doc.get('cropName'),
+                            'variety_type': variety_doc.get('varietyType'),
+                            'scientific_name': variety_doc.get('scientificName'),
+                            'category': variety_doc.get('category'),
+                            'soil_requirements': self.crop_store._format_soil(
+                                variety_doc.get('soilRequirements')
+                            ),
+                            'climate_requirements': self.crop_store._format_climate(
+                                variety_doc.get('climateRequirements')
+                            ),
+                            'growing_conditions': variety_doc.get('plantingInfo'),
+                            'farming_practices': variety_doc.get('farmingPractices', []),
+                            'pests_diseases': self.crop_store._format_pests(
+                                variety_doc.get('pestsDiseases', [])
+                            ),
+                            'recommendations': variety_doc.get('recommendations', []),
+                            'yield_information': variety_doc.get('yieldInfo'),
+                            'regional_data': variety_doc.get('regionalData', [])
+                        }
+
+                        variety_summary = self.crop_store.get_crop_summary(variety_record)
+                        context_parts.append(f"### {variety_record['name']}\n{variety_summary}\n")
+                        crops_used.append(variety_record['name'])
 
         context = '\n\n---\n\n'.join(context_parts)
 
@@ -130,8 +166,13 @@ class RAGEngine:
             }
 
     def _create_prompt(self, query: str, context: str) -> str:
-        """Create the prompt for the LLM"""
+        """Create the prompt for the LLM with variety awareness"""
         return f"""You are a helpful agricultural advisor. Answer the user's question based on the crop information provided below.
+
+The information includes parent crops and their varieties. When answering:
+- If the user asks about a specific variety (e.g., "wetland rice"), provide details specific to that variety
+- If they ask generally (e.g., "rice"), provide comprehensive information covering both general crop info and notable variety differences
+- Clearly distinguish between variety-specific traits (e.g., "Wetland Rice requires flooded conditions") and general traits
 
 CROP INFORMATION:
 {context}
@@ -141,7 +182,8 @@ USER QUESTION: {query}
 INSTRUCTIONS:
 - Answer based ONLY on the information provided above
 - Be conversational and helpful
-- If the information doesn't fully answer the question, say what you know and note what's missing
+- When discussing varieties, clarify which information applies to which variety
+- If discussing conflicting information (e.g., different pH ranges for varieties), explain the variation
 - Include specific numbers (fertilizer rates, yields, pH ranges) when available
 - Keep your response concise but informative
 

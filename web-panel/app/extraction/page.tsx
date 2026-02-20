@@ -9,6 +9,7 @@ import { ExtractionResults } from "@/components/extraction/extraction-results"
 import { ValidationQueue } from "@/components/extraction/validation-queue"
 import { ValidationCompare } from "@/components/extraction/validation-compare"
 import { ValidationActions } from "@/components/extraction/validation-actions"
+import { CreateMergedDataButton } from "@/components/extraction/create-merged-data-button"
 import { ExtractionSessionLog } from "@/components/extraction/extraction-session-log"
 import { TokenInput, type TokenStatus } from "@/components/extraction/token-input"
 import type { ProcessedChunk } from "@/components/extraction/extraction-session-log"
@@ -542,6 +543,14 @@ export default function ExtractionPage() {
               const next = validationChunks[idx + 1]
               setSelectedValidationId(next?._id || null)
               setSnapshotOriginal(null)
+            }}
+          />
+
+          <CreateMergedDataButton
+            extractedData={extractedData}
+            onSuccess={() => {
+              mutateExtracted()
+              toast.success("Merged data created successfully!")
             }}
           />
 

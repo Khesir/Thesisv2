@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/layout/theme-provider"
+import { UserProvider } from "@/lib/context/UserProvider"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
@@ -39,19 +40,21 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 !h-4" />
-                <div className="flex-1" />
-                <ThemeToggle />
-              </header>
-              <main className="flex-1 p-6">{children}</main>
-            </SidebarInset>
-          </SidebarProvider>
-          <Toaster />
+          <UserProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+                <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mr-2 !h-4" />
+                  <div className="flex-1" />
+                  <ThemeToggle />
+                </header>
+                <main className="flex-1 p-6">{children}</main>
+              </SidebarInset>
+            </SidebarProvider>
+            <Toaster />
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>
