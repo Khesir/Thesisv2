@@ -31,7 +31,8 @@ class RAGEngine:
         self,
         query: str,
         top_k: int = 3,
-        include_context: bool = True
+        include_context: bool = True,
+        api_key: Optional[str] = None
     ) -> Dict:
         """
         Process a user query with RAG.
@@ -40,6 +41,7 @@ class RAGEngine:
             query: User's question
             top_k: Number of crops to retrieve for context
             include_context: Whether to include retrieved context in response
+            api_key: Optional custom Google API key (overrides backend default)
 
         Returns:
             Response dict with answer and metadata
@@ -67,8 +69,26 @@ class RAGEngine:
         context = '\n\n---\n\n'.join(context_parts)
 
         # Step 3: Generate response using LLM
-        if not self.is_available():
-            # Fallback: return raw context if LLM not available
+        # Determine which client to use (custom API key or default)
+        client_to_use = self.client
+
+        if api_key:
+            # User provided a custom API key - use it for this request only
+            try:
+                # Configure genai with the custom key temporarily
+                import google.generativeai as genai_temp
+                genai_temp.configure(api_key=api_key)
+                client_to_use = genai_temp.GenerativeModel(self.model_name)
+            except Exception as e:
+                return {
+                    'answer': f"Invalid API key provided: {str(e)}\n\nPlease check your API key and try again.",
+                    'crops_used': crops_used,
+                    'context': context if include_context else None,
+                    'llm_used': False,
+                    'error': f'Invalid API key: {str(e)}'
+                }
+        elif not self.is_available():
+            # No custom key and no default backend key available
             return {
                 'answer': f"Here's what I found:\n\n{context}",
                 'crops_used': crops_used,
@@ -79,7 +99,7 @@ class RAGEngine:
         prompt = self._create_prompt(query, context)
 
         try:
-            response = self.client.generate_content(
+            response = client_to_use.generate_content(
                 prompt,
                 generation_config={
                     'temperature': 0.7,
@@ -95,11 +115,18 @@ class RAGEngine:
             }
 
         except Exception as e:
+            error_msg = str(e)
+            # Check if it's a quota error
+            if 'quota' in error_msg.lower() or 'rate limit' in error_msg.lower():
+                hint = "\n\nTip: The backend API key quota may be exhausted. Try providing your own API key in the request."
+            else:
+                hint = ""
+
             return {
-                'answer': f"Error generating response: {str(e)}\n\nHere's the raw data:\n\n{context}",
+                'answer': f"Error generating response: {error_msg}{hint}\n\nHere's the raw data:\n\n{context}",
                 'crops_used': crops_used,
                 'context': context if include_context else None,
-                'error': str(e)
+                'error': error_msg
             }
 
     def _create_prompt(self, query: str, context: str) -> str:

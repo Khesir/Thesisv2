@@ -14,6 +14,7 @@ A comprehensive system for extracting, managing, and serving agricultural crop d
 | [Database](./database.md) | MongoDB schemas, indexes, migrations, and seed data |
 | [Deployment](./deployment.md) | Docker, production builds, Electron desktop packaging |
 | [API Reference](./api-reference.md) | Complete REST API reference for the web panel |
+| [**Theoretical Foundations**](./theories/) | **RAG, semantic search, and AI foundations** |
 
 ## Quick Links
 

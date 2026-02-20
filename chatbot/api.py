@@ -53,6 +53,7 @@ class ChatRequest(BaseModel):
     message: str
     top_k: int = 3
     include_context: bool = False
+    api_key: Optional[str] = None  # Optional: use custom API key if backend quota exhausted
 
 
 class ChatResponse(BaseModel):
@@ -122,7 +123,8 @@ async def chat(request: ChatRequest):
     result = rag_engine.chat(
         query=request.message,
         top_k=request.top_k,
-        include_context=request.include_context
+        include_context=request.include_context,
+        api_key=request.api_key  # Pass optional custom API key
     )
 
     return ChatResponse(

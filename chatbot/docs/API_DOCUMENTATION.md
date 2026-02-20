@@ -161,6 +161,7 @@ POST /chat
 | `message` | string | Yes | - | Your question about crops/agriculture |
 | `top_k` | integer | No | 3 | Number of relevant crops to retrieve for context |
 | `include_context` | boolean | No | false | Include raw context in response |
+| `api_key` | string | No | null | Custom Google API key (use if backend quota exhausted) |
 
 #### Response
 
@@ -178,6 +179,17 @@ POST /chat
   "message": "What are the soil requirements for rice?",
   "top_k": 3,
   "include_context": false
+}
+```
+
+#### Example Request (with custom API key)
+
+```json
+{
+  "message": "What are the soil requirements for rice?",
+  "top_k": 3,
+  "include_context": false,
+  "api_key": "AIzaSyD...your-custom-api-key"
 }
 ```
 
@@ -417,7 +429,8 @@ GET /sources
 {
   "message": "string (required)",
   "top_k": "integer (optional, default: 3)",
-  "include_context": "boolean (optional, default: false)"
+  "include_context": "boolean (optional, default: false)",
+  "api_key": "string (optional, default: null) - Custom Google API key"
 }
 ```
 
@@ -449,6 +462,51 @@ GET /sources
   "score": "integer",
   "category": "string"
 }
+```
+
+---
+
+## Security Considerations
+
+### Custom API Keys
+
+The `/chat` endpoint accepts an optional `api_key` parameter. This allows the frontend to provide its own Google API key if the backend quota is exhausted.
+
+**Security Best Practices:**
+
+1. **Use HTTPS in production** - API keys should only be transmitted over encrypted connections (HTTPS). For local development (localhost), HTTP is acceptable.
+
+2. **Frontend storage** - If your Flutter app stores an API key:
+   - Use Flutter's `flutter_secure_storage` for sensitive data
+   - Never hardcode keys in source code
+   - Consider using environment variables or user input
+
+3. **Key scope** - The custom API key is used only for that single request and is not stored server-side.
+
+4. **Rate limiting** - Consider implementing rate limiting in production to prevent abuse.
+
+5. **Quota monitoring** - The API returns helpful error messages when quota is exhausted, prompting the user to provide their own key.
+
+**Example Flutter code (secure storage):**
+```dart
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+final storage = FlutterSecureStorage();
+
+// Store API key securely
+await storage.write(key: 'google_api_key', value: userApiKey);
+
+// Retrieve when needed
+String? apiKey = await storage.read(key: 'google_api_key');
+
+// Send in request only if backend quota exhausted
+final response = await http.post(
+  Uri.parse('$baseUrl/chat'),
+  body: jsonEncode({
+    'message': message,
+    'api_key': apiKey,  // Include only when needed
+  }),
+);
 ```
 
 ---

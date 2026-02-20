@@ -50,7 +50,7 @@ class CropStore:
         """Embed text using Gemini (for documents)"""
         try:
             result = genai.embed_content(
-                model="models/text-embedding-004",
+                model="models/embedding-001",
                 content=text,
                 task_type="retrieval_document"
             )
@@ -63,7 +63,7 @@ class CropStore:
         """Embed text using Gemini (for queries)"""
         try:
             result = genai.embed_content(
-                model="models/text-embedding-004",
+                model="models/embedding-001",
                 content=query,
                 task_type="retrieval_query"
             )
