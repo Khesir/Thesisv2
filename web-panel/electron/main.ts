@@ -204,13 +204,6 @@ async function runMigrations(
 
     const env: NodeJS.ProcessEnv = { ...process.env, MONGODB_URI: uri };
 
-    // In production, set NODE_PATH so the migration runner can find mongoose
-    // from the standalone Next.js output's node_modules
-    if (!isDev) {
-      const standaloneNodeModules = path.join(process.resourcesPath, "app", "standalone", "node_modules");
-      env.NODE_PATH = standaloneNodeModules;
-    }
-
     const proc = spawn(cmd, args, {
       cwd,
       env,

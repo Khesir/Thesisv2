@@ -1,6 +1,6 @@
 {
   "name": "web-panel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "db:migrate:down": "npx tsx scripts/migration-runner.ts down",
     "db:seed": "npx tsx scripts/seed.ts",
     "electron:dev": "concurrently -k \"next dev\" \"tsc -p electron/tsconfig.json && electron .\"",
-    "build:scripts": "tsc -p scripts/tsconfig.json",
+    "build:scripts": "esbuild scripts/migration-runner.ts --bundle --platform=node --outfile=dist-scripts/migration-runner.js && tsc -p scripts/tsconfig.migrations.json",
     "build:electron": "next build && tsc -p electron/tsconfig.json && npm run build:scripts",
     "electron:build": "npm run build:electron && electron-builder",
     "build:python": "python ../build_python.py",
