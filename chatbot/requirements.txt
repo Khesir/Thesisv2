@@ -1,5 +1,5 @@
 # LLM Integration
-google-generativeai==0.8.3
+google-genai>=1.0.0
 
 # Embeddings / Vector Search
 numpy==1.26.4

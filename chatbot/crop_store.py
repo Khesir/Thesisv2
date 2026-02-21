@@ -9,7 +9,8 @@ import os
 from typing import Dict, List, Optional
 
 import numpy as np
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from .db_connection import get_db
 
@@ -37,10 +38,13 @@ class CropStore:
         api_key = os.getenv('GOOGLE_API_KEY')
         if api_key:
             try:
-                genai.configure(api_key=api_key)
+                self._genai_client = genai.Client(api_key=api_key)
                 logger.info("Gemini embedding client initialized")
             except Exception as e:
+                self._genai_client = None
                 logger.warning(f"Failed to init Gemini embedding client: {e}")
+        else:
+            self._genai_client = None
 
     def _hash_text(self, text: str) -> str:
         """SHA256 hash of text to detect data changes"""
@@ -49,12 +53,12 @@ class CropStore:
     def _embed_text(self, text: str) -> Optional[np.ndarray]:
         """Embed text using Gemini (for documents)"""
         try:
-            result = genai.embed_content(
-                model="models/embedding-001",
-                content=text,
-                task_type="retrieval_document"
+            result = self._genai_client.models.embed_content(
+                model="gemini-embedding-001",
+                contents=text,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
             )
-            return np.array(result['embedding'], dtype=np.float32)
+            return np.array(result.embeddings[0].values, dtype=np.float32)
         except Exception as e:
             logger.error(f"Embedding error: {e}")
             return None
@@ -62,12 +66,12 @@ class CropStore:
     def _embed_query(self, query: str) -> Optional[np.ndarray]:
         """Embed text using Gemini (for queries)"""
         try:
-            result = genai.embed_content(
-                model="models/embedding-001",
-                content=query,
-                task_type="retrieval_query"
+            result = self._genai_client.models.embed_content(
+                model="gemini-embedding-001",
+                contents=query,
+                config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
             )
-            return np.array(result['embedding'], dtype=np.float32)
+            return np.array(result.embeddings[0].values, dtype=np.float32)
         except Exception as e:
             logger.error(f"Query embedding error: {e}")
             return None
@@ -102,8 +106,8 @@ class CropStore:
 
     def _generate_embeddings(self):
         """Generate embeddings for all crops, using cache when possible"""
-        if not os.getenv('GOOGLE_API_KEY'):
-            logger.info("No GOOGLE_API_KEY set, skipping embedding generation")
+        if not self._genai_client:
+            logger.info("No Gemini client available, skipping embedding generation")
             return
 
         cached = self._load_cached_embeddings()
