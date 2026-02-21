@@ -60,7 +60,7 @@ export async function testToken(provider: string, apiKey: string) {
       provider,
       api_key: apiKey,
     }),
-    timeout: 30000,
+    timeout: 60000,
   })
 
   if (!result.success) {

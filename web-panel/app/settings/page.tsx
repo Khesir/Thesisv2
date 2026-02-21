@@ -8,7 +8,7 @@ import { AddTokenDialog } from "@/components/settings/add-token-dialog"
 import { EditTokenDialog } from "@/components/settings/edit-token-dialog"
 import { DeleteTokenDialog } from "@/components/settings/delete-token-dialog"
 import { useTokens, createToken, updateToken, deleteToken } from "@/lib/hooks/use-api"
-import { type IAPIToken, type APITokenResponse } from "@/lib/entities/api-token"
+import { type APITokenResponse } from "@/lib/entities/api-token"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 
@@ -57,7 +57,7 @@ export default function SettingsPage() {
         open={!!editToken}
         onOpenChange={(open) => !open && setEditToken(null)}
         onSave={async (id, data) => {
-          const result = await updateToken(id, data)
+          const result = await updateToken(id, { alias: data.alias })
           if (result.success) {
             toast.success("Token updated")
             setEditToken(null)

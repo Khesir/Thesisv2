@@ -25,7 +25,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Eye, ArrowUpDown } from "lucide-react"
 import { useChunks, useSources } from "@/lib/hooks/use-api"
 import { Chunk } from "@/lib/types/chunk"
@@ -36,6 +35,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
   "requires-validation": "secondary",
   processing: "outline",
   "not-processed": "outline",
+  rejected: "destructive",
 }
 
 export default function ChunksPage() {
@@ -90,6 +90,7 @@ export default function ChunksPage() {
             <SelectItem value="processing">Processing</SelectItem>
             <SelectItem value="requires-validation">Requires Validation</SelectItem>
             <SelectItem value="processed">Processed</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
           </SelectContent>
         </Select>
 
@@ -181,30 +182,28 @@ export default function ChunksPage() {
 
       {detailChunk && (
         <Dialog open={!!detailChunk} onOpenChange={(open) => !open && setDetailChunk(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
+          <DialogContent className="max-w-2xl flex flex-col max-h-[80vh]">
+            <DialogHeader className="shrink-0 overflow-hidden">
+              <DialogTitle className="overflow-hidden text-ellipsis whitespace-nowrap pr-6">
                 Chunk #{detailChunk.chunkIndex} - {detailChunk.source}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Status: </span>
-                  <Badge variant={statusVariant[detailChunk.status]}>{detailChunk.status}</Badge>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Tokens: </span>
-                  <span className="font-medium">{detailChunk.tokenCount}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Created: </span>
-                  <span>{new Date(detailChunk.createdAt).toLocaleDateString()}</span>
-                </div>
+            <div className="flex gap-4 text-sm shrink-0">
+              <div>
+                <span className="text-muted-foreground">Status: </span>
+                <Badge variant={statusVariant[detailChunk.status]}>{detailChunk.status}</Badge>
               </div>
-              <ScrollArea className="h-[400px] rounded-md border p-4">
-                <pre className="whitespace-pre-wrap text-sm">{detailChunk.content}</pre>
-              </ScrollArea>
+              <div>
+                <span className="text-muted-foreground">Tokens: </span>
+                <span className="font-medium">{detailChunk.tokenCount}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Created: </span>
+                <span>{new Date(detailChunk.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-md border p-4 [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-clip-padding">
+              <pre className="whitespace-pre-wrap text-sm break-words">{detailChunk.content}</pre>
             </div>
           </DialogContent>
         </Dialog>

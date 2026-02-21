@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { UserProvider } from "@/lib/context/UserProvider"
+import { TokenProvider } from "@/lib/context/token-context"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
@@ -41,6 +42,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <UserProvider>
+            <TokenProvider>
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset>
@@ -54,6 +56,7 @@ export default function RootLayout({
               </SidebarInset>
             </SidebarProvider>
             <Toaster />
+            </TokenProvider>
           </UserProvider>
         </ThemeProvider>
       </body>

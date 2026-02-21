@@ -4,6 +4,7 @@ import useSWR, { mutate } from "swr"
 import type { ChunkResponse } from "@/lib/entities/chunk"
 import type { ExtractedDataResponse } from "@/lib/entities/extracted-data"
 import type { APITokenResponse } from "@/lib/entities/api-token"
+import type { ValidationResultResponse } from "@/lib/entities/validation-result"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -63,6 +64,7 @@ interface DashboardStatsResponse {
     processedChunks: number
     validationChunks: number
     notProcessedChunks: number
+    rejectedChunks: number
     totalExtracted: number
   }
   sources: { source: string; total: number; processed: number }[]
@@ -139,7 +141,7 @@ export async function createToken(data: {
   provider: string
   token: string
   alias: string
-  usageLimit: number | null
+  usageLimit?: number | null
   quotaLimit?: number | null
   cooldownMinutes?: number
 }) {
@@ -190,6 +192,44 @@ export async function uploadPDF(file: File, chunkSize: number) {
   const result = await res.json()
   mutateChunks()
   return result
+}
+
+// --- Validation Results ---
+
+interface ValidationResultsResponse {
+  success: boolean
+  data: ValidationResultResponse[]
+  total: number
+  page: number
+  totalPages: number
+}
+
+interface ValidationSummaryResponse {
+  success: boolean
+  summary: {
+    totalValidated: number
+    avgConsistency: number
+    avgAccuracy: number
+    perField: Record<string, { consistencyRate: number; accuracyRate: number }>
+  }
+}
+
+export function useValidationResults(params?: { summary?: boolean; page?: number; limit?: number }) {
+  const searchParams = new URLSearchParams()
+  if (params?.summary) searchParams.set("summary", "true")
+  if (params?.page) searchParams.set("page", String(params.page))
+  if (params?.limit) searchParams.set("limit", String(params.limit))
+
+  const qs = searchParams.toString()
+  return useSWR<ValidationResultsResponse | ValidationSummaryResponse>(
+    `/api/validation-results${qs ? `?${qs}` : ""}`,
+    fetcher,
+    swrConfig
+  )
+}
+
+export function mutateValidationResults() {
+  mutate((key: string) => typeof key === "string" && key.startsWith("/api/validation-results"))
 }
 
 // --- Extraction ---

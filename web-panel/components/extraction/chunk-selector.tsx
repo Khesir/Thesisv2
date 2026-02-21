@@ -29,6 +29,7 @@ interface ChunkSelectorProps {
   allChunks: Chunk[]
   selectedIds: string[]
   onSelectionChange: (ids: string[]) => void
+  onRejectChunk?: (chunkId: string) => void
 }
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -44,6 +45,7 @@ export function ChunkSelector({
   allChunks,
   selectedIds,
   onSelectionChange,
+  onRejectChunk,
 }: ChunkSelectorProps) {
   const [sourceFilter, setSourceFilter] = useState("all")
   const [detailChunk, setDetailChunk] = useState<Chunk | null>(null)
@@ -159,6 +161,7 @@ export function ChunkSelector({
         chunk={detailChunk}
         open={!!detailChunk}
         onOpenChange={(open) => !open && setDetailChunk(null)}
+        onReject={onRejectChunk}
       />
     </div>
   )

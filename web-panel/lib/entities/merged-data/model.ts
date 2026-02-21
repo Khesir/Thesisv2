@@ -5,7 +5,7 @@
  * Layer 2: Production-ready validated and merged crop data for chatbot consumption.
  */
 
-import mongoose, { Schema } from "mongoose"
+import mongoose, { Schema, Types } from "mongoose"
 import type { IMergedData } from "./types"
 
 const NutrientSchema = new Schema(
@@ -175,7 +175,8 @@ MergedDataSchema.statics.getParentCrops = function () {
  * Static method: Get varieties of a parent crop
  */
 MergedDataSchema.statics.getVarietiesOf = function (parentCropId: string) {
-  return this.find({ parentCrop: parentCropId, isVariety: true })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return this.find({ parentCrop: parentCropId, isVariety: true } as any)
 }
 
 /**

@@ -144,26 +144,26 @@ export async function POST(req: NextRequest) {
     for (const doc of sourceDocuments) {
       // Merge soil types
       if (doc.soilRequirements?.types) {
-        doc.soilRequirements.types.forEach((type) => mergedSoilTypes.add(type))
+        doc.soilRequirements.types.forEach((type: string) => mergedSoilTypes.add(type))
       }
 
       // Merge climate conditions
       if (doc.climateRequirements?.conditions) {
-        doc.climateRequirements.conditions.forEach((cond) =>
+        doc.climateRequirements.conditions.forEach((cond: string) =>
           mergedClimateConditions.add(cond)
         )
       }
 
       // Merge farming practices
       if (doc.farmingPractices) {
-        doc.farmingPractices.forEach((practice) =>
+        doc.farmingPractices.forEach((practice: string) =>
           mergedFarmingPractices.add(practice)
         )
       }
 
       // Merge recommendations
       if (doc.recommendations) {
-        doc.recommendations.forEach((rec) => mergedRecommendations.add(rec))
+        doc.recommendations.forEach((rec: string) => mergedRecommendations.add(rec))
       }
 
       // Merge regional data

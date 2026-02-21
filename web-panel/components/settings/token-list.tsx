@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -23,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2, FlaskConical, Loader2, Construction } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, FlaskConical, Loader2, Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
 import { type APITokenResponse } from "@/lib/entities/api-token"
 import { toast } from "sonner"
@@ -40,52 +39,18 @@ const providerColors: Record<string, string> = {
   openai: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
 }
 
-function formatCooldown(seconds: number): string {
-  if (seconds <= 0) return ""
-  const mins = Math.ceil(seconds / 60)
-  if (mins >= 60) {
-    const hrs = Math.floor(mins / 60)
-    const remainMins = mins % 60
-    return remainMins > 0 ? `${hrs}h ${remainMins}m` : `${hrs}h`
-  }
-  return `${mins}m`
-}
-
-function getTokenStatus(token: APITokenResponse): {
-  label: string
-  variant: "default" | "destructive" | "secondary" | "outline"
-} {
-  if (!token.isActive) {
-    return { label: "Inactive", variant: "secondary" }
-  }
-  if (token.invalidKey) {
-    return { label: "Invalid Key", variant: "destructive" }
-  }
-  if (token.rateLimited) {
-    const remaining = formatCooldown(token.cooldownRemaining)
-    return { label: `Rate Limited (${remaining} left)`, variant: "destructive" }
-  }
-  if (token.quotaLimit !== null && token.quotaUsed >= token.quotaLimit) {
-    return { label: "Quota Reached (resets midnight)", variant: "destructive" }
-  }
-  if (token.usageLimit !== null && token.usageCount >= token.usageLimit) {
-    return { label: "Exhausted", variant: "destructive" }
-  }
-  return { label: "Active", variant: "default" }
-}
-
 export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
   const [filter, setFilter] = useState("all")
   const [testingId, setTestingId] = useState<string | null>(null)
+  const [revealedTokens, setRevealedTokens] = useState<Record<string, string>>({})
+  const [revealingId, setRevealingId] = useState<string | null>(null)
+  const [shownIds, setShownIds] = useState<Set<string>>(new Set())
 
   const handleTestToken = async (token: APITokenResponse) => {
     setTestingId(token._id)
     try {
-      const res = await fetch(`/api/tokens/${token._id}/test`, {
-        method: "POST",
-      })
+      const res = await fetch(`/api/tokens/${token._id}/test`, { method: "POST" })
       const result = await res.json()
-
       if (result.valid) {
         toast.success(`${token.alias}: Token is valid`)
       } else {
@@ -98,17 +63,43 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
     }
   }
 
+  const handleToggleReveal = async (token: APITokenResponse) => {
+    const id = token._id
+
+    // If already shown, just hide
+    if (shownIds.has(id)) {
+      setShownIds((prev) => { const s = new Set(prev); s.delete(id); return s })
+      return
+    }
+
+    // If we already fetched, just show
+    if (revealedTokens[id]) {
+      setShownIds((prev) => new Set(prev).add(id))
+      return
+    }
+
+    // Fetch full token
+    setRevealingId(id)
+    try {
+      const res = await fetch(`/api/tokens/${id}/value`)
+      const result = await res.json()
+      if (result.success) {
+        setRevealedTokens((prev) => ({ ...prev, [id]: result.token }))
+        setShownIds((prev) => new Set(prev).add(id))
+      } else {
+        toast.error("Failed to reveal token")
+      }
+    } catch {
+      toast.error("Failed to reveal token")
+    } finally {
+      setRevealingId(null)
+    }
+  }
+
   const filtered = filter === "all" ? tokens : tokens.filter((t) => t.provider === filter)
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
-        <Construction className="h-4 w-4 shrink-0" />
-        <span>
-          <strong>In Development</strong> — Token rotation and management is being reworked. Use the manual token input on the EBR Filter page for now.
-        </span>
-      </div>
-
       <Select value={filter} onValueChange={setFilter}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="All Providers" />
@@ -128,23 +119,20 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
               <TableHead>Provider</TableHead>
               <TableHead>Alias</TableHead>
               <TableHead>Token</TableHead>
-              <TableHead>Usage</TableHead>
-              <TableHead>Quota</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead className="w-16">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                   No tokens found
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((token) => {
-                const status = getTokenStatus(token)
-
+                const isShown = shownIds.has(token._id)
+                const isRevealing = revealingId === token._id
                 return (
                   <TableRow key={token._id}>
                     <TableCell>
@@ -153,21 +141,27 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
                       </span>
                     </TableCell>
                     <TableCell className="font-medium">{token.alias}</TableCell>
-                    <TableCell className="font-mono text-sm text-muted-foreground">
-                      {token.maskedToken}
-                    </TableCell>
                     <TableCell>
-                      {token.usageCount} / {token.usageLimit ?? "\u221E"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {token.quotaLimit !== null
-                        ? `${token.quotaUsed}/${token.quotaLimit}`
-                        : "\u221E"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={status.variant}>
-                        {status.label}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm text-muted-foreground">
+                          {isShown && revealedTokens[token._id]
+                            ? revealedTokens[token._id]
+                            : token.maskedToken}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleToggleReveal(token)}
+                          disabled={isRevealing}
+                        >
+                          {isRevealing
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : isShown
+                              ? <EyeOff className="h-3.5 w-3.5" />
+                              : <Eye className="h-3.5 w-3.5" />}
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -190,10 +184,7 @@ export function TokenList({ tokens, onEdit, onDelete }: TokenListProps) {
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => onDelete(token)}
-                          >
+                          <DropdownMenuItem className="text-destructive" onClick={() => onDelete(token)}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>

@@ -309,9 +309,13 @@ function setupIPC() {
       await sendProgress("Saving configuration...");
       storeSet("mongodbUri", uri);
 
-      // Step 4: Start Next.js server
-      await sendProgress("Starting web server...");
-      await startNextServer(uri);
+      // Step 4: Start Next.js server (skip in dev — concurrently already runs next dev)
+      if (isDev) {
+        await sendProgress("Using existing dev server...");
+      } else {
+        await sendProgress("Starting web server...");
+        await startNextServer(uri);
+      }
 
       await sendProgress("Almost ready...");
 

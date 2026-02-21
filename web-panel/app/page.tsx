@@ -4,13 +4,15 @@ import { StatsCards } from "@/components/dashboard/stats-cards"
 import { CropChart } from "@/components/dashboard/crop-chart"
 import { SourcesBreakdown } from "@/components/dashboard/sources-breakdown"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
-import { useDashboardStats, useCrops, useExtractedData } from "@/lib/hooks/use-api"
+import { ValidationMetrics } from "@/components/dashboard/validation-metrics"
+import { useDashboardStats, useCrops, useExtractedData, useValidationResults } from "@/lib/hooks/use-api"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardPage() {
   const { data: statsData, isLoading: statsLoading } = useDashboardStats()
   const { data: cropsData, isLoading: cropsLoading } = useCrops()
   const { data: extractedData, isLoading: extractedLoading } = useExtractedData({ limit: 5, sort: "desc" })
+  const { data: validationSummary, isLoading: validationLoading } = useValidationResults({ summary: true })
 
   return (
     <div className="space-y-6">
@@ -37,12 +39,23 @@ export default function DashboardPage() {
           <SourcesBreakdown sources={statsData.sources} />
         ) : null}
       </div>
-
+  {validationLoading ? (
+        <Skeleton className="h-48" />
+      ) : validationSummary?.success && "summary" in validationSummary ? (
+        <ValidationMetrics
+          totalValidated={validationSummary.summary.totalValidated}
+          rejectedChunks={statsData?.success ? statsData.stats.rejectedChunks ?? 0 : 0}
+          avgAccuracy={validationSummary.summary.avgAccuracy}
+          avgConsistency={validationSummary.summary.avgConsistency}
+        />
+      ) : null}
       {extractedLoading ? (
         <Skeleton className="h-48" />
       ) : extractedData?.success ? (
         <RecentActivity extractedData={extractedData.data} />
       ) : null}
+
+    
     </div>
   )
 }

@@ -26,7 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Eye, ArrowUpDown } from "lucide-react"
 import { useExtractedData, useSources } from "@/lib/hooks/use-api"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -208,27 +207,29 @@ export default function ExtractedDataPage() {
 
       {detailData && (
         <Dialog open={!!detailData} onOpenChange={(open) => !open && setDetailData(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {detailData.cropName || "[No crop name]"}
-                <Badge variant="secondary">{detailData.category}</Badge>
-                {detailData.validatedAt && <Badge>Validated</Badge>}
+          <DialogContent className="max-w-3xl flex flex-col max-h-[80vh]">
+            <DialogHeader className="shrink-0 overflow-hidden">
+              <DialogTitle className="flex items-center gap-2 overflow-hidden">
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-6">
+                  {detailData.cropName || "[No crop name]"}
+                </span>
+                <Badge variant="secondary" className="shrink-0">{detailData.category}</Badge>
+                {detailData.validatedAt && <Badge className="shrink-0">Validated</Badge>}
               </DialogTitle>
             </DialogHeader>
 
             <Tabs defaultValue="extracted">
-              <TabsList>
+              <TabsList className="shrink-0">
                 <TabsTrigger value="extracted">Extracted Data</TabsTrigger>
                 <TabsTrigger value="chunk">Chunk Info</TabsTrigger>
               </TabsList>
 
               <TabsContent value="extracted" className="mt-3">
-                <ScrollArea className="h-[400px] rounded border bg-muted p-3">
-                  <pre className="text-xs font-mono whitespace-pre-wrap">
+                <div className="max-h-[55vh] overflow-y-auto overflow-x-hidden rounded border bg-muted p-3 [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-clip-padding">
+                  <pre className="text-xs font-mono whitespace-pre-wrap break-words">
                     {JSON.stringify(detailData, null, 2)}
                   </pre>
-                </ScrollArea>
+                </div>
               </TabsContent>
 
               <TabsContent value="chunk" className="mt-3">
@@ -246,7 +247,7 @@ export default function ExtractedDataPage() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Source: </span>
-                          <span className="font-medium">{chunk.source}</span>
+                          <span className="font-medium break-words">{chunk.source}</span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Chunk Index: </span>
@@ -254,14 +255,14 @@ export default function ExtractedDataPage() {
                         </div>
                         <div>
                           <span className="text-muted-foreground">Chunk ID: </span>
-                          <span className="font-mono text-xs">{chunk._id}</span>
+                          <span className="font-mono text-xs break-all">{chunk._id}</span>
                         </div>
                       </div>
-                      <ScrollArea className="h-[300px] rounded border bg-muted p-3">
-                        <pre className="text-xs font-mono whitespace-pre-wrap">
+                      <div className="max-h-[45vh] overflow-y-auto overflow-x-hidden rounded border bg-muted p-3 [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-clip-padding">
+                        <pre className="text-xs font-mono whitespace-pre-wrap break-words">
                           {JSON.stringify(chunk, null, 2)}
                         </pre>
-                      </ScrollArea>
+                      </div>
                     </div>
                   )
                 })()}

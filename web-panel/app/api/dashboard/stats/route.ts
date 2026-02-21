@@ -44,6 +44,7 @@ export async function GET() {
     const processedChunks = statusCounts.find((s: any) => s._id === "processed")?.count || 0
     const validationChunks = statusCounts.find((s: any) => s._id === "requires-validation")?.count || 0
     const notProcessedChunks = statusCounts.find((s: any) => s._id === "not-processed")?.count || 0
+    const rejectedChunks = statusCounts.find((s: any) => s._id === "rejected")?.count || 0
 
     return NextResponse.json({
       success: true,
@@ -52,6 +53,7 @@ export async function GET() {
         processedChunks,
         validationChunks,
         notProcessedChunks,
+        rejectedChunks,
         totalExtracted,
       },
       sources: sources.map((s) => ({

@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   BookOpen,
   Filter,
+  CheckCircle,
   Settings,
   Database,
   FileText,
@@ -33,7 +34,8 @@ const navGroups = [
     label: "Processing",
     items: [
       { title: "Processing Book", url: "/processing", icon: BookOpen },
-      { title: "EBR Filter", url: "/extraction", icon: Filter },
+      { title: "Extraction", url: "/extraction", icon: Filter },
+      { title: "Validation", url: "/validation", icon: CheckCircle },
     ],
   },
   {
