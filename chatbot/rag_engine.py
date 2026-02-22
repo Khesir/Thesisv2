@@ -4,7 +4,8 @@ Retrieval-Augmented Generation for agricultural chatbot.
 """
 import os
 from typing import Dict, List, Optional
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from .crop_store import CropStore
 
@@ -20,8 +21,7 @@ class RAGEngine:
         # Initialize Gemini
         api_key = os.getenv('GOOGLE_API_KEY')
         if api_key:
-            genai.configure(api_key=api_key)
-            self.client = genai.GenerativeModel(self.model_name)
+            self.client = genai.Client(api_key=api_key)
 
     def is_available(self) -> bool:
         """Check if LLM is available"""
@@ -76,10 +76,7 @@ class RAGEngine:
         if api_key:
             # User provided a custom API key - use it for this request only
             try:
-                # Configure genai with the custom key temporarily
-                import google.generativeai as genai_temp
-                genai_temp.configure(api_key=api_key)
-                client_to_use = genai_temp.GenerativeModel(self.model_name)
+                client_to_use = genai.Client(api_key=api_key)
             except Exception as e:
                 return {
                     'answer': f"Invalid API key provided: {str(e)}\n\nPlease check your API key and try again.",
@@ -100,12 +97,13 @@ class RAGEngine:
         prompt = self._create_prompt(query, context)
 
         try:
-            response = client_to_use.generate_content(
-                prompt,
-                generation_config={
-                    'temperature': 0.7,
-                    'max_output_tokens': 1024,
-                }
+            response = client_to_use.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                    max_output_tokens=1024,
+                )
             )
 
             return {
