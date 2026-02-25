@@ -56,20 +56,31 @@ The system consists of three integrated components:
 
 ## 3.3 Data Collection
 
-### 3.3.1 Primary Data — Government Agricultural PDF Corpus
+The dataset for this study consists of official Philippine agricultural reference documents collected manually by the researchers from publicly accessible government online repositories. The collection and use of these documents required no special permissions, as all materials are classified as public government information. Data collection is divided into primary data — the PDF document corpus used for extraction — and secondary data — survey responses gathered from system testers.
 
-The primary dataset consists of official agricultural reference documents sourced from Philippine government agencies and institutions, including [specify sources, e.g., Department of Agriculture (DA), Philippine Rice Research Institute (PhilRice), Bureau of Plant Industry (BPI), and regional Agricultural Research and Development Centers]. As these documents are issued by authoritative government bodies, the information they contain is treated as institutionally validated and factually reliable without the need for independent expert re-annotation.
+### 3.3.1 Document Sources
 
-Documents were selected based on:
+Source documents were obtained from recognized national agricultural institutions, primarily the Department of Agriculture (DA) and the Philippine Rice Research Institute (PhilRice). These agencies were selected because they are the principal government authorities responsible for issuing crop production standards, pest management guidelines, and agricultural technical recommendations in the Philippines. All documents were accessed through their official online repositories in PDF format.
 
-- Relevance to crop cultivation, pest management, and yield data
-- Issuance by a recognized Philippine government agricultural agency
-- Availability in digitally parseable PDF format
-- Coverage of [N] distinct crop varieties across [N] document types
+### 3.3.2 Inclusion Criteria
 
-A total of **[N] PDF documents** containing approximately **[N] pages** were collected, forming the raw corpus. Because the source documents are official government publications, extracted content inherits their institutional authority. Extraction evaluation therefore measures **fidelity to the source document** — whether the system correctly and completely captures what is stated in the original text — rather than validating the factual correctness of the content itself.
+Documents were included in the corpus based on the following criteria:
 
-### 3.3.2 Secondary Data — Application Testing and Usability Survey
+1. **Institutional authority** — issued by a recognized national or regional Philippine government agricultural agency
+2. **Content relevance** — directly pertains to crop cultivation, pest and disease management, or yield-related information
+3. **Technical parsability** — available as a digitally parseable PDF containing an embedded text layer
+
+Documents failing any criterion were excluded. Scanned PDFs with no embedded text layer were excluded due to the absence of optical character recognition (OCR) in the current pipeline.
+
+### 3.3.3 Corpus Composition
+
+The compiled corpus includes **[N] PDF documents** spanning **[N] crop varieties**, comprising technical production guides, crop management manuals, pest and disease bulletins, and research-based recommendations. Documents range from [N] to [N] pages in length, with an average of [N] pages per document. The corpus collectively covers [N] distinct document categories and represents [N] issuing agencies.
+
+### 3.3.4 Evaluation Framing
+
+Because all source documents originate from authoritative government institutions, their content is treated as institutionally validated without independent expert re-annotation. Accordingly, system evaluation in this study measures **extraction fidelity** — the degree to which the system accurately and completely captures information as stated in the original source text — rather than the factual correctness of the underlying agricultural content itself. This distinction is important: a low-fidelity extraction is a system error; a factual inaccuracy in the source document is outside the scope of this study's evaluation.
+
+### 3.3.5 Secondary Data — Application Testing and Usability Survey
 
 A structured usability questionnaire was administered to **[N] respondents** after each participant completed a guided hands-on testing session with the system. Respondents comprised [describe population: e.g., agriculture students, extension workers, faculty] from [institution/region].
 
@@ -90,52 +101,140 @@ The survey used a **5-point Likert scale** (1 = Strongly Disagree, 5 = Strongly 
 
 ---
 
-## 3.4 Data Processing
+## 3.4 Data Preprocessing
+
+Raw PDF documents contain unstructured text interleaved with layout artifacts such as page numbers, repeated headers, and formatting characters. Before LLM processing, each document undergoes a three-stage preprocessing pipeline: text extraction, cleaning and normalization, and segmentation into chunks. The pipeline is implemented in the `finder_system` Python library and is orchestrated by the web panel via a JSON-over-stdin/stdout subprocess protocol.
+
+> **Figure 3.1** — Data preprocessing pipeline overview
+> `[INSERT FIGURE: flowchart showing PDF → extract_text.py → TextProcessor.clean_text() → TextProcessor.segment_text() → Chunks stored in MongoDB]`
 
 ### 3.4.1 PDF Text Extraction
 
-Raw PDFs were processed using the `extract_text` script within the LLM Extraction Module, which leverages [library, e.g., PyMuPDF/pdfplumber] to extract plain text content. The extraction process handles:
+Text is extracted from PDF files using `pdfplumber`, a Python library that parses PDF content streams to recover embedded text while preserving spatial structure. Each page is processed individually via `page.extract_text()`, and the resulting page texts are concatenated with double newline delimiters (`\n\n`) to maintain paragraph-level separation across page boundaries. Alongside the text, document metadata is collected — including title, author, page count, and word count. A SHA-256 hash of the full extracted text is generated at this stage for deduplication purposes.
 
-- Multi-column layouts through bounding-box heuristics
-- Table detection and linearization
-- Header/footer stripping via positional filtering
+The extraction process does not apply structural filtering; page numbers, running headers, figure captions, and reference sections are included in the output as-is. This is acknowledged as a preprocessing limitation discussed further in Section [X.X].
 
-Output is a normalized plain-text representation per document.
+```python
+# finder_system/pdf_extractor.py (excerpt)
+with pdfplumber.open(pdf_path) as pdf:
+    full_text = ""
+    for page in pdf.pages:
+        page_text = page.extract_text() or ""
+        full_text += page_text + "\n\n"
 
-### 3.4.2 Text Chunking
+content_hash = hashlib.sha256(full_text.encode()).hexdigest()
+```
 
-Extracted text was segmented into chunks using the `create_chunks` script. The chunking strategy employed a **sliding window with overlap** approach:
+> **Figure 3.2** — Web panel Processing page: PDF upload and text extraction step
+> `[INSERT SCREENSHOT: web panel /processing page showing a PDF being uploaded and the extracted text preview]`
 
-- **Chunk size:** [N] tokens (configurable)
-- **Overlap:** [N] tokens to preserve cross-boundary context
-- **Boundary detection:** Paragraph and sentence boundary preference to avoid mid-sentence splits
+### 3.4.2 Text Cleaning and Normalization
 
-Each chunk is stored in MongoDB with metadata including source document ID, page range, character offsets, and token count.
+The raw extracted text is passed through a normalization routine (`TextProcessor.clean_text()`) that applies three transformations in sequence:
 
-### 3.4.3 LLM-Based Structured Extraction
+1. **Whitespace normalization** — consecutive whitespace characters, including tabs and multiple spaces, are collapsed into a single space; repeated newlines are reduced to a single occurrence
+2. **Character filtering** — non-word characters are removed, with explicit retention of symbols common in agricultural data: the degree symbol (`°`), percent sign (`%`), and forward slash (`/`)
+3. **Boundary trimming** — leading and trailing whitespace is removed from the resulting string
 
-Each chunk was submitted to the extraction pipeline via the `extract_chunk` script. The pipeline uses a structured prompt instructing the LLM to identify and return:
+```python
+# finder_system/text_processor.py (excerpt)
+def clean_text(self, text: str) -> str:
+    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'[^\w\s.,;:()\-°%/]', '', text)
+    text = re.sub(r'\n+', '\n', text)
+    return text.strip()
+```
 
-- Crop name and variety
-- Growth duration and stages
-- Soil and climate requirements
-- Recommended inputs (fertilizers, pesticides)
-- Yield data and harvest indicators
+Following cleaning, a section detector (`TextProcessor.extract_sections()`) applies regex pattern matching against common academic section headings — *Introduction*, *Materials and Methods*, *Results*, *Discussion*, *Conclusion*, and *References* — to annotate structural boundaries within the document. Section labels are recorded as metadata but are not used to filter or exclude content from LLM processing at this stage.
 
-The multi-provider orchestrator within the LLM Extraction Module supports **Claude (Anthropic)**, **Gemini (Google)**, and **Ollama (local)** backends. Provider selection strategies include:
+### 3.4.3 Text Segmentation and Chunking
 
-| Strategy | Description |
+The cleaned text is segmented into fixed-size chunks for LLM processing using a hierarchical boundary-respecting strategy (`TextProcessor.segment_text()`). The chunker applies the following cascade:
+
+1. **Paragraph-first splitting** — the text is split at double-newline boundaries (`\n\n`), preserving logical paragraph units as the primary unit of segmentation
+2. **Sentence-level fallback** — paragraphs that exceed the configured token limit are further split at sentence-ending punctuation (`[.!?]`)
+3. **Word-level fallback** — individual sentences that still exceed the limit are split at word boundaries, guaranteeing the chunk size constraint is always met
+
+The default chunk size is **1,000 tokens**, approximated at a ratio of four characters per token. This parameter is configurable at runtime via the web panel interface. No chunk overlap is applied; each chunk represents a non-overlapping, contiguous segment of the source text.
+
+```python
+# finder_system/text_processor.py (excerpt)
+def segment_text(self, text: str, max_chunk_size: int = 1000) -> List[Dict]:
+    max_chars = max_chunk_size * 4
+    paragraphs = text.split('\n\n')
+
+    # Fall back to sentence splitting if no paragraph breaks
+    if len(paragraphs) == 1 and len(text) > max_chars:
+        return self._segment_by_sentences(text, max_chunk_size)
+
+    chunks = []
+    current_chunk = ""
+    for paragraph in paragraphs:
+        if len(paragraph) / 4 > max_chunk_size:
+            # Paragraph too large — split by sentences
+            sub_chunks = self._segment_by_sentences(paragraph, max_chunk_size)
+            chunks.extend(sub_chunks)
+        elif len(current_chunk) / 4 + len(paragraph) / 4 > max_chunk_size:
+            chunks.append({'text': current_chunk.strip(), ...})
+            current_chunk = paragraph
+        else:
+            current_chunk += "\n\n" + paragraph if current_chunk else paragraph
+    return chunks
+```
+
+Each chunk is stored in MongoDB with a sequential index, source document reference, raw content string, and estimated token count.
+
+> **Figure 3.3** — Web panel Chunks page: list of generated chunks with token counts and source document
+> `[INSERT SCREENSHOT: web panel /chunks page showing chunk list with index, preview text, and token count columns]`
+
+### 3.4.4 LLM-Based Structured Extraction
+
+Each chunk is submitted individually to the LLM extraction pipeline via the `extract_chunk` script. The LLM is instructed through a structured prompt to act as an agricultural information extraction expert and return a fixed JSON schema containing the following fields:
+
+| Field | Description |
 |---|---|
-| `failover` | Primary provider with automatic fallback on quota/error |
-| `round_robin` | Distributes requests evenly across providers |
+| `crops` | Crop name, scientific name, and category |
+| `soil_types` | Soil type requirements mentioned |
+| `climate_conditions` | Temperature range, rainfall, sunlight requirements |
+| `growing_conditions` | Soil pH, planting season, growing period |
+| `pests_diseases` | Pest or disease name, type, and affected crops |
+| `fertilizers` | Fertilizer types or nutrient recommendations |
+| `yield_information` | Average yield and unit of measurement |
+| `recommendations` | General agricultural best practices |
+
+The prompt includes explicit negative instructions to return `null` for absent fields rather than inferring or generating values, directly mitigating hallucination risk.
+
+```python
+# finder_system/llm_extractor/llm_extractor.py (excerpt — prompt structure)
+prompt = f"""You are an agricultural information extraction expert. Analyze the
+following text and extract structured agricultural information.
+
+Text to analyze:
+{text}
+
+Important:
+- Only include information explicitly mentioned in the text
+- Use null for fields where information is not available
+- Be accurate and do not hallucinate information
+
+Return ONLY the JSON object, no additional text."""
+```
+
+The multi-provider orchestrator supports **Claude (Anthropic)**, **Gemini (Google)**, and **Ollama (local)** backends. Provider selection is governed by a configurable strategy:
+
+| Strategy | Behavior |
+|---|---|
+| `failover` | Uses the primary provider; automatically switches on quota exhaustion or error |
+| `round_robin` | Distributes requests evenly across all configured providers |
 | `cost_optimized` | Prefers lower-cost providers when quality is equivalent |
-| `performance` | Routes to the historically fastest/most accurate provider |
+| `performance` | Routes to the historically fastest or highest-accuracy provider |
 
-Extraction outputs are validated against a JSON schema before persistence to MongoDB.
+> **Figure 3.4** — Web panel Extraction page: per-chunk LLM extraction progress and provider status
+> `[INSERT SCREENSHOT: web panel /extraction page showing extraction queue, provider indicator, and per-chunk status]`
 
-### 3.4.4 Data Validation and Deduplication
+### 3.4.5 Post-Extraction Validation and Deduplication
 
-Post-extraction, records were validated for schema compliance and cross-checked for duplicate chunk references. Incomplete records (missing mandatory fields) were flagged for re-extraction or manual review.
+After extraction, each record is validated for schema compliance — confirming that the returned JSON contains the expected fields and data types. Records that fail schema validation are flagged in the database with an error status and excluded from downstream retrieval indexing. Cross-chunk deduplication is performed using the SHA-256 content hash generated during extraction; re-submitted documents with identical content do not produce duplicate extraction records.
 
 ---
 
