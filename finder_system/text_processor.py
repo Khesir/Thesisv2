@@ -250,3 +250,28 @@ class TextProcessor:
             'chunks': chunks,
             'total_chunks': len(chunks)
         }
+    
+    # Segement Text -- shorter code than the original
+    def segment_text(self, text: str, max_chunk_size: int = 1000) -> List[Dict]:
+        max_chars = max_chunk_size * 4
+        paragraphs = text.split('\n\n')
+
+        # Fall back to sentence splitting if no paragraph breaks
+        if len(paragraphs) == 1 and len(text) > max_chars:
+            return self._segment_by_sentences(text, max_chunk_size)
+
+        chunks = []
+        current_chunk = ""
+        for paragraph in paragraphs:
+            if len(paragraph) / 4 > max_chunk_size:
+                # Paragraph too large — split by sentences
+                sub_chunks = self._segment_by_sentences(paragraph, max_chunk_size)
+                chunks.extend(sub_chunks)
+            elif len(current_chunk) / 4 + len(paragraph) / 4 > max_chunk_size:
+                chunks.append({'text': current_chunk.strip()})
+                current_chunk = paragraph
+            else:
+                current_chunk += "\n\n" + paragraph if current_chunk else paragraph
+        return chunks
+    
+    

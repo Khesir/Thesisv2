@@ -2,7 +2,8 @@
 FastAPI Backend for Agricultural RAG Chatbot
 """
 import os
-from typing import List, Optional
+import uuid
+from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -34,6 +35,9 @@ app.add_middleware(
 crop_store = CropStore()
 rag_engine: Optional[RAGEngine] = None
 
+# In-memory session store: session_id -> list of {"role": "user"|"model", "content": str}
+sessions: Dict[str, List[dict]] = {}
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -51,6 +55,7 @@ async def startup_event():
 # Request/Response Models
 class ChatRequest(BaseModel):
     message: str
+    session_id: Optional[str] = None  # Omit to start a new session; include to continue one
     top_k: int = 3
     include_context: bool = False
     api_key: Optional[str] = None  # Optional: use custom API key if backend quota exhausted
@@ -58,6 +63,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     answer: str
+    session_id: str  # Always returned so client can continue the session
     crops_used: List[str]
     context: Optional[str] = None
     llm_used: bool = False
@@ -112,7 +118,8 @@ async def chat(request: ChatRequest):
     Chat with the agricultural advisor.
 
     Send a question about crops and get a conversational response
-    based on the extracted agricultural data.
+    based on the extracted agricultural data. Pass `session_id` from
+    a previous response to continue the same conversation thread.
     """
     if not rag_engine:
         raise HTTPException(status_code=503, detail="Service not initialized")
@@ -120,18 +127,28 @@ async def chat(request: ChatRequest):
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
+    # Resolve or create session
+    session_id = request.session_id or str(uuid.uuid4())
+    history = sessions.setdefault(session_id, [])
+
     result = rag_engine.chat(
         query=request.message,
+        conversation_history=history,
         top_k=request.top_k,
         include_context=request.include_context,
-        api_key=request.api_key  # Pass optional custom API key
+        api_key=request.api_key,
     )
+
+    # Persist this turn into session history
+    history.append({"role": "user", "content": request.message})
+    history.append({"role": "model", "content": result['answer']})
 
     return ChatResponse(
         answer=result['answer'],
+        session_id=session_id,
         crops_used=result['crops_used'],
         context=result.get('context'),
-        llm_used=result.get('llm_used', False)
+        llm_used=result.get('llm_used', False),
     )
 
 
@@ -182,6 +199,21 @@ async def search_crops(request: SearchRequest):
         }
         for r in results
     ]
+
+
+@app.get("/sessions/{session_id}")
+async def get_session(session_id: str):
+    """Return the conversation history for a session"""
+    if session_id not in sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"session_id": session_id, "history": sessions[session_id]}
+
+
+@app.delete("/sessions/{session_id}")
+async def clear_session(session_id: str):
+    """Clear (reset) a session's conversation history"""
+    sessions.pop(session_id, None)
+    return {"session_id": session_id, "cleared": True}
 
 
 @app.get("/sources")

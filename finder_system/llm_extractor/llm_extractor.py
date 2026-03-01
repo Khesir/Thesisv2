@@ -36,61 +36,65 @@ class LLMExtractor:
         Returns:
             Formatted prompt
         """
-        prompt = f"""You are an agricultural information extraction expert. Analyze the following text and extract structured agricultural information.
+        structure = f"""
+        {{
+        "crops": [
+            {{
+            "name": "crop name",
+            "scientific_name": "scientific name if mentioned",
+            "category": "cereal|vegetable|fruit|legume|other"
+            }}
+        ],
+        "soil_types": ["list of soil types mentioned"],
+        "climate_conditions": {{
+            "temperature_range": "temperature range if mentioned",
+            "rainfall": "rainfall requirements if mentioned",
+            "sunlight": "sunlight requirements if mentioned",
+            "other_conditions": ["other climate factors"]
+        }},
+        "growing_conditions": {{
+            "soil_ph": "pH range if mentioned",
+            "planting_season": "best planting time if mentioned",
+            "growing_period": "duration if mentioned"
+        }},
+        "pests_diseases": [
+            {{
+            "name": "pest or disease name",
+            "type": "pest|disease|weed",
+            "affected_crops": ["crops affected"]
+            }}
+        ],
+        "farming_practices": ["list of farming practices or techniques mentioned"],
+        "fertilizers": ["types of fertilizers or nutrients mentioned"],
+        "yield_information": {{
+            "average_yield": "yield data if mentioned",
+            "unit": "unit of measurement"
+        }},
+        "regional_data": {{
+            "region": "geographical region if mentioned",
+            "specific_recommendations": ["region-specific recommendations"]
+        }},
+        "recommendations": ["any agricultural recommendations or best practices"],
+        "summary": "brief summary of the key agricultural information in this text"
+        }}"""
 
-Text to analyze:
-{text}
+        prompt = f"""You are an agricultural information extraction expert. 
+        Analyze the following text and extract structured agricultural information.
 
-Extract and return a JSON object with the following structure:
-{{
-  "crops": [
-    {{
-      "name": "crop name",
-      "scientific_name": "scientific name if mentioned",
-      "category": "cereal|vegetable|fruit|legume|other"
-    }}
-  ],
-  "soil_types": ["list of soil types mentioned"],
-  "climate_conditions": {{
-    "temperature_range": "temperature range if mentioned",
-    "rainfall": "rainfall requirements if mentioned",
-    "sunlight": "sunlight requirements if mentioned",
-    "other_conditions": ["other climate factors"]
-  }},
-  "growing_conditions": {{
-    "soil_ph": "pH range if mentioned",
-    "planting_season": "best planting time if mentioned",
-    "growing_period": "duration if mentioned"
-  }},
-  "pests_diseases": [
-    {{
-      "name": "pest or disease name",
-      "type": "pest|disease|weed",
-      "affected_crops": ["crops affected"]
-    }}
-  ],
-  "farming_practices": ["list of farming practices or techniques mentioned"],
-  "fertilizers": ["types of fertilizers or nutrients mentioned"],
-  "yield_information": {{
-    "average_yield": "yield data if mentioned",
-    "unit": "unit of measurement"
-  }},
-  "regional_data": {{
-    "region": "geographical region if mentioned",
-    "specific_recommendations": ["region-specific recommendations"]
-  }},
-  "recommendations": ["any agricultural recommendations or best practices"],
-  "summary": "brief summary of the key agricultural information in this text"
-}}
+        Text to analyze:
+        {text}
 
-Important:
-- Only include information explicitly mentioned in the text
-- Use null for fields where information is not available
-- Use empty arrays [] for list fields with no data
-- Be accurate and do not hallucinate information
-- If the text is not about agriculture, return a JSON with all fields as null/empty and a note in summary
+        Extract and return a JSON object with the following structure:
+        {structure}
 
-Return ONLY the JSON object, no additional text."""
+        Important:
+        - Only include information explicitly mentioned in the text
+        - Use null for fields where information is not available
+        - Use empty arrays [] for list fields with no data
+        - Be accurate and do not hallucinate information
+        - If the text is not about agriculture, return a JSON with all fields as null/empty and a note in summary
+
+        Return ONLY the JSON object, no additional text."""
 
         return prompt
 

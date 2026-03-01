@@ -56,7 +56,7 @@ The system consists of three integrated components:
 
 ## 3.3 Data Collection
 
-The dataset for this study consists of official Philippine agricultural reference documents collected manually by the researchers from publicly accessible government online repositories. The collection and use of these documents required no special permissions, as all materials are classified as public government information. Data collection is divided into primary data — the PDF document corpus used for extraction — and secondary data — survey responses gathered from system testers.
+The dataset for this study consists of official Philippine agricultural reference documents collected manually from publicly accessible government online repositories. The collection and use of these documents required no special permissions, as all materials are classified as public government information.
 
 ### 3.3.1 Document Sources
 
@@ -79,25 +79,6 @@ The compiled corpus includes **[N] PDF documents** spanning **[N] crop varieties
 ### 3.3.4 Evaluation Framing
 
 Because all source documents originate from authoritative government institutions, their content is treated as institutionally validated without independent expert re-annotation. Accordingly, system evaluation in this study measures **extraction fidelity** — the degree to which the system accurately and completely captures information as stated in the original source text — rather than the factual correctness of the underlying agricultural content itself. This distinction is important: a low-fidelity extraction is a system error; a factual inaccuracy in the source document is outside the scope of this study's evaluation.
-
-### 3.3.5 Secondary Data — Application Testing and Usability Survey
-
-A structured usability questionnaire was administered to **[N] respondents** after each participant completed a guided hands-on testing session with the system. Respondents comprised [describe population: e.g., agriculture students, extension workers, faculty] from [institution/region].
-
-**Testing Protocol:** Prior to completing the survey, each respondent was given direct access to the deployed application and asked to perform a standardized set of tasks, including:
-1. Querying the chatbot with [N] predefined crop-related questions
-2. Reviewing chatbot responses and comparing them against the source document where indicated
-3. Navigating the web panel to inspect extracted crop data records
-
-Responses were recorded only after task completion, ensuring all survey ratings reflect actual interaction with the system rather than hypothetical or projected use.
-
-Survey dimensions covered:
-- **Usability** — ease of navigation, clarity of the interface, and task completion without assistance
-- **Response Quality** — accuracy, completeness, and comprehensibility of chatbot answers as experienced during testing
-- **System Reliability** — consistency and responsiveness observed during the testing session
-- **Overall Satisfaction** — general assessment of the system's value for agricultural information retrieval
-
-The survey used a **5-point Likert scale** (1 = Strongly Disagree, 5 = Strongly Agree) for all scaled items. The instrument was structured around usability heuristics and the **System Usability Scale (SUS)** adapted for the agricultural domain context, validated through expert review and pilot testing prior to full deployment.
 
 ---
 
@@ -238,106 +219,207 @@ After extraction, each record is validated for schema compliance — confirming 
 
 ---
 
-## 3.5 Feature Engineering
+## 3.5 Semantic Indexing and Retrieval
+
+Following structured extraction, the preprocessed chunk text and associated metadata are transformed into a form suitable for semantic retrieval. This section describes how chunk embeddings are generated and indexed, how extracted metadata is attached to vector records for filtered retrieval, and how incoming user queries are preprocessed before being issued to the retrieval system. These steps constitute the core of the RAG pipeline's knowledge base and determine the quality of context supplied to the generation model.
 
 ### 3.5.1 Vector Embedding for Retrieval
 
-For the RAG pipeline, chunk text was transformed into dense vector embeddings using [embedding model, e.g., `text-embedding-004` (Google), `text-embedding-3-small` (OpenAI)]. Embeddings capture semantic meaning beyond keyword overlap, enabling cosine-similarity-based retrieval.
+Crop text is transformed into dense vector representations using the `gemini-embedding-001` model (Google Generative AI), accessed through the `google-genai` Python SDK. This model produces fixed-dimension float32 vectors that encode the semantic meaning of agricultural text, enabling similarity-based retrieval that goes beyond what keyword matching alone can achieve.
 
-Each chunk embedding is stored alongside its structured metadata, enabling hybrid retrieval that combines:
-- **Dense retrieval** — cosine similarity over embeddings
-- **Sparse retrieval (optional)** — BM25 keyword scoring for precision on named entities (crop names, chemical inputs)
+The embedding pipeline distinguishes between document-time and query-time embeddings by specifying a task type at generation. When embedding stored crop records, the `RETRIEVAL_DOCUMENT` task type is passed to the model, which biases the representation toward dense, content-rich encoding suited for storage. This distinction ensures that document and query vectors inhabit compatible regions of the shared embedding space.
+
+```python
+# chatbot/crop_store.py (excerpt)
+def _embed_text(self, text: str) -> Optional[np.ndarray]:
+    result = self._genai_client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=text,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+    )
+    return np.array(result.embeddings[0].values, dtype=np.float32)
+```
+
+Because embedding generation incurs API cost and latency, the system maintains a persistent embedding cache in a dedicated MongoDB collection (`crop_embeddings`). Before generating a new embedding, the pipeline computes a SHA-256 hash of the crop's searchable text and compares it against the stored hash. If the hash matches, the cached vector is loaded directly. If it differs — indicating that the underlying crop data has changed since the last run — the embedding is regenerated and the cache is updated via an upsert operation. This cache-on-content-hash strategy ensures that repeated service restarts do not trigger unnecessary re-embedding while still reflecting data updates accurately.
+
+> **Figure 3.5** — Embedding generation and caching flow: crop text → SHA-256 hash check → cached load or Gemini API call → `crop_embeddings` collection upsert
+> `[INSERT FIGURE: flowchart showing the hash-check branch between cache hit and API call paths]`
 
 ### 3.5.2 Metadata Enrichment
 
-Structured extracted fields (crop name, category, region) were attached to each chunk's vector record as filterable metadata. This enables **filtered RAG**, where a user query like "rice cultivation in Mindanao" can pre-filter by crop type before semantic search, improving retrieval precision.
+Structured fields extracted by the LLM pipeline are attached to each crop's in-memory record during the data loading phase. When the chatbot service initializes, `CropStore.load_all()` queries the `extracteddatas` MongoDB collection for all validated records — those with a non-null `validatedAt` timestamp and a non-empty `cropName` field. Each document is mapped into a typed crop record containing fields for soil requirements, climate requirements, growing conditions, pests and diseases, yield information, and regional data alongside a `_source` reference that preserves the originating document ID and chunk ID.
+
+```python
+# chatbot/crop_store.py (excerpt)
+crop_record = {
+    'name': crop_name,
+    'scientific_name': doc.get('scientificName'),
+    'category': doc.get('category', 'other'),
+    'soil_requirements': self._format_soil(doc.get('soilRequirements')),
+    'climate_requirements': self._format_climate(doc.get('climateRequirements')),
+    'pests_diseases': self._format_pests(doc.get('pestsDiseases', [])),
+    'yield_information': doc.get('yieldInfo'),
+    '_source': {
+        'doc_id': str(doc['_id']),
+        'chunk_id': str(doc.get('chunkId', '')),
+        'validated_at': doc.get('validatedAt'),
+    }
+}
+```
+
+Multiple extraction records sharing the same crop name — which arise naturally from a multi-chunk document — are merged in-memory via `_merge_crop()`. List fields such as `farming_practices`, `pests_diseases`, and `recommendations` are deduplicated and extended across records; scalar fields such as `scientific_name` and `yield_information` retain the first non-null value encountered. Source provenance is tracked by accumulating all contributing `_source` references on the merged record as a `_sources` list, allowing any synthesized crop summary to be traced back to every document and chunk that contributed to it.
+
+> **Figure 3.6** — Metadata enrichment and in-memory merge: multiple extraction records for the same crop name collapsing into one deduplicated crop record with an accumulated `_sources` provenance list
+> `[INSERT FIGURE: diagram showing multiple MongoDB documents converging into a single in-memory crop record]`
 
 ### 3.5.3 Query Preprocessing
 
-User queries submitted to the chatbot are preprocessed through:
-- Lowercasing and punctuation normalization
-- Intent classification (factual lookup vs. procedural guidance vs. comparison)
-- Entity extraction (crop names, region names) for metadata-filtered retrieval
+When a user submits a question to the chatbot, the query is embedded using the same `gemini-embedding-001` model but with the `RETRIEVAL_QUERY` task type, producing a representation optimized for matching against document embeddings rather than for representing document content.
+
+```python
+# chatbot/crop_store.py (excerpt)
+def _embed_query(self, query: str) -> Optional[np.ndarray]:
+    result = self._genai_client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=query,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
+    )
+    return np.array(result.embeddings[0].values, dtype=np.float32)
+```
+
+The search pipeline follows a vector-first, keyword-fallback strategy. If Gemini embeddings are available and the query embedding is successfully generated, cosine similarity is computed against all in-memory crop embeddings and the top-K results by score are returned. The cosine similarity between query vector $\vec{q}$ and crop vector $\vec{c}$ is computed as:
+
+$$\text{similarity}(\vec{q}, \vec{c}) = \frac{\vec{q} \cdot \vec{c}}{\|\vec{q}\| \|\vec{c}\|}$$
+
+If embedding-based retrieval is unavailable — due to a missing API key or a failed embedding call — the system falls back to keyword scoring, where each query term is matched against the crop's pre-built searchable text string and crops are ranked by term overlap count. This fallback ensures the chatbot remains operational in environments without API access, at the cost of retrieval precision.
+
+```python
+# chatbot/crop_store.py (excerpt)
+def search(self, query: str, top_k: int = 3) -> List[Dict]:
+    if self.embedding_search_available:
+        query_embedding = self._embed_query(query)
+        if query_embedding is not None:
+            results = self._vector_search(query_embedding, top_k)
+            if results:
+                return results
+    return self._keyword_search(query, top_k)
+```
+
+> **Figure 3.7** — Query retrieval flow: user query → `RETRIEVAL_QUERY` embedding → cosine similarity ranking → top-K crop records; fallback branch to term-overlap keyword scoring when embeddings are unavailable
+> `[INSERT FIGURE: flowchart showing the vector search path and keyword fallback branch with decision node]`
 
 ---
 
-## 3.6 Model Training
-
-> *Note: This system leverages pre-trained foundation models (Claude, Gemini) via API and does not perform traditional from-scratch model training. "Training" in this context refers to system configuration, prompt engineering, and RAG pipeline calibration.*
+## 3.6 System Development
 
 ### 3.6.1 Prompt Engineering and Optimization
 
-The extraction prompt template was developed iteratively. An initial prompt was drafted based on the target schema, then refined through [N] rounds of prompt evaluation on a held-out validation set. Metrics guiding prompt refinement included field extraction recall and format compliance rate.
+The extraction prompt was engineered iteratively to elicit consistent, schema-compliant JSON output from the LLM without requiring post-processing corrections. The final prompt is delivered to the model as a single user-turn message structured in four components.
 
-Final extraction prompt components:
-- **Role definition** — positions the model as a structured agricultural data extractor
-- **Schema specification** — explicit JSON field names and expected data types
-- **Few-shot examples** — [N] annotated examples included in the prompt for schema grounding
-- **Negative instructions** — explicit directives to return null for absent fields rather than hallucinating values
+The first component is a role definition that positions the model as a structured agricultural data extraction expert, establishing task context before any schema or data is presented. The second component is the target text chunk, inserted verbatim so the model has full access to the source passage. The third component is the extraction schema — a fully annotated JSON template listing all expected field names, their data types, and enumerated category values where applicable. The fourth component is a set of negative instructions that explicitly prohibit the model from inferring, assuming, or generating values not present in the source text; absent fields must be returned as `null` and empty list fields as `[]`.
+
+```python
+# finder_system/llm_extractor/llm_extractor.py (excerpt)
+prompt = f"""You are an agricultural information extraction expert.
+Analyze the following text and extract structured agricultural information.
+
+Text to analyze:
+{text}
+
+Extract and return a JSON object with the following structure:
+{structure}
+
+Important:
+- Only include information explicitly mentioned in the text
+- Use null for fields where information is not available
+- Use empty arrays [] for list fields with no data
+- Be accurate and do not hallucinate information
+
+Return ONLY the JSON object, no additional text."""
+```
+
+The schema passed as `structure` specifies top-level fields for crops (name, scientific name, category), soil types, climate conditions (temperature range, rainfall, sunlight), growing conditions (pH, planting season, duration), pests and diseases (name, type, affected crops), farming practices, fertilizers, yield information, regional data, and a free-text summary. Enumerated values are specified inline — for example, crop category is constrained to `cereal|vegetable|fruit|legume|other` — to prevent uncontrolled variation in categorical fields that would impede downstream deduplication and filtering.
+
+Prompt refinement proceeded over [N] rounds using a held-out validation set of [N] annotated chunks. Each round measured field extraction recall and format compliance rate; changes were accepted only when they improved at least one metric without degrading the other. The final prompt converged after adjustments to field description phrasing and the addition of explicit handling instructions for multi-crop chunks.
+
+> **Figure 3.8** — Prompt structure: role definition → source text → JSON schema → negative instructions → raw JSON output
+> `[INSERT FIGURE: annotated layout of the four prompt components with a sample LLM JSON response on the right]`
 
 ### 3.6.2 RAG Pipeline Configuration
 
-The RAG pipeline was configured with the following hyperparameters, determined via ablation study on the validation query set:
+The RAG pipeline follows the standard retrieve-then-generate pattern (Lewis et al., 2020) extended with conversational memory. Per-session turn histories are maintained server-side, and on each follow-up turn the user's query is first rewritten into a standalone search query before retrieval — a technique shown to improve conversational retrieval accuracy (Vakulenko et al., 2021). The full turn history is then replayed alongside the freshly retrieved context as a structured multi-turn prompt for generation.
 
-| Parameter | Value | Rationale |
-|---|---|---|
-| Top-K retrieved chunks | [N] | Balances context coverage vs. prompt length |
-| Similarity threshold | [0.N] | Filters low-relevance chunks |
-| Max context tokens | [N] | Fits within model context window |
-| Reranking | [Yes/No] | Cross-encoder reranker for precision |
+**Retrieval and Context Assembly.** The top-K (default 3) most relevant crop records are retrieved via vector similarity or keyword fallback. Each result is serialised into a structured text block and concatenated as grounded context. If no records are found, a fixed not-found response is returned without invoking the LLM.
+
+> **Figure 3.9** — Conversational RAG pipeline: user query + `session_id` → query reformulation → `CropStore.search()` → context assembly → multi-turn Gemini generation → `ChatResponse`
+> `[INSERT FIGURE: five-phase conversational RAG flow diagram]`
 
 ### 3.6.3 API Token Pool Management
 
-The web panel's token rotation service manages a pool of LLM API keys with per-key quota tracking, cooldown scheduling, and failover logic. This ensures sustained throughput during large-scale batch extraction without manual key management.
+The web panel's token rotation service manages a pool of LLM API keys with per-key quota tracking, cooldown scheduling, and automatic failover. Each key is assigned an active, cooling, or exhausted status that is updated in real time based on API response codes returned during extraction. When a rate-limit or quota-exceeded response is encountered, the offending key is placed into a cooldown period and the `LLMOrchestrator` automatically promotes the next available key according to the configured provider strategy. This mechanism sustains pipeline throughput during large-scale batch extraction without manual key rotation, and is administered through the web panel's `/settings` page where keys can be added, removed, and individually tested before deployment.
+
+> **Figure 3.10** — Token pool management: active key → quota-exceeded response → cooldown status → orchestrator promotes next key; `/settings` page key management interface
+> `[INSERT SCREENSHOT: web panel /settings page showing API token pool with per-key status indicators]`
 
 ---
 
-## 3.7 Model Evaluation
+## 3.7 System Evaluation
 
 ### 3.7.1 Extraction Evaluation
 
-Since all source documents are official government publications, their content is treated as the authoritative reference. Extraction quality was therefore evaluated as **source fidelity** — the degree to which the LLM correctly and completely captures information as stated in the original document text — rather than as agreement with independently annotated labels.
+Since all source documents are official Philippine government publications, their content is treated as the authoritative reference. Extraction quality is evaluated as **source fidelity** — the degree to which the system accurately captures information as stated in the source text — rather than real-world factual correctness. A verification set was constructed by randomly sampling [N] chunks and manually inspecting the raw text alongside the structured extraction output at the field level.
 
-A verification set was constructed by randomly sampling **[N] chunks** and manually inspecting the raw text alongside the system's structured extraction output. For each sampled record, a reviewer confirmed whether each extracted field value was (a) present and correctly captured, (b) partially captured, or (c) absent or hallucinated. This verification was performed at the text level, not the factual level — reviewers checked fidelity to the document, not the real-world accuracy of the government content.
+**Metrics and Formulas**
 
-Metrics computed per field:
+| Metric | Formula |
+|---|---|
+| Precision | TP / (TP + FP) |
+| Recall | TP / (TP + FN) |
+| F1-Score | 2 × (Precision × Recall) / (Precision + Recall) |
+| Field Coverage Rate | (Fields Populated / Total Expected Fields) × 100% |
+| Hallucination Rate | (Hallucinated Values / Total Extracted Values) × 100% |
 
-- **Precision** — proportion of extracted field values that faithfully reflect text found in the source chunk
-- **Recall** — proportion of source-mentioned field values that were successfully extracted
-- **F1-Score** — harmonic mean of precision and recall
-- **Exact Match (EM)** — strict string equality after normalization (useful for discrete fields like crop names and numeric values)
-- **Field Coverage Rate** — percentage of expected fields populated per record across all extracted documents
-- **Hallucination Rate** — proportion of extracted values with no corresponding basis in the source chunk text
+**Tools:** Manual annotation by reviewers; metric computation via custom Python scripts.
 
-### 3.7.2 Retrieval Evaluation
+### 3.7.2 User Evaluation — App Usability and Impact
 
-The RAG retrieval component was evaluated on a set of [N] benchmark queries with known relevant chunks:
+A structured usability questionnaire was administered to [N] respondents after each participant completed a hands-on testing session with the chatbot. Each respondent was given direct access to the chatbot interface and asked to submit predefined crop-related questions, engage in follow-up queries, and review the chatbot's responses. Ratings were recorded only after the session concluded to ensure all responses reflect actual interaction with the chatbot rather than hypothetical assessment.
 
-- **Hit Rate @ K** — proportion of queries where the correct chunk appears in top-K results
-- **Mean Reciprocal Rank (MRR)** — average of the reciprocal rank of the first correct result
-- **Normalized Discounted Cumulative Gain (nDCG)** — ranked relevance quality
+The instrument used a 5-point Likert scale (1 = Strongly Disagree, 5 = Strongly Agree) covering four dimensions: Usability, which covers ease of interaction and clarity of the chatbot interface; Response Comprehensibility, which covers how clearly and understandably the chatbot communicates its answers; System Reliability, which covers the chatbot's consistency and responsiveness across queries; and Perceived Impact, which covers the chatbot's potential to improve access to agricultural knowledge. The instrument was structured around conversational agent usability heuristics adapted for the agricultural domain.
 
-### 3.7.3 Chatbot Response Evaluation
+**Metrics and Formulas**
 
-End-to-end chatbot responses were evaluated on the benchmark query set using:
+| Metric | Applied To | Formula |
+|---|---|---|
+| Weighted Mean | All dimensions | Σ(f × x) / n |
+| Cronbach's Alpha | Overall instrument | (k / (k − 1)) × (1 − Σσ²ᵢ / σ²total) |
 
-- **BERTScore** / **ROUGE-L** — semantic and lexical overlap with reference answers
-- **Faithfulness Score** — proportion of response claims verifiable against retrieved context (using an LLM judge)
-- **Answer Relevance** — whether the response addresses the query intent
+Weighted mean results are interpreted on a five-point scale: 4.50–5.00 = Strongly Agree, 3.50–4.49 = Agree, 2.50–3.49 = Neutral, 1.50–2.49 = Disagree, and 1.00–1.49 = Strongly Disagree. Cronbach's Alpha assesses internal consistency across all scale items to confirm that items within each dimension reliably measure the same underlying construct.
 
-### 3.7.4 User Evaluation (Survey-Based)
+**Tools:** Structured questionnaire (Google Forms); descriptive statistics and reliability analysis via Python (`pandas`, `scipy`, `pingouin`).
 
-Quantitative survey results were analyzed using:
-- Descriptive statistics (mean, standard deviation) per Likert item
-- Overall weighted mean interpretation using standard scale (e.g., 4.50–5.00 = Strongly Agree)
-- Reliability analysis using **Cronbach's Alpha** for internal consistency of survey scales
+### 3.7.3 Response Quality Evaluation
 
-### 3.7.5 System Performance Evaluation
+Response quality was assessed using a custom gold-standard evaluation test set prepared by the researchers. The test set consists of [N] question-and-prompt items covering a representative range of agricultural topics present in the corpus — including crop-specific queries on soil requirements, nutrient management, pest and disease control, planting methods, and yield information. Each item in the test set includes the prompt submitted to the chatbot and a researcher-defined expected response that serves as the reference standard.
 
-Operational metrics evaluated:
-- Average extraction time per chunk (seconds)
-- End-to-end query response latency (ms)
-- System uptime and error rate under load testing
+The chatbot's actual responses to each prompt were collected and presented to a panel of [N] raters — comprising observers, coders, and subject-matter annotators — who independently rated each response on a 1-to-5 ordinal scale, where 1 indicates the response is entirely inaccurate or irrelevant relative to the expected answer and 5 indicates a fully accurate, complete, and relevant response. Raters assessed responses without knowledge of one another's scores to preserve independence.
+
+**Metrics and Formulas**
+
+| Metric | Applied To | Formula |
+|---|---|---|
+| Mean Rating Score | Per item and overall | Σ ratings / (raters × items) |
+| Krippendorff's Alpha | Inter-rater agreement | α = 1 − (D_o / D_e) |
+
+Krippendorff's Alpha is computed using an ordinal difference function appropriate for the 1–5 rating scale, where D_o is the observed disagreement across all rater pairs and D_e is the expected disagreement by chance. Values above 0.80 indicate strong inter-rater agreement; 0.67–0.80 indicate tentative but acceptable agreement. Mean rating scores are interpreted against the same five-point scale used in the usability evaluation.
+
+**Tools:** Custom evaluation rubric and scoring sheet; inter-rater reliability computed via Python (`krippendorff`).
+
+### 3.7.4 System Performance Evaluation
+
+Operational performance was measured under representative load conditions across three indicators: average extraction time per chunk (seconds), end-to-end chatbot response latency (milliseconds) decomposed into embedding, retrieval, and generation time, and system error rate across a full extraction run.
+
+**Tools:** Python `time` module for extraction timing; FastAPI middleware for request-level latency logging.
 
 ---
 
@@ -349,23 +431,21 @@ All survey respondents were provided an informed consent form explaining the stu
 
 ### 3.8.2 Data Privacy
 
-No personally identifiable information (PII) was collected beyond basic demographic categories (role, institution type, years of experience). Survey data is stored in aggregated form and reported only at the group level.
+No personally identifiable information was collected beyond basic demographic categories (role, institution type, years of experience). Survey data is stored in aggregated form and reported only at the group level.
 
 ### 3.8.3 Source Authority, Attribution, and Copyright
 
 All PDF documents processed were sourced from publicly available Philippine government repositories and are classified as official public information. Government-issued agricultural publications are considered part of the public domain under Philippine law and do not require additional licensing for academic use.
 
-The use of government documents confers a dual ethical benefit: (1) the information extracted carries institutional authority and accountability, reducing the risk of propagating unverified or misleading agricultural guidance; and (2) the system effectively democratizes access to knowledge that is already public but practically inaccessible due to its unstructured PDF format.
-
-The system preserves full source provenance by attributing every extracted record and every chatbot response to its originating document, allowing users to trace any piece of information back to its official government source.
+The use of government documents confers a dual ethical benefit: the information extracted carries institutional authority and accountability, reducing the risk of propagating unverified agricultural guidance; and the system effectively democratizes access to knowledge that is already public but practically inaccessible in its original unstructured PDF format. The system preserves full source provenance by attributing every extracted record and every chatbot response to its originating document, allowing users to trace any piece of information back to its official government source.
 
 ### 3.8.4 AI-Generated Content and Hallucination Risk
 
-The study acknowledges that LLM-based extraction and generation carry an inherent risk of hallucination or factual error. Mitigation strategies include: ground truth validation of extraction outputs, RAG-grounded generation to anchor responses to source text, and user-facing citation of source documents in chatbot responses.
+The study acknowledges that LLM-based extraction and generation carry an inherent risk of hallucination or factual error. Mitigation strategies applied in this system include ground truth validation of extraction outputs against source text, RAG-grounded generation that anchors responses to retrieved document context rather than model parametric memory, and user-facing source citation in chatbot responses so that any claim can be independently verified against the originating government document.
 
 ### 3.8.5 Bias and Fairness
 
-The agricultural corpus was reviewed for geographic and crop-type coverage balance to prevent the system from producing high-quality responses only for majority crops while underserving minority or regional varieties. Coverage gaps identified during evaluation are disclosed in the results.
+The agricultural corpus was reviewed for geographic and crop-type coverage balance to prevent the system from producing high-quality responses only for majority crops while underserving minority or regional varieties. Coverage gaps identified during evaluation are disclosed in the results and discussed in terms of their implications for equitable system utility across different agricultural contexts.
 
 ---
 
