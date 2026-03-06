@@ -52,7 +52,9 @@ chatbot_deploy/
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net
 MONGODB_NAME=thesis
-GOOGLE_API_KEY=your-google-api-key
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:1b
+GOOGLE_API_KEY=your-google-api-key   # optional, for semantic embeddings
 ```
 
 > `.env` must be in the **same directory** as `chatbot_server.exe`. The executable loads it from its own directory automatically.
@@ -167,15 +169,28 @@ docker compose up chatbot-api
 |----------|----------|-------------|
 | `MONGODB_URI` | Yes | MongoDB connection string. Atlas (`mongodb+srv://...`) or local (`mongodb://localhost:27017`) |
 | `MONGODB_NAME` | No | Database name. Default: `thesis` |
-| `GOOGLE_API_KEY` | No* | Google AI API key for Gemini LLM and embeddings |
+| `OLLAMA_BASE_URL` | No | Ollama server URL. Default: `http://localhost:11434` |
+| `OLLAMA_MODEL` | No | Ollama model to use. Default: `llama3.2:1b` |
+| `GOOGLE_API_KEY` | No* | Google AI API key — used only for crop embeddings |
 
-> *Without `GOOGLE_API_KEY`: the API still runs but falls back to keyword search. Chat responses return raw crop data instead of AI-generated answers.
+> *Without `GOOGLE_API_KEY`: embeddings are skipped and the system falls back to keyword-based crop retrieval. Chat responses are still AI-generated via Ollama.
+>
+> Without Ollama running: the API still works but returns raw formatted crop data instead of AI-generated answers.
 
-### Getting a Google API Key
+### Installing Ollama
+
+1. Download from [ollama.com](https://ollama.com/download)
+2. Install and run: `ollama serve`
+3. Pull a model: `ollama pull llama3.2:1b` (or `mistral`, `phi3`, etc.)
+4. Verify: `curl http://localhost:11434/api/tags`
+
+### Getting a Google API Key (for embeddings only)
 
 1. Go to [Google AI Studio](https://aistudio.google.com/)
 2. Click **Get API key** → **Create API key**
 3. Copy the key into your `.env` file
+
+> Embeddings are cached in MongoDB after the first run. You only need the key when new crops are added to the database.
 
 ### MongoDB URI
 
@@ -288,7 +303,49 @@ Common causes:
 
 **Symptom:** `LLM available: False` in startup log, chat returns raw data.
 
-**Fix:** Add `GOOGLE_API_KEY` to your `.env` file. The API still works without it but responses are unformatted.
+**If running locally:**
+```bash
+ollama serve
+ollama pull llama3.2:1b   # if not already downloaded
+```
+
+**If running via Docker:**
+```bash
+# Check if the ollama container is running
+docker ps | grep chatbot_ollama
+
+# Pull the model inside the container (first time only)
+docker exec chatbot_ollama ollama pull llama3.2:1b
+
+# Restart the chatbot API so it reconnects
+docker compose -f chatbot/docker-compose.standalone.yml restart chatbot-api
+```
+
+The `OLLAMA_BASE_URL` must be:
+- `http://localhost:11434` when running chatbot locally
+- `http://ollama:11434` when both services run in Docker (set automatically by docker-compose)
+
+### Ollama model not found
+
+**Symptom:** Error in chat response mentioning `model not found` or `pull model first`.
+
+**Fix:**
+```bash
+# Local
+ollama pull llama3.2:1b
+
+# Docker
+docker exec chatbot_ollama ollama pull llama3.2:1b
+```
+
+Check available models:
+```bash
+# Local
+ollama list
+
+# Docker
+docker exec chatbot_ollama ollama list
+```
 
 ### PyInstaller build fails
 

@@ -1,15 +1,45 @@
 # Standalone deployment for the Agricultural RAG Chatbot API
+#
 # Usage:
-#   1. Create a .env file next to this file with:
+#   1. Create a .env file next to this file:
 #      MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net
 #      MONGODB_NAME=thesis_panel
-#      GOOGLE_API_KEY=your-google-api-key  (optional - falls back to keyword search)
-#   2. Run: docker compose -f chatbot/docker-compose.standalone.yml up --build
+#      OLLAMA_MODEL=llama3.2:1b      # or llama3.2:3b, gemma2:2b, etc.
+#      GOOGLE_API_KEY=...            # optional - for semantic embeddings only
 #
-# The API will be available at http://localhost:8000
-# Swagger docs at http://localhost:8000/docs
+#   2. Start services:
+#      docker compose -f chatbot/docker-compose.standalone.yml up -d
+#
+#   3. Pull the Ollama model (first run only):
+#      docker exec chatbot_ollama ollama pull llama3.2:1b
+#
+#   4. Restart chatbot after model is ready:
+#      docker compose -f chatbot/docker-compose.standalone.yml restart chatbot-api
+#
+# API:      http://localhost:8000
+# Swagger:  http://localhost:8000/docs
+# Ollama:   http://localhost:11434
 
 services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chatbot_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama   # persists downloaded models across restarts
+    restart: unless-stopped
+    # --- GPU support (NVIDIA) ---
+    # Uncomment the block below if your machine has an NVIDIA GPU and
+    # the NVIDIA Container Toolkit is installed (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
   chatbot-api:
     build:
       context: ..
@@ -19,4 +49,11 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434   # resolves to the ollama service above
+    depends_on:
+      - ollama
     restart: unless-stopped
+
+volumes:
+  ollama_data:

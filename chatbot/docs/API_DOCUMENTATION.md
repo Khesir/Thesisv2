@@ -17,6 +17,8 @@ A FastAPI-based agricultural advisory chatbot using Retrieval-Augmented Generati
 - [Error Handling](#error-handling)
 - [Examples](#examples)
 
+> **LLM Design:** Chat generation uses local Ollama (free, unlimited). Embeddings use Gemini (cached in MongoDB after first run). See [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md) for the full rationale.
+
 ---
 
 ## Getting Started
@@ -43,13 +45,12 @@ pip install -r requirements.txt
 Copy `.env.example` to `.env` and configure your API keys:
 
 ```env
-# LLM Providers (at least one required for chat functionality)
-ANTHROPIC_API_KEY=your_anthropic_api_key
-GOOGLE_API_KEY=your_google_api_key
+# Ollama (required for chat generation)
+OLLAMA_BASE_URL=http://localhost:11434   # default
+OLLAMA_MODEL=llama3.1                   # or mistral, phi3, etc.
 
-# Ollama (optional - for local LLM)
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1
+# Google API (optional - for semantic embeddings; falls back to keyword search without it)
+GOOGLE_API_KEY=your_google_api_key
 ```
 
 ### Running the API
@@ -159,9 +160,10 @@ POST /chat
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `message` | string | Yes | - | Your question about crops/agriculture |
+| `session_id` | string | No | null | Session ID from a previous response to continue a conversation |
 | `top_k` | integer | No | 3 | Number of relevant crops to retrieve for context |
 | `include_context` | boolean | No | false | Include raw context in response |
-| `api_key` | string | No | null | Custom Google API key (use if backend quota exhausted) |
+| `api_key` | string | No | null | Unused (kept for backwards compatibility) |
 
 #### Response
 
@@ -182,14 +184,13 @@ POST /chat
 }
 ```
 
-#### Example Request (with custom API key)
+#### Example Request (continuing a conversation)
 
 ```json
 {
-  "message": "What are the soil requirements for rice?",
-  "top_k": 3,
-  "include_context": false,
-  "api_key": "AIzaSyD...your-custom-api-key"
+  "message": "What about fertilizer for those?",
+  "session_id": "3f2a1b9c-...",
+  "top_k": 3
 }
 ```
 
@@ -428,9 +429,9 @@ GET /sources
 ```json
 {
   "message": "string (required)",
+  "session_id": "string (optional) - omit to start a new session",
   "top_k": "integer (optional, default: 3)",
-  "include_context": "boolean (optional, default: false)",
-  "api_key": "string (optional, default: null) - Custom Google API key"
+  "include_context": "boolean (optional, default: false)"
 }
 ```
 
@@ -468,46 +469,13 @@ GET /sources
 
 ## Security Considerations
 
-### Custom API Keys
+The chatbot uses **local Ollama** for chat generation — no external API keys are sent per request. The only external service is Google (for embeddings), and those are cached after the first run.
 
-The `/chat` endpoint accepts an optional `api_key` parameter. This allows the frontend to provide its own Google API key if the backend quota is exhausted.
+**Best Practices:**
 
-**Security Best Practices:**
-
-1. **Use HTTPS in production** - API keys should only be transmitted over encrypted connections (HTTPS). For local development (localhost), HTTP is acceptable.
-
-2. **Frontend storage** - If your Flutter app stores an API key:
-   - Use Flutter's `flutter_secure_storage` for sensitive data
-   - Never hardcode keys in source code
-   - Consider using environment variables or user input
-
-3. **Key scope** - The custom API key is used only for that single request and is not stored server-side.
-
-4. **Rate limiting** - Consider implementing rate limiting in production to prevent abuse.
-
-5. **Quota monitoring** - The API returns helpful error messages when quota is exhausted, prompting the user to provide their own key.
-
-**Example Flutter code (secure storage):**
-```dart
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-final storage = FlutterSecureStorage();
-
-// Store API key securely
-await storage.write(key: 'google_api_key', value: userApiKey);
-
-// Retrieve when needed
-String? apiKey = await storage.read(key: 'google_api_key');
-
-// Send in request only if backend quota exhausted
-final response = await http.post(
-  Uri.parse('$baseUrl/chat'),
-  body: jsonEncode({
-    'message': message,
-    'api_key': apiKey,  // Include only when needed
-  }),
-);
-```
+1. **Use HTTPS in production** — even for local Ollama, if the API is exposed over a network.
+2. **Rate limiting** — consider adding FastAPI rate limiting middleware if the API is publicly accessible.
+3. **CORS** — the current config allows all origins (`*`). Restrict this in production to your Flutter app's origin.
 
 ---
 

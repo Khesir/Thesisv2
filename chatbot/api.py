@@ -1,6 +1,7 @@
 """
 FastAPI Backend for Agricultural RAG Chatbot
 """
+import logging
 import os
 import uuid
 from typing import Dict, List, Optional
@@ -8,12 +9,20 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import requests
 
 from .crop_store import CropStore
 from .rag_engine import RAGEngine
 
 # Load environment variables
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -41,15 +50,111 @@ sessions: Dict[str, List[dict]] = {}
 
 @app.on_event("startup")
 async def startup_event():
-    """Load crop data from MongoDB on startup"""
+    """Check all dependencies and load crop data on startup."""
     global rag_engine
+
+    sep = "-" * 52
+    logger.info(sep)
+    logger.info("Agricultural Chatbot API — Dependency Check")
+    logger.info(sep)
+
+    all_ok = True
+
+    # --- 1. MongoDB ---
     try:
         count = crop_store.load_all()
-        rag_engine = RAGEngine(crop_store)
-        print(f"Loaded {count} crops from MongoDB. LLM available: {rag_engine.is_available()}")
+        logger.info(f"[OK]  MongoDB        — connected, {count} crops loaded")
     except Exception as e:
-        print(f"Error during startup: {e}")
-        raise
+        logger.error(f"[FAIL] MongoDB       — {e}")
+        logger.error("       Set MONGODB_URI in chatbot/.env and verify the cluster is reachable.")
+        all_ok = False
+
+    # --- 2. Ollama reachable ---
+    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+    ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+    try:
+        r = requests.get(f"{ollama_url}/api/tags", timeout=5)
+        r.raise_for_status()
+        logger.info(f"[OK]  Ollama         — reachable at {ollama_url}")
+    except Exception as e:
+        logger.error(f"[FAIL] Ollama        — cannot reach {ollama_url}")
+        logger.error("       Make sure Ollama is installed and running.")
+        logger.error("       Download: https://ollama.com/download/windows")
+        all_ok = False
+        # Skip further Ollama checks if not reachable
+        _finish_startup(rag_engine, all_ok, sep)
+        return
+
+    # --- 3. Ollama version (/api/chat support) ---
+    try:
+        r = requests.get(f"{ollama_url}/api/version", timeout=5)
+        version = r.json().get("version", "unknown") if r.ok else "unknown"
+        logger.info(f"[OK]  Ollama version — {version}")
+    except Exception:
+        version = "unknown"
+        logger.warning("[WARN] Ollama version — could not determine version")
+
+    # --- 4. Model available ---
+    try:
+        r = requests.get(f"{ollama_url}/api/tags", timeout=5)
+        models = [m["name"] for m in r.json().get("models", [])]
+        matched = any(m == ollama_model or m.startswith(ollama_model.split(":")[0]) for m in models)
+        if matched:
+            logger.info(f"[OK]  Ollama model   — '{ollama_model}' is available")
+        else:
+            logger.error(f"[FAIL] Ollama model  — '{ollama_model}' not found")
+            logger.error(f"       Run: ollama pull {ollama_model}")
+            if models:
+                logger.error(f"       Available models: {', '.join(models)}")
+            all_ok = False
+    except Exception as e:
+        logger.error(f"[FAIL] Ollama model  — {e}")
+        all_ok = False
+
+    # --- 5. /api/chat endpoint (required for response generation) ---
+    try:
+        r = requests.post(
+            f"{ollama_url}/api/chat",
+            json={"model": ollama_model, "messages": [{"role": "user", "content": "hi"}], "stream": False, "options": {"num_predict": 1}},
+            timeout=30,
+        )
+        if r.status_code == 404:
+            logger.error("[FAIL] Ollama /api/chat — endpoint not found (Ollama is too old)")
+            logger.error("       Update Ollama to v0.1.14 or newer: https://ollama.com/download/windows")
+            all_ok = False
+        elif r.ok:
+            logger.info("[OK]  Ollama /api/chat — endpoint works")
+        else:
+            logger.warning(f"[WARN] Ollama /api/chat — status {r.status_code}: {r.text[:80]}")
+    except Exception as e:
+        logger.warning(f"[WARN] Ollama /api/chat — {e}")
+
+    # --- 6. Gemini API key (optional — for embeddings) ---
+    google_key = os.getenv("GOOGLE_API_KEY")
+    if google_key:
+        logger.info("[OK]  Gemini API key — present (semantic embedding enabled)")
+    else:
+        logger.warning("[WARN] Gemini API key — not set, falling back to keyword search")
+        logger.warning("       Set GOOGLE_API_KEY in chatbot/.env to enable vector search")
+
+    # --- Init RAG engine ---
+    try:
+        rag_engine = RAGEngine(crop_store)
+    except Exception as e:
+        logger.error(f"[FAIL] RAG engine    — {e}")
+        all_ok = False
+
+    _finish_startup(rag_engine, all_ok, sep)
+
+
+def _finish_startup(rag_engine, all_ok: bool, sep: str):
+    logger.info(sep)
+    if all_ok:
+        logger.info("All checks passed. Chatbot API is ready.")
+    else:
+        logger.warning("One or more checks failed. See errors above.")
+        logger.warning("The API will start but some features may not work.")
+    logger.info(sep)
 
 
 # Request/Response Models
@@ -139,9 +244,9 @@ async def chat(request: ChatRequest):
         api_key=request.api_key,
     )
 
-    # Persist this turn into session history
+    # Persist this turn into session history (Ollama uses "assistant" not "model")
     history.append({"role": "user", "content": request.message})
-    history.append({"role": "model", "content": result['answer']})
+    history.append({"role": "assistant", "content": result['answer']})
 
     return ChatResponse(
         answer=result['answer'],

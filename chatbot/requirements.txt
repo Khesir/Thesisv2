@@ -1,4 +1,7 @@
-# LLM Integration
+# LLM Integration (Ollama - local inference via HTTP)
+requests>=2.31.0
+
+# Embeddings (Gemini - cached in MongoDB after first run)
 google-genai>=1.0.0
 
 # Embeddings / Vector Search
