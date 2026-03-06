@@ -30,7 +30,7 @@ def test_google(api_key):
     """Test Google API key with a minimal request."""
     import google.generativeai as genai
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash-lite")
     model.generate_content("Hi", generation_config={"max_output_tokens": 1})
     return True
 

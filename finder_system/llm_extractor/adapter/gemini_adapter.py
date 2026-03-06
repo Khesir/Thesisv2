@@ -169,7 +169,7 @@ class GeminiAdapter(BaseLLMExtractor):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-2.5-flash-lite",
         **kwargs
     ):
         """
@@ -186,11 +186,16 @@ class GeminiAdapter(BaseLLMExtractor):
 
         # Token limits for different Gemini models
         self.token_limits = {
-            # Gemini 2.5 (newer, stable)
+            # Gemini 3.x (latest preview)
+            'gemini-3.1-flash-lite-preview': 1048576,
+            # Gemini 2.5 (stable)
+            'gemini-2.5-flash-lite': 1048576,
+            'gemini-2.5-flash-lite-preview-09-2025': 1048576,
             'gemini-2.5-pro': 1048576,
             'gemini-2.5-flash': 1048576,
             # Gemini 2.0
             'gemini-2.0-flash': 1048576,
+            'gemini-2.0-flash-lite': 1048576,
             'gemini-2.0-flash-exp': 1048576,
             # Legacy 1.5 models (if available)
             'gemini-1.5-pro': 2000000,
@@ -299,7 +304,7 @@ class GeminiAdapter(BaseLLMExtractor):
 
             # Provide helpful error messages for common issues
             if '404' in error_msg and 'not found' in error_msg:
-                error_msg = f"Model '{self.model_name}' not found. Try 'gemini-2.5-flash', 'gemini-2.5-pro', or 'gemini-2.0-flash'. Run 'python check_gemini_models.py' to see available models."
+                error_msg = f"Model '{self.model_name}' not found. Try 'gemini-2.5-flash-lite', 'gemini-2.5-flash', or 'gemini-2.0-flash'. Run 'python check_gemini_models.py' to see available models."
             elif 'API key' in error_msg or '401' in error_msg or 'authentication' in error_msg.lower():
                 error_msg = f"Invalid or expired API key: {error_msg}"
             elif 'quota' in error_msg.lower() or '429' in error_msg or 'resource_exhausted' in error_msg.lower():
