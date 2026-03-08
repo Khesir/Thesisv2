@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       valid: isValid,
       error: result.data?.error || result.error,
+      model: result.data?.model || null,
       ...(isValid && defaults ? {
         suggestedQuotaLimit: defaults.quotaLimit,
         suggestedCooldownMinutes: defaults.cooldownMinutes,

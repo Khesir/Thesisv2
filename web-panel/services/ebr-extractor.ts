@@ -12,6 +12,7 @@ interface ExtractChunkResult {
 interface TestTokenResult {
   valid: boolean
   error?: string
+  model?: string
 }
 
 export async function extractChunk(

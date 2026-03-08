@@ -23,6 +23,7 @@ export interface TokenStatus {
   quotaUsed: number
   quotaExhausted: boolean
   error?: string
+  model?: string
 }
 
 interface TokenInputProps {
@@ -214,7 +215,12 @@ export function TokenInput({
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="text-green-700">Token is valid and ready to use.</span>
+                  <span className="text-green-700">
+                    Token is valid and ready to use.
+                    {tokenStatus.model && (
+                      <span className="ml-1 text-green-600 font-mono text-xs">({tokenStatus.model})</span>
+                    )}
+                  </span>
                 </>
               )
             ) : (

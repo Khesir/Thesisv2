@@ -15,24 +15,29 @@ else:
 
 
 def test_anthropic(api_key):
-    """Test Anthropic API key with a minimal request."""
+    """Test Anthropic API key with a minimal request. Returns the extraction model name."""
     import anthropic
     client = anthropic.Anthropic(api_key=api_key)
+    extraction_model = "claude-3-5-sonnet-20241022"
     client.messages.create(
         model="claude-3-haiku-20240307",
         max_tokens=1,
         messages=[{"role": "user", "content": "Hi"}],
     )
-    return True
+    return extraction_model
 
 
 def test_google(api_key):
-    """Test Google API key with a minimal request."""
+    """Test Google API key and auto-detect the best available model."""
     import google.generativeai as genai
+    from finder_system.llm_extractor.adapter.gemini_adapter import GeminiAdapter
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash-lite")
+    # Use same auto-detection as the extraction adapter so the model shown matches what runs
+    GeminiAdapter._auto_model_cache = None  # force fresh detection
+    model_name = GeminiAdapter._detect_best_model()
+    model = genai.GenerativeModel(model_name)
     model.generate_content("Hi", generation_config={"max_output_tokens": 1})
-    return True
+    return model_name
 
 
 def test_openai(api_key):
@@ -73,8 +78,8 @@ def main():
             json.dump({"valid": False, "error": f"Unknown provider: {provider}"}, sys.stdout)
             return
 
-        tester(api_key)
-        json.dump({"valid": True}, sys.stdout)
+        model = tester(api_key)
+        json.dump({"valid": True, "model": model}, sys.stdout)
     except Exception as e:
         import traceback
         error_msg = str(e)

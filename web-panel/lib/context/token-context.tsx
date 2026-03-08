@@ -57,9 +57,11 @@ export function TokenProvider({ children }: { children: ReactNode }) {
         quotaUsed: 0,
         quotaExhausted: false,
         error: result.error,
+        model: result.model || undefined,
       })
       if (result.valid) {
-        toast.success("Token is valid and ready to use")
+        const modelLabel = result.model ? ` · ${result.model}` : ""
+        toast.success(`Token valid${modelLabel}`)
       } else {
         toast.error(result.error || "Token is invalid")
       }

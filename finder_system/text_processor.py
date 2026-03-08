@@ -268,10 +268,15 @@ class TextProcessor:
                 sub_chunks = self._segment_by_sentences(paragraph, max_chunk_size)
                 chunks.extend(sub_chunks)
             elif len(current_chunk) / 4 + len(paragraph) / 4 > max_chunk_size:
-                chunks.append({'text': current_chunk.strip()})
+                chunks.append({'text': current_chunk.strip(), 'token_count': int(len(current_chunk) / 4)})
                 current_chunk = paragraph
             else:
                 current_chunk += "\n\n" + paragraph if current_chunk else paragraph
+
+        # Append the final chunk (previously missing — caused 0 chunks for short documents)
+        if current_chunk:
+            chunks.append({'text': current_chunk.strip(), 'token_count': int(len(current_chunk) / 4)})
+
         return chunks
     
     
