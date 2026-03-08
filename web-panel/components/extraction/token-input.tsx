@@ -26,6 +26,11 @@ export interface TokenStatus {
   model?: string
 }
 
+interface ModelOption {
+  id: string
+  name: string
+}
+
 interface TokenInputProps {
   token: string
   onTokenChange: (v: string) => void
@@ -35,6 +40,10 @@ interface TokenInputProps {
   onTest: () => void
   isTesting: boolean
   disabled?: boolean
+  availableModels?: ModelOption[]
+  isLoadingModels?: boolean
+  selectedModel?: string
+  onModelChange?: (v: string) => void
 }
 
 export function TokenInput({
@@ -46,6 +55,10 @@ export function TokenInput({
   onTest,
   isTesting,
   disabled = false,
+  availableModels = [],
+  isLoadingModels = false,
+  selectedModel = "",
+  onModelChange,
 }: TokenInputProps) {
   const [showToken, setShowToken] = useState(false)
   const [mode, setMode] = useState<"saved" | "manual">("manual")
@@ -55,6 +68,8 @@ export function TokenInput({
 
   const { data: tokensData } = useTokens()
   const savedTokens = tokensData?.tokens || []
+
+  const showModelSelector = tokenStatus.tested && tokenStatus.valid && !tokenStatus.quotaExhausted
 
   const handleModeChange = (newMode: string) => {
     setMode(newMode as "saved" | "manual")
@@ -215,12 +230,7 @@ export function TokenInput({
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="text-green-700">
-                    Token is valid and ready to use.
-                    {tokenStatus.model && (
-                      <span className="ml-1 text-green-600 font-mono text-xs">({tokenStatus.model})</span>
-                    )}
-                  </span>
+                  <span className="text-green-700">Token is valid and ready to use.</span>
                 </>
               )
             ) : (
@@ -230,6 +240,42 @@ export function TokenInput({
                   {tokenStatus.error || "Token is invalid."}
                 </span>
               </>
+            )}
+          </div>
+        )}
+
+        {showModelSelector && (
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Model</Label>
+            {isLoadingModels ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Fetching available models...
+              </div>
+            ) : availableModels.length > 0 ? (
+              <Select
+                value={selectedModel}
+                onValueChange={onModelChange}
+                disabled={disabled}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a model..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableModels.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      <span className="font-mono text-xs">{m.id}</span>
+                      {m.name !== m.id && (
+                        <span className="ml-2 text-muted-foreground text-xs">{m.name}</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Could not fetch model list. The provider default will be used.
+              </p>
             )}
           </div>
         )}

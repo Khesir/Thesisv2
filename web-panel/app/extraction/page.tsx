@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import type { Chunk } from "@/lib/types/chunk"
 
 export default function ExtractionPage() {
-  const { apiKey, provider, tokenStatus, isTesting, handleTokenChange, handleProviderChange, handleTestToken, markQuotaExhausted, incrementQuotaUsed } = useToken()
+  const { apiKey, provider, tokenStatus, isTesting, handleTokenChange, handleProviderChange, handleTestToken, markQuotaExhausted, incrementQuotaUsed, availableModels, isLoadingModels, selectedModel, handleModelChange } = useToken()
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -107,6 +107,7 @@ export default function ExtractionPage() {
           content: chunk.content,
           provider,
           apiKey,
+          model: selectedModel || undefined,
           strategy: "failover",
         })
 
@@ -258,6 +259,10 @@ export default function ExtractionPage() {
         onTest={handleTestToken}
         isTesting={isTesting}
         disabled={isProcessing}
+        availableModels={availableModels}
+        isLoadingModels={isLoadingModels}
+        selectedModel={selectedModel}
+        onModelChange={handleModelChange}
       />
 
       <ExtractionControls

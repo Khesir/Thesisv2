@@ -29,13 +29,13 @@ export interface IExtractedData extends Document {
     duration: string
   }
   farmingPractices: string[]
-  pestsDiseases: { name: string; type: string; treatment: string }[]
+  pestsDiseases: Array<{ name: string; type: string; treatment: string | null } | string>
   yieldInfo: {
     average: string
     range: string
     unit: string
   }
-  regionalData: { region: string; specific_info: string }[]
+  regionalData: Array<{ region: string; specific_info: string } | string>
   recommendations: string[]
   rawResponse: Record<string, unknown>
   validatedAt: Date | null
@@ -78,13 +78,15 @@ const ExtractedDataSchema = new Schema<IExtractedData>(
       duration: String,
     },
     farmingPractices: [String],
-    pestsDiseases: [{ name: String, type: String, treatment: String }],
+    // Mixed: LLMs may return objects {name,type,treatment} or raw strings — both are accepted
+    pestsDiseases: { type: [Schema.Types.Mixed], default: [] },
     yieldInfo: {
       average: String,
       range: String,
       unit: String,
     },
-    regionalData: [{ region: String, specific_info: String }],
+    // Mixed: same reason as pestsDiseases
+    regionalData: { type: [Schema.Types.Mixed], default: [] },
     recommendations: [String],
     rawResponse: { type: Schema.Types.Mixed, default: {} },
     validatedAt: { type: Date, default: null },

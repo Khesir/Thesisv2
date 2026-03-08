@@ -199,10 +199,11 @@ class LLMExtractorInterface(ABC):
 
             # Merge list fields
             for field in ['farming_practices', 'pests_diseases', 'recommendations']:
-                if new.get(field):
+                raw = new.get(field)
+                if raw and isinstance(raw, list):
                     if not existing.get(field):
                         existing[field] = []
-                    for item in new[field]:
+                    for item in raw:
                         if item and item not in existing[field]:
                             existing[field].append(item)
 
@@ -368,6 +369,13 @@ CRITICAL RULES:
 5. Only extract information explicitly stated - do not hallucinate
 6. If text mentions multiple crops, create separate entries for each with their specific data
 7. Use consistent units (prefer kg/ha for nutrients, tonnes/ha for yield)
+
+JSON FORMAT RULES (strictly required):
+8. This is JSON — use double quotes for ALL strings, never single quotes
+9. "pests_diseases" and "regional_data" MUST always be arrays of objects — never a string, never a stringified list
+10. Each element of "pests_diseases" must be an object: {{"name": "...", "type": "pest|disease", "treatment": "..."}}
+11. Do NOT write Python-style dicts, repr() output, or any non-JSON syntax
+12. Do NOT wrap array values in quotes — arrays start with [ and end with ]
 
 Return ONLY the JSON object, no markdown code blocks or additional text."""
 

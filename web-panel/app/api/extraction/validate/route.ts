@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB()
     const body = await req.json()
-    const { chunkId, provider, apiKey, strategy } = body
+    const { chunkId, provider, apiKey, model, strategy } = body
 
     const chunk = await ChunkModel.findById(chunkId).lean()
     if (!chunk) {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       chunk.content,
       provider || "auto",
       apiKey,
-      undefined,
+      model || undefined,
       strategy || "failover"
     )
 

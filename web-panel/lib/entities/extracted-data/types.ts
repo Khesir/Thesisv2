@@ -39,13 +39,15 @@ export interface CreateExtractedDataInput {
     duration: string
   }
   farmingPractices?: string[]
-  pestsDiseases?: { name: string; type: string; treatment: string }[]
+  /** Elements may be objects {name,type,treatment} or raw strings from LLM */
+  pestsDiseases?: Array<{ name: string; type: string; treatment: string | null } | string>
   yieldInfo?: {
     average: string
     range: string
     unit: string
   }
-  regionalData?: { region: string; specific_info: string }[]
+  /** Elements may be objects {region,specific_info} or raw strings from LLM */
+  regionalData?: Array<{ region: string; specific_info: string } | string>
   recommendations?: string[]
   rawResponse?: Record<string, unknown>
 }
@@ -90,13 +92,13 @@ export interface IExtractedData {
     duration: string
   }
   farmingPractices: string[]
-  pestsDiseases: { name: string; type: string; treatment: string }[]
+  pestsDiseases: Array<{ name: string; type: string; treatment: string | null } | string>
   yieldInfo: {
     average: string
     range: string
     unit: string
   }
-  regionalData: { region: string; specific_info: string }[]
+  regionalData: Array<{ region: string; specific_info: string } | string>
   recommendations: string[]
   rawResponse: Record<string, unknown>
   validatedAt: Date | null
@@ -137,13 +139,13 @@ export interface ExtractedDataResponse {
     duration: string
   }
   farmingPractices: string[]
-  pestsDiseases: { name: string; type: string; treatment: string }[]
+  pestsDiseases: Array<{ name: string; type: string; treatment: string | null } | string>
   yieldInfo: {
     average: string
     range: string
     unit: string
   }
-  regionalData: { region: string; specific_info: string }[]
+  regionalData: Array<{ region: string; specific_info: string } | string>
   recommendations: string[]
   rawResponse: Record<string, unknown>
   validatedAt: string | null

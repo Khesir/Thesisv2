@@ -6,6 +6,56 @@ import { extractChunk } from "@/services/ebr-extractor"
 import { logger } from "@/lib/logger"
 
 /**
+ * Safely parse a value that may be a JSON-stringified array or already an array.
+ * LLMs sometimes return array fields as raw JSON strings instead of parsed arrays.
+ */
+function parseArray(value: any): any[] {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
+/**
+ * Parse an array whose elements should be objects (e.g. pestsDiseases, regionalData).
+ * Handles cases where the LLM returns the entire list as a single string element,
+ * or returns individual elements as JSON strings.
+ * Non-parseable string elements are dropped rather than causing a cast error.
+ */
+function parseObjectArray(value: any): any[] {
+  const arr = parseArray(value)
+  const result: any[] = []
+  for (const item of arr) {
+    if (item && typeof item === "object" && !Array.isArray(item)) {
+      result.push(item)
+    } else if (typeof item === "string") {
+      // The element itself is a string — could be JSON or a Python-style repr
+      try {
+        const parsed = JSON.parse(item)
+        if (Array.isArray(parsed)) {
+          // The string was actually the whole array (e.g. "[{...},{...}]")
+          for (const inner of parsed) {
+            if (inner && typeof inner === "object") result.push(inner)
+          }
+        } else if (parsed && typeof parsed === "object") {
+          result.push(parsed)
+        }
+      } catch {
+        // Unparseable string element — skip it to avoid a cast error
+      }
+    }
+  }
+  return result
+}
+
+/**
  * Transform LLM extraction output to database schema format.
  * LLM returns crops array, but database expects separate records per crop.
  * Creates one ExtractedData document per crop found.
@@ -27,12 +77,12 @@ function transformExtractionData(
       cropName: null,
       category: "other",
       scientificName: null,
-      soilRequirements: inner.soil_types ? { types: inner.soil_types } : undefined,
+      soilRequirements: inner.soil_types ? { types: parseArray(inner.soil_types) } : undefined,
       climateRequirements: inner.climate_conditions || undefined,
       plantingInfo: inner.growing_conditions || undefined,
-      farmingPractices: inner.farming_practices || [],
-      pestsDiseases: inner.pests_diseases || [],
-      recommendations: inner.recommendations || [],
+      farmingPractices: parseArray(inner.farming_practices),
+      pestsDiseases: parseObjectArray(inner.pests_diseases),
+      recommendations: parseArray(inner.recommendations),
       rawResponse: llmData,
     }]
   }
@@ -51,11 +101,11 @@ function transformExtractionData(
       climateRequirements: crop.climate_requirements || undefined,
       nutrients: crop.nutrients || undefined,
       plantingInfo: crop.planting_info || undefined,
-      farmingPractices: crop.farming_practices || [],
-      pestsDiseases: crop.pests_diseases || [],
+      farmingPractices: parseArray(crop.farming_practices),
+      pestsDiseases: parseObjectArray(crop.pests_diseases),
       yieldInfo: crop.yield_info || undefined,
-      regionalData: crop.regional_data || [],
-      recommendations: crop.recommendations || [],
+      regionalData: parseObjectArray(crop.regional_data),
+      recommendations: parseArray(crop.recommendations),
       rawResponse: index === 0 ? llmData : {},
     }
   })
@@ -68,7 +118,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB()
     const body = await req.json()
-    const { chunkId, content, provider, apiKey, strategy } = body
+    const { chunkId, content, provider, apiKey, model, strategy } = body
 
     logger.debug('ExtractionAPI', `[${requestId}] Request parsed`, {
       hasChunkId: !!chunkId,
@@ -106,7 +156,7 @@ export async function POST(req: NextRequest) {
       content,
       provider || "auto",
       apiKey,
-      undefined,
+      model || undefined,
       strategy || "failover"
     )
 

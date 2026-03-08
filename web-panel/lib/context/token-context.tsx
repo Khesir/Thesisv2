@@ -4,14 +4,23 @@ import React, { createContext, useContext, useState, ReactNode } from "react"
 import { toast } from "sonner"
 import type { TokenStatus } from "@/components/extraction/token-input"
 
+interface ModelOption {
+  id: string
+  name: string
+}
+
 interface TokenContextType {
   apiKey: string
   provider: string
   tokenStatus: TokenStatus
   isTesting: boolean
+  availableModels: ModelOption[]
+  isLoadingModels: boolean
+  selectedModel: string
   handleTokenChange: (v: string) => void
   handleProviderChange: (v: string) => void
   handleTestToken: () => Promise<void>
+  handleModelChange: (v: string) => void
   markQuotaExhausted: () => void
   incrementQuotaUsed: () => void
 }
@@ -30,15 +39,48 @@ export function TokenProvider({ children }: { children: ReactNode }) {
   const [provider, setProvider] = useState("google")
   const [tokenStatus, setTokenStatus] = useState<TokenStatus>(DEFAULT_STATUS)
   const [isTesting, setIsTesting] = useState(false)
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([])
+  const [isLoadingModels, setIsLoadingModels] = useState(false)
+  const [selectedModel, setSelectedModel] = useState("")
+
+  const resetTokenState = () => {
+    setTokenStatus(DEFAULT_STATUS)
+    setAvailableModels([])
+    setSelectedModel("")
+  }
 
   const handleTokenChange = (v: string) => {
     setApiKey(v)
-    if (tokenStatus.tested) setTokenStatus(DEFAULT_STATUS)
+    if (tokenStatus.tested) resetTokenState()
   }
 
   const handleProviderChange = (v: string) => {
     setProvider(v)
-    if (tokenStatus.tested) setTokenStatus(DEFAULT_STATUS)
+    if (tokenStatus.tested) resetTokenState()
+  }
+
+  const handleModelChange = (v: string) => {
+    setSelectedModel(v)
+  }
+
+  const fetchModels = async (prov: string, key: string) => {
+    setIsLoadingModels(true)
+    try {
+      const res = await fetch("/api/models/list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: prov, apiKey: key }),
+      })
+      const result = await res.json()
+      if (result.success && Array.isArray(result.models) && result.models.length > 0) {
+        setAvailableModels(result.models)
+        setSelectedModel(result.models[0].id)
+      }
+    } catch {
+      // model listing is optional — don't block the user
+    } finally {
+      setIsLoadingModels(false)
+    }
   }
 
   const handleTestToken = async () => {
@@ -60,10 +102,13 @@ export function TokenProvider({ children }: { children: ReactNode }) {
         model: result.model || undefined,
       })
       if (result.valid) {
-        const modelLabel = result.model ? ` · ${result.model}` : ""
-        toast.success(`Token valid${modelLabel}`)
+        toast.success("Token valid — fetching available models...")
+        // Fetch model list after successful validation
+        fetchModels(provider, apiKey)
       } else {
         toast.error(result.error || "Token is invalid")
+        setAvailableModels([])
+        setSelectedModel("")
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -89,9 +134,13 @@ export function TokenProvider({ children }: { children: ReactNode }) {
       provider,
       tokenStatus,
       isTesting,
+      availableModels,
+      isLoadingModels,
+      selectedModel,
       handleTokenChange,
       handleProviderChange,
       handleTestToken,
+      handleModelChange,
       markQuotaExhausted,
       incrementQuotaUsed,
     }}>

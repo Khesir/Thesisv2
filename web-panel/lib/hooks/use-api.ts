@@ -239,6 +239,7 @@ export async function processChunk(data: {
   content: string
   provider?: string
   apiKey?: string
+  model?: string
   strategy?: string
 }) {
   const res = await fetch("/api/extraction/process", {

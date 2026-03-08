@@ -52,6 +52,24 @@ export async function extractChunk(
   return result
 }
 
+interface ListModelsResult {
+  success: boolean
+  models?: Array<{ id: string; name: string }>
+  error?: string
+}
+
+export async function listModels(provider: string, apiKey: string) {
+  logger.debug('EBRExtractor', 'Listing models', { provider })
+
+  const result = await runScript<ListModelsResult>({
+    scriptName: "list_models.py",
+    stdin: JSON.stringify({ provider, api_key: apiKey }),
+    timeout: 30000,
+  })
+
+  return result
+}
+
 export async function testToken(provider: string, apiKey: string) {
   logger.debug('EBRExtractor', 'Testing token', { provider })
 

@@ -7,6 +7,7 @@ Output: JSON to stdout { success, data, usage, provider, error }
 import sys
 import json
 import os
+import ast
 
 if getattr(sys, 'frozen', False):
     sys.path.insert(0, sys._MEIPASS)
@@ -15,6 +16,106 @@ else:
 
 from finder_system.llm_extractor.adapter import ClaudeAdapter, GeminiAdapter, OllamaAdapter
 from finder_system.llm_orchestrator import create_orchestrator
+
+
+def _try_parse_object(value):
+    """Try to parse a value into a dict using json.loads then ast.literal_eval."""
+    if isinstance(value, dict):
+        return value
+    if not isinstance(value, str):
+        return None
+    # Try standard JSON first
+    try:
+        parsed = json.loads(value)
+        if isinstance(parsed, dict):
+            return parsed
+    except (json.JSONDecodeError, ValueError):
+        pass
+    # Fall back to ast.literal_eval (handles Python-style single-quoted dicts)
+    try:
+        parsed = ast.literal_eval(value)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    return None
+
+
+def _normalize_object_list(value):
+    """
+    Normalize a field that should be a list of dicts.
+    Handles: already-correct list, stringified JSON list, Python-repr list,
+    or a list whose elements are themselves strings (the LLM-hallucination case).
+    """
+    if not value:
+        return []
+
+    # If the whole thing is a string, try to parse it into a list first
+    if isinstance(value, str):
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                parsed = parser(value)
+                if isinstance(parsed, list):
+                    value = parsed
+                    break
+                if isinstance(parsed, dict):
+                    return [parsed]
+            except Exception:
+                pass
+        else:
+            return []  # unparseable string → drop
+
+    if not isinstance(value, list):
+        return []
+
+    result = []
+    for item in value:
+        if isinstance(item, dict):
+            result.append(item)
+            continue
+        if isinstance(item, str):
+            # Item might be the entire list as a string (LLM wraps it in an array)
+            for parser in (json.loads, ast.literal_eval):
+                try:
+                    parsed = parser(item)
+                    if isinstance(parsed, list):
+                        result.extend(d for d in parsed if isinstance(d, dict))
+                        break
+                    if isinstance(parsed, dict):
+                        result.append(parsed)
+                        break
+                except Exception:
+                    pass
+    return result
+
+
+def sanitize_extraction_data(data):
+    """
+    Walk the extraction result and normalize fields that the LLM sometimes
+    returns as Python-style strings instead of proper JSON arrays of objects.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    crops = data.get("crops")
+    if isinstance(crops, list):
+        for crop in crops:
+            if not isinstance(crop, dict):
+                continue
+            # Fields that must be lists of dicts
+            for field in ("pests_diseases", "regional_data"):
+                if field in crop:
+                    crop[field] = _normalize_object_list(crop[field])
+            # Fields that must be lists of strings — flatten any nested lists
+            for field in ("farming_practices", "recommendations"):
+                raw = crop.get(field)
+                if isinstance(raw, str):
+                    try:
+                        parsed = ast.literal_eval(raw)
+                        crop[field] = parsed if isinstance(parsed, list) else [raw]
+                    except Exception:
+                        crop[field] = []
+    return data
 
 
 def create_single_provider(provider, api_key, model=None):
@@ -68,7 +169,7 @@ def main():
         if result.success:
             json.dump({
                 "success": True,
-                "data": result.data,
+                "data": sanitize_extraction_data(result.data),
                 "usage": result.total_usage,
                 "provider": result.provider,
             }, sys.stdout)

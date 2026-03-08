@@ -12,6 +12,7 @@ SCRIPTS = [
     "finder_system/web_scripts/create_chunks.py",
     "finder_system/web_scripts/extract_chunk.py",
     "finder_system/web_scripts/test_token.py",
+    "finder_system/web_scripts/list_models.py",
 ]
 
 HIDDEN_IMPORTS = [

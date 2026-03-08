@@ -58,13 +58,15 @@ const ExtractedDataSchema = new Schema<IExtractedData>(
       duration: String,
     },
     farmingPractices: [String],
-    pestsDiseases: [{ name: String, type: String, treatment: String }],
+    // Mixed: LLMs may return objects {name,type,treatment} or raw strings — both are accepted
+    pestsDiseases: { type: [Schema.Types.Mixed], default: [] },
     yieldInfo: {
       average: String,
       range: String,
       unit: String,
     },
-    regionalData: [{ region: String, specific_info: String }],
+    // Mixed: same reason as pestsDiseases
+    regionalData: { type: [Schema.Types.Mixed], default: [] },
     recommendations: [String],
     rawResponse: { type: Schema.Types.Mixed, default: {} },
     validatedAt: { type: Date, default: null },
@@ -113,6 +115,11 @@ ExtractedDataSchema.statics.getUnvalidated = function () {
 }
 
 // ============= EXPORT =============
+
+// In dev, delete the cached model so schema changes are picked up on hot reload
+if (process.env.NODE_ENV !== "production" && mongoose.models.ExtractedData) {
+  delete mongoose.models.ExtractedData
+}
 
 export const ExtractedDataModel =
   mongoose.models.ExtractedData ||
