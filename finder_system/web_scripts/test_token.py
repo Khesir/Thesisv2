@@ -28,15 +28,16 @@ def test_anthropic(api_key):
 
 
 def test_google(api_key):
-    """Test Google API key and auto-detect the best available model."""
-    import google.generativeai as genai
-    from finder_system.llm_extractor.adapter.gemini_adapter import GeminiAdapter
-    genai.configure(api_key=api_key)
-    # Use same auto-detection as the extraction adapter so the model shown matches what runs
-    GeminiAdapter._auto_model_cache = None  # force fresh detection
-    model_name = GeminiAdapter._detect_best_model()
-    model = genai.GenerativeModel(model_name)
-    model.generate_content("Hi", generation_config={"max_output_tokens": 1})
+    """Test Google API key with a minimal request using a known free-tier model."""
+    from google import genai
+    from google.genai import types
+    model_name = "gemini-2.5-flash-lite"
+    client = genai.Client(api_key=api_key)
+    client.models.generate_content(
+        model=model_name,
+        contents="Hi",
+        config=types.GenerateContentConfig(max_output_tokens=1),
+    )
     return model_name
 
 
@@ -85,15 +86,18 @@ def main():
         error_msg = str(e)
         error_lower = error_msg.lower()
 
-        # Rate limit = key is valid, just throttled
-        if "429" in error_msg or "rate" in error_lower or "resource_exhausted" in error_lower or "too many requests" in error_lower:
+        # Zero quota = key will never work on free tier (limit: 0 means no free tier quota assigned)
+        if "limit: 0" in error_msg:
+            json.dump({"valid": False, "error": f"No free-tier quota on this project. Create an API key from Google AI Studio (aistudio.google.com) to get free-tier access: {error_msg}", "errorType": type(e).__name__}, sys.stdout)
+        # Quota/billing issues - key exists but can't be used
+        elif "quota" in error_lower or "billing" in error_lower or "credit" in error_lower:
+            json.dump({"valid": False, "error": f"Quota or billing issue: {error_msg}", "errorType": type(e).__name__}, sys.stdout)
+        # Temporary rate limit = key is valid, just throttled
+        elif "429" in error_msg or "rate" in error_lower or "resource_exhausted" in error_lower or "too many requests" in error_lower:
             json.dump({"valid": True, "error": f"Key valid but rate limited: {error_msg}"}, sys.stdout)
         # Invalid/expired key
         elif "401" in error_msg or "invalid" in error_lower or "unauthorized" in error_lower or "api_key_invalid" in error_lower or "not valid" in error_lower:
             json.dump({"valid": False, "error": f"Invalid API key: {error_msg}", "errorType": type(e).__name__}, sys.stdout)
-        # Quota/billing issues - key exists but can't be used
-        elif "quota" in error_lower or "billing" in error_lower or "credit" in error_lower:
-            json.dump({"valid": False, "error": f"Quota or billing issue: {error_msg}", "errorType": type(e).__name__}, sys.stdout)
         else:
             json.dump({"valid": False, "error": error_msg, "errorType": type(e).__name__, "traceback": traceback.format_exc()}, sys.stdout)
 

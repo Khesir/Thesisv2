@@ -22,7 +22,7 @@ import {
 import type { Chunk } from "@/lib/types/chunk"
 
 export default function ValidationPage() {
-  const { apiKey, provider, tokenStatus, isTesting, handleTokenChange, handleProviderChange, handleTestToken, markQuotaExhausted, incrementQuotaUsed } = useToken()
+  const { apiKey, provider, tokenStatus, isTesting, handleTokenChange, handleProviderChange, handleTestToken, markQuotaExhausted, incrementQuotaUsed, availableModels, modelFetchDone, selectedModel, handleModelChange } = useToken()
 
   // Validation state
   const [selectedValidationId, setSelectedValidationId] = useState<string | null>(null)
@@ -124,6 +124,7 @@ export default function ValidationPage() {
         content: chunk.content,
         provider,
         apiKey,
+        model: selectedModel || undefined,
         strategy: "failover",
       })
       if (result.success) {
@@ -238,6 +239,10 @@ export default function ValidationPage() {
         onTest={handleTestToken}
         isTesting={isTesting}
         disabled={isValidating}
+        availableModels={availableModels}
+        modelFetchDone={modelFetchDone}
+        selectedModel={selectedModel}
+        onModelChange={handleModelChange}
       />
 
       <ValidationQueue

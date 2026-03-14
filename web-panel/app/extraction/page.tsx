@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import type { Chunk } from "@/lib/types/chunk"
 
 export default function ExtractionPage() {
-  const { apiKey, provider, tokenStatus, isTesting, handleTokenChange, handleProviderChange, handleTestToken, markQuotaExhausted, incrementQuotaUsed, availableModels, isLoadingModels, selectedModel, handleModelChange } = useToken()
+  const { apiKey, provider, tokenStatus, isTesting, handleTokenChange, handleProviderChange, handleTestToken, markQuotaExhausted, incrementQuotaUsed, availableModels, modelFetchDone, selectedModel, handleModelChange } = useToken()
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -39,7 +39,8 @@ export default function ExtractionPage() {
   const notProcessedChunks = allChunks.filter((c) => c.status === "not-processed")
   const extractedData = extractedRes?.data || []
 
-  const hasValidToken = tokenStatus.tested && tokenStatus.valid && !tokenStatus.quotaExhausted
+  const needsModel = availableModels.length > 0 && !selectedModel
+  const hasValidToken = tokenStatus.tested && tokenStatus.valid && !tokenStatus.quotaExhausted && !needsModel
 
   function isQuotaError(errorMsg: string): boolean {
     const lower = errorMsg.toLowerCase()
@@ -260,7 +261,7 @@ export default function ExtractionPage() {
         isTesting={isTesting}
         disabled={isProcessing}
         availableModels={availableModels}
-        isLoadingModels={isLoadingModels}
+        modelFetchDone={modelFetchDone}
         selectedModel={selectedModel}
         onModelChange={handleModelChange}
       />

@@ -6,7 +6,8 @@ import json
 import os
 import re
 from typing import Dict, List, Optional
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from ..llm_interface import (
     BaseLLMExtractor,
@@ -163,40 +164,9 @@ def safe_json_parse(text: str) -> Dict:
     raise json.JSONDecodeError("Failed to parse JSON after all repair attempts", text, 0)
 
 
-def _score_gemini_model(name: str) -> tuple:
-    """
-    Score a Gemini model name for ranking. Higher score = better/newer model.
-    Prefers stable flash models, avoids preview/exp/legacy variants.
-
-    Returns a tuple used for sorting: (major, minor, tier, is_stable)
-    """
-    import re
-
-    # Tier scores: flash > flash-lite > pro (pro is slower/costlier for bulk extraction)
-    tier_score = 0
-    if 'flash-lite' in name:
-        tier_score = 1
-    elif 'flash' in name:
-        tier_score = 2
-    elif 'pro' in name:
-        tier_score = 0
-
-    # Stability: prefer stable over preview/exp
-    is_stable = 0 if any(s in name for s in ('preview', 'exp', 'experimental', 'rc')) else 1
-
-    # Parse version number (e.g. gemini-2.5-flash → major=2, minor=5)
-    match = re.search(r'gemini-(\d+)\.(\d+)', name)
-    major = int(match.group(1)) if match else 0
-    minor = int(match.group(2)) if match else 0
-
-    return (major, minor, tier_score, is_stable)
-
 
 class GeminiAdapter(BaseLLMExtractor):
     """Adapter for Google's Gemini API"""
-
-    # Class-level cache so model detection runs only once per process
-    _auto_model_cache: Optional[str] = None
 
     def __init__(
         self,
@@ -205,58 +175,26 @@ class GeminiAdapter(BaseLLMExtractor):
         **kwargs
     ):
         """
-        Initialize Gemini adapter
+        Initialize Gemini adapter.
 
         Args:
             api_key: Google API key (or set GOOGLE_API_KEY env var)
-            model: Gemini model to use. If None, auto-detects the best available model.
+            model: Gemini model to use — must be explicitly provided.
             **kwargs: Additional configuration options
         """
+        if not model:
+            raise ValueError(
+                "No Gemini model specified. Select a model in the extraction page after testing your API key."
+            )
         self.api_key = api_key or os.getenv('GOOGLE_API_KEY')
+        self.model_name = model
         self.client = None
 
-        # Initialize client first so we can call list_models for auto-detection
         if self.api_key:
             try:
-                genai.configure(api_key=self.api_key)
-                # Auto-detect model if not explicitly provided
-                if model is None:
-                    model = self._detect_best_model()
-                self.model_name = model
-                self.client = genai.GenerativeModel(self.model_name)
+                self.client = genai.Client(api_key=self.api_key)
             except Exception:
-                self.model_name = model or "gemini-2.5-flash-lite"
-        else:
-            self.model_name = model or "gemini-2.5-flash-lite"
-
-    @classmethod
-    def _detect_best_model(cls) -> str:
-        """
-        Query the Gemini API for available models and pick the best one.
-        Result is cached at the class level so it only runs once per process.
-        Falls back to 'gemini-2.5-flash-lite' if detection fails.
-        """
-        if cls._auto_model_cache is not None:
-            return cls._auto_model_cache
-
-        fallback = "gemini-2.5-flash-lite"
-        try:
-            available = [
-                m.name.replace("models/", "")
-                for m in genai.list_models()
-                if "generateContent" in (m.supported_generation_methods or [])
-                and "gemini" in m.name.lower()
-            ]
-
-            if not available:
-                return fallback
-
-            # Rank and pick the best model
-            best = max(available, key=_score_gemini_model)
-            cls._auto_model_cache = best
-            return best
-        except Exception:
-            return fallback
+                pass
 
     def get_provider_name(self) -> str:
         """Get provider name"""
@@ -301,16 +239,14 @@ class GeminiAdapter(BaseLLMExtractor):
         try:
             prompt = self.create_extraction_prompt(text)
 
-            # Configure generation settings with JSON mode
-            generation_config = {
-                'temperature': 0.1,
-                'max_output_tokens': max_tokens or 8192,
-                'response_mime_type': 'application/json',  # Force JSON output
-            }
-
-            response = self.client.generate_content(
-                prompt,
-                generation_config=generation_config
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    max_output_tokens=max_tokens or 8192,
+                    response_mime_type='application/json',
+                ),
             )
 
             # Extract the text content from response
@@ -321,14 +257,13 @@ class GeminiAdapter(BaseLLMExtractor):
 
             # Get token usage if available
             usage = {}
-            if hasattr(response, 'usage_metadata'):
+            if hasattr(response, 'usage_metadata') and response.usage_metadata:
                 usage = {
-                    'input_tokens': response.usage_metadata.prompt_token_count,
-                    'output_tokens': response.usage_metadata.candidates_token_count,
-                    'total_tokens': response.usage_metadata.total_token_count
+                    'input_tokens': response.usage_metadata.prompt_token_count or 0,
+                    'output_tokens': response.usage_metadata.candidates_token_count or 0,
+                    'total_tokens': response.usage_metadata.total_token_count or 0,
                 }
             else:
-                # Estimate if not available
                 estimated_input = len(prompt.split()) * 1.3
                 estimated_output = len(response_text.split()) * 1.3
                 usage = {

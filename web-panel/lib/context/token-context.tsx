@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from "react"
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react"
 import { toast } from "sonner"
 import type { TokenStatus } from "@/components/extraction/token-input"
 
@@ -15,7 +15,7 @@ interface TokenContextType {
   tokenStatus: TokenStatus
   isTesting: boolean
   availableModels: ModelOption[]
-  isLoadingModels: boolean
+  modelFetchDone: boolean
   selectedModel: string
   handleTokenChange: (v: string) => void
   handleProviderChange: (v: string) => void
@@ -40,48 +40,80 @@ export function TokenProvider({ children }: { children: ReactNode }) {
   const [tokenStatus, setTokenStatus] = useState<TokenStatus>(DEFAULT_STATUS)
   const [isTesting, setIsTesting] = useState(false)
   const [availableModels, setAvailableModels] = useState<ModelOption[]>([])
-  const [isLoadingModels, setIsLoadingModels] = useState(false)
+  const [modelFetchDone, setModelFetchDone] = useState(false)
   const [selectedModel, setSelectedModel] = useState("")
 
   const resetTokenState = () => {
     setTokenStatus(DEFAULT_STATUS)
     setAvailableModels([])
     setSelectedModel("")
+    setModelFetchDone(false)
   }
 
   const handleTokenChange = (v: string) => {
+    if (v === apiKey) return
     setApiKey(v)
-    if (tokenStatus.tested) resetTokenState()
+    if (tokenStatus.tested) {
+      resetTokenState()
+    }
   }
 
   const handleProviderChange = (v: string) => {
+    if (v === provider) return
     setProvider(v)
-    if (tokenStatus.tested) resetTokenState()
+    if (tokenStatus.tested) {
+      resetTokenState()
+    }
   }
 
   const handleModelChange = (v: string) => {
     setSelectedModel(v)
   }
 
-  const fetchModels = async (prov: string, key: string) => {
-    setIsLoadingModels(true)
-    try {
-      const res = await fetch("/api/models/list", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: prov, apiKey: key }),
-      })
-      const result = await res.json()
-      if (result.success && Array.isArray(result.models) && result.models.length > 0) {
-        setAvailableModels(result.models)
-        setSelectedModel(result.models[0].id)
-      }
-    } catch {
-      // model listing is optional — don't block the user
-    } finally {
-      setIsLoadingModels(false)
+  // Automatically fetch models whenever the token becomes valid.
+  // Using useEffect decouples model loading from the test flow, avoiding
+  // any React batching race where isLoadingModels=true renders before
+  // tokenStatus.tested=true (which would hide the spinner via showModelSelector).
+  const fetchCancelRef = useRef(false)
+
+  useEffect(() => {
+    if (!tokenStatus.tested || !tokenStatus.valid || tokenStatus.quotaExhausted) {
+      return
     }
-  }
+
+    fetchCancelRef.current = false
+    setModelFetchDone(false)
+    setAvailableModels([])
+
+    fetch("/api/models/list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider, apiKey }),
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (fetchCancelRef.current) return
+        if (result.success && Array.isArray(result.models) && result.models.length > 0) {
+          setAvailableModels(result.models)
+        } else {
+          toast.error(`Could not load models: ${result.error || "Unknown error"}`)
+        }
+      })
+      .catch((err) => {
+        if (fetchCancelRef.current) return
+        toast.error(`Could not load models: ${err instanceof Error ? err.message : String(err)}`)
+      })
+      .finally(() => {
+        if (!fetchCancelRef.current) {
+          setModelFetchDone(true)
+        }
+      })
+
+    return () => {
+      fetchCancelRef.current = true
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tokenStatus.tested, tokenStatus.valid, tokenStatus.quotaExhausted])
 
   const handleTestToken = async () => {
     if (!apiKey.trim()) return
@@ -103,12 +135,8 @@ export function TokenProvider({ children }: { children: ReactNode }) {
       })
       if (result.valid) {
         toast.success("Token valid — fetching available models...")
-        // Fetch model list after successful validation
-        fetchModels(provider, apiKey)
       } else {
         toast.error(result.error || "Token is invalid")
-        setAvailableModels([])
-        setSelectedModel("")
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -135,7 +163,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
       tokenStatus,
       isTesting,
       availableModels,
-      isLoadingModels,
+      modelFetchDone,
       selectedModel,
       handleTokenChange,
       handleProviderChange,

@@ -41,7 +41,7 @@ interface TokenInputProps {
   isTesting: boolean
   disabled?: boolean
   availableModels?: ModelOption[]
-  isLoadingModels?: boolean
+  modelFetchDone?: boolean
   selectedModel?: string
   onModelChange?: (v: string) => void
 }
@@ -56,7 +56,7 @@ export function TokenInput({
   isTesting,
   disabled = false,
   availableModels = [],
-  isLoadingModels = false,
+  modelFetchDone = false,
   selectedModel = "",
   onModelChange,
 }: TokenInputProps) {
@@ -247,34 +247,39 @@ export function TokenInput({
         {showModelSelector && (
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Model</Label>
-            {isLoadingModels ? (
+            {!modelFetchDone ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Fetching available models...
               </div>
             ) : availableModels.length > 0 ? (
-              <Select
-                value={selectedModel}
-                onValueChange={onModelChange}
-                disabled={disabled}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a model..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      <span className="font-mono text-xs">{m.id}</span>
-                      {m.name !== m.id && (
-                        <span className="ml-2 text-muted-foreground text-xs">{m.name}</span>
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-1">
+                <Select
+                  value={selectedModel}
+                  onValueChange={onModelChange}
+                  disabled={disabled}
+                >
+                  <SelectTrigger className={`w-full ${!selectedModel ? "border-amber-400" : ""}`}>
+                    <SelectValue placeholder="— Select a model to continue —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        <span className="font-mono text-xs">{m.id}</span>
+                        {m.name !== m.id && (
+                          <span className="ml-2 text-muted-foreground text-xs">{m.name}</span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!selectedModel && (
+                  <p className="text-xs text-amber-600">A model must be selected before extraction can run.</p>
+                )}
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Could not fetch model list. The provider default will be used.
+              <p className="text-sm text-destructive">
+                Could not fetch model list. Check your API key or network connection.
               </p>
             )}
           </div>

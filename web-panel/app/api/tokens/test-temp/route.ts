@@ -4,7 +4,7 @@ import type { TokenProvider } from "@/lib/entities/api-token"
 import { logger } from "@/lib/logger"
 
 const PROVIDER_DEFAULTS: Record<TokenProvider, { quotaLimit: number | null; cooldownMinutes: number; description: string }> = {
-  google: { quotaLimit: 1500, cooldownMinutes: 60, description: "Google free tier: ~1500 requests/day, 60min cooldown" },
+  google: { quotaLimit: 1500, cooldownMinutes: 60, description: "Google free tier (gemini-1.5-flash): ~1500 requests/day, 60min cooldown" },
   anthropic: { quotaLimit: null, cooldownMinutes: 5, description: "Anthropic: usage-based billing, 5min cooldown" },
   openai: { quotaLimit: null, cooldownMinutes: 5, description: "OpenAI: usage-based billing, 5min cooldown" },
 }

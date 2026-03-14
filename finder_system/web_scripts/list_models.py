@@ -27,25 +27,25 @@ def list_anthropic(api_key):
 
 
 def list_google(api_key):
-    import google.generativeai as genai
-    genai.configure(api_key=api_key)
+    from google import genai
+    # Segments that indicate vision/image/audio/video models — not suitable for text extraction
+    _EXCLUDED = ("image", "vision", "audio", "video", "tts", "native")
+    client = genai.Client(api_key=api_key)
     models = []
-    for m in genai.list_models():
-        if "generateContent" not in getattr(m, "supported_generation_methods", []):
+    for m in client.models.list():
+        name = getattr(m, "name", "") or ""
+        model_id = name.replace("models/", "") if name.startswith("models/") else name
+        if not model_id.startswith("gemini"):
             continue
-        model_id = m.name.replace("models/", "") if m.name.startswith("models/") else m.name
-        models.append({
-            "id": model_id,
-            "name": getattr(m, "display_name", model_id),
-        })
-    # Sort: gemini models first, then alphabetically
-    def sort_key(m):
-        mid = m["id"].lower()
-        # Prefer non-preview/non-exp for ordering (but still show them)
-        is_preview = "preview" in mid or "exp" in mid or "latest" in mid
-        # Prefer flash over others for speed
-        return (is_preview, mid)
-    models.sort(key=sort_key)
+        if any(seg in model_id.lower() for seg in _EXCLUDED):
+            continue
+        display = getattr(m, "display_name", None) or model_id
+        models.append({"id": model_id, "name": display})
+    # Stable models first (no preview/exp/latest), then alphabetical
+    models.sort(key=lambda m: (
+        any(s in m["id"] for s in ("preview", "exp", "experimental", "latest")),
+        m["id"],
+    ))
     return models
 
 
