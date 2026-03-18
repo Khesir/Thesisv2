@@ -100,10 +100,10 @@ class RAGEngine:
                 json={
                     "model": self.model_name,
                     "messages": messages,
-                    "stream": False,
+                    "stream": True,
                     "options": {
                         "temperature": 0.7,
-                        "num_predict": 1024,
+                        "num_predict": 512,
                     },
                 },
                 timeout=300,
