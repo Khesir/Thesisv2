@@ -34,7 +34,7 @@ class RAGEngine:
         self,
         query: str,
         conversation_history: Optional[List[dict]] = None,
-        top_k: int = 3,
+        top_k: int = 2,
         include_context: bool = True,
         api_key: Optional[str] = None,  # Kept for API schema compatibility; unused by Ollama
     ) -> Dict:
@@ -103,7 +103,7 @@ class RAGEngine:
                     "stream": True,
                     "options": {
                         "temperature": 0.7,
-                        "num_predict": 512,
+                        "num_predict": 256,
                     },
                 },
                 timeout=300,
@@ -143,35 +143,29 @@ class RAGEngine:
         Uses Ollama /api/generate with a very low token budget (64 tokens)
         since this is a simple rewriting task.
         """
+        # Already specific enough — don't touch it
+        if len(query.split()) >= 6:
+            return query
+ 
+        # Gather recent history text for crop name extraction
         recent = conversation_history[-6:]
-        history_text = "\n".join(
-            f"{t['role'].upper()}: {t['content']}" for t in recent
-        )
-        prompt = (
-            "Given the conversation history below and a follow-up question, "
-            "rewrite the follow-up as a concise, standalone search query that "
-            "includes all relevant crop names and topics. "
-            "Output ONLY the reformulated query in English — no explanation.\n\n"
-            f"CONVERSATION HISTORY:\n{history_text}\n\n"
-            f"FOLLOW-UP QUESTION: {query}\n\n"
-            "STANDALONE SEARCH QUERY:"
-        )
-        try:
-            response = requests.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": self.model_name,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.0, "num_predict": 64},
-                },
-                timeout=60,
-            )
-            response.raise_for_status()
-            result = response.json().get("response", "").strip()
-            return result if result else query
-        except Exception:
-            return query  # Fall back to original query on any error
+        history_text = " ".join(t["content"] for t in recent).lower()
+ 
+        # Match against known crop names from the store
+        known_crops = self.crop_store.list_crops()  # e.g. ["Rice", "Corn", "Tomato", ...]
+        query_lower = query.lower()
+ 
+        mentioned_crops = [
+            crop for crop in known_crops
+            if crop.lower() in history_text
+            and crop.lower() not in query_lower  # only append if not already in query
+        ]
+ 
+        if mentioned_crops:
+            crops_str = " and ".join(mentioned_crops[:3])  # cap at 3 to avoid bloat
+            return f"{query} for {crops_str}"
+ 
+        return 
 
     def _build_messages(
         self,
