@@ -151,7 +151,7 @@ class RAGEngine:
             "Given the conversation history below and a follow-up question, "
             "rewrite the follow-up as a concise, standalone search query that "
             "includes all relevant crop names and topics. "
-            "Output ONLY the reformulated query — no explanation.\n\n"
+            "Output ONLY the reformulated query in English — no explanation.\n\n"
             f"CONVERSATION HISTORY:\n{history_text}\n\n"
             f"FOLLOW-UP QUESTION: {query}\n\n"
             "STANDALONE SEARCH QUERY:"
@@ -196,6 +196,8 @@ class RAGEngine:
                     "Assume all farming conditions, seasons, regions, and practices are Philippine-based. "
                     "Answer questions based ONLY on the crop information provided in each message. "
                     "Be conversational and include specific numbers when available."
+                    "IMPORTANT: Always respond in English only, regardless of the language "
+                    "used in the user's question or the crop data provided."                  
                 ),
             }
         ]
