@@ -1,64 +1,87 @@
-# Ollama Setup Guide
+# Groq Setup Guide
 
-Setup guide for running Ollama as the local LLM backend for the Agricultural Chatbot.
+Setup guide for using Groq API as the LLM backend for the Agricultural Chatbot.
 
----
-
-## Minimum Requirements
-
-| Component | Minimum |
-|---|---|
-| OS | Windows 10 64-bit |
-| CPU | Intel Core i5 (any gen) or AMD Ryzen 5 (any gen) or equivalent |
-| RAM | 4 GB (8 GB recommended) |
-| Disk | 3 GB free (1.3 GB model + Ollama install) |
-| GPU | Not required — runs on CPU only |
-
-## Recommended Model
-
-Use `llama3.2:1b` — it's fast, lightweight (~1.3 GB), and works well on an i5 CPU without a GPU.
+> **Note:** This project previously used Ollama (local inference). It has been replaced with Groq API for faster responses and simpler setup — no local model installation required.
 
 ---
 
-## Setup (Native Install)
+## Prerequisites
 
-### 1. Install Ollama
+- A free Groq account: [console.groq.com](https://console.groq.com)
+- Python 3.10+
+- `groq` Python package (listed in `requirements.txt`)
 
-Download and run the installer: https://ollama.com/download/windows
+---
 
-After install, Ollama runs as a background service automatically. No need to manually start it.
+## Setup
 
-### 2. Pull the model
+### 1. Get a Groq API Key
 
-```bash
-ollama pull llama3.2:1b
-```
+1. Sign up or log in at [console.groq.com](https://console.groq.com)
+2. Go to **API Keys** → **Create API Key**
+3. Copy the key (starts with `gsk_...`)
 
-Downloads the model (~1.3 GB). Only needed once — cached locally after that.
-
-### 3. Verify Ollama is running
-
-```bash
-python chatbot/test_ollama.py
-```
-
-All 3 checks should pass before starting the chatbot API.
-
-### 4. Configure the chatbot
+### 2. Configure the chatbot
 
 In `chatbot/.env`:
 
 ```env
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.2:1b
+GROQ_API_KEY=gsk_your_api_key_here
+GROQ_MODEL=llama-3.1-8b-instant
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r chatbot/requirements.txt
+```
+
+### 4. Start the chatbot API
+
+```bash
+uvicorn chatbot.api:app --host 127.0.0.1 --port 8000
+```
+
+Check the health endpoint:
+
+```bash
+curl http://127.0.0.1:8000/
+```
+
+Expected output:
+
+```json
+{
+  "status": "healthy",
+  "crops_loaded": 45,
+  "llm_available": true
+}
 ```
 
 ---
 
-## CPU Performance Tips
+## Available Models
 
-- **Close other apps** — Ollama uses all available CPU cores
-- Expected response time on i5 (no GPU): **15–35 seconds** per query
+| Model | Notes |
+|-------|-------|
+| `llama-3.1-8b-instant` | **Default** — fast, free-tier friendly |
+| `llama-3.3-70b-versatile` | Higher quality, slightly slower |
+| `mixtral-8x7b-32768` | Alternative |
+| `gemma2-9b-it` | Lightweight |
+
+Change the model via the `GROQ_MODEL` env var.
+
+---
+
+## Free Tier Limits
+
+Groq's free tier (as of early 2025) for `llama-3.1-8b-instant`:
+
+- ~14,400 requests/day
+- ~500,000 tokens/minute
+
+This is more than sufficient for thesis demo use.
 
 ---
 
@@ -66,33 +89,16 @@ OLLAMA_MODEL=llama3.2:1b
 
 ### `LLM available: False` at startup
 
-Ollama is not reachable. Open the Ollama app or check if it's running in the system tray. Then rerun:
+`GROQ_API_KEY` is missing or not set in `chatbot/.env`. Verify the key is present and starts with `gsk_`.
 
-```bash
-python chatbot/test_ollama.py
-```
+### `AuthenticationError` in chat responses
 
-### `model not found` error in chat responses
+The API key is invalid or expired. Generate a new key at [console.groq.com](https://console.groq.com).
 
-The model hasn't been pulled yet:
+### `RateLimitError` in chat responses
 
-```bash
-ollama pull llama3.2:1b
-```
+You've hit the free tier rate limit. Either wait a moment or upgrade to a paid plan at [groq.com/pricing](https://groq.com/pricing).
 
 ### Responses are too slow
 
-Reduce max tokens in `rag_engine.py` to cap response length:
-
-```python
-"options": {
-    "temperature": 0.7,
-    "num_predict": 512,  # lower = faster
-},
-```
-
-### Check what models are downloaded
-
-```bash
-ollama list
-```
+Groq is typically very fast (~200–500ms). If slow, check your internet connection or try a smaller model like `gemma2-9b-it`.

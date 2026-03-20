@@ -9,7 +9,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import requests
 
 from .crop_store import CropStore
 from .rag_engine import RAGEngine
@@ -69,67 +68,16 @@ async def startup_event():
         logger.error("       Set MONGODB_URI in chatbot/.env and verify the cluster is reachable.")
         all_ok = False
 
-    # --- 2. Ollama reachable ---
-    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-    ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
-    try:
-        r = requests.get(f"{ollama_url}/api/tags", timeout=5)
-        r.raise_for_status()
-        logger.info(f"[OK]  Ollama         — reachable at {ollama_url}")
-    except Exception as e:
-        logger.error(f"[FAIL] Ollama        — cannot reach {ollama_url}")
-        logger.error("       Make sure Ollama is installed and running.")
-        logger.error("       Download: https://ollama.com/download/windows")
-        all_ok = False
-        # Skip further Ollama checks if not reachable
-        _finish_startup(rag_engine, all_ok, sep)
-        return
+    # --- 2. Groq API key ---
+    groq_key = os.getenv("GROQ_API_KEY")
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    if groq_key:
+        logger.info(f"[OK]  Groq API key   — present, model: {groq_model}")
+    else:
+        logger.warning("[WARN] Groq API key  — not set, LLM chat disabled")
+        logger.warning("       Set GROQ_API_KEY in chatbot/.env (get one at https://console.groq.com)")
 
-    # --- 3. Ollama version (/api/chat support) ---
-    try:
-        r = requests.get(f"{ollama_url}/api/version", timeout=5)
-        version = r.json().get("version", "unknown") if r.ok else "unknown"
-        logger.info(f"[OK]  Ollama version — {version}")
-    except Exception:
-        version = "unknown"
-        logger.warning("[WARN] Ollama version — could not determine version")
-
-    # --- 4. Model available ---
-    try:
-        r = requests.get(f"{ollama_url}/api/tags", timeout=5)
-        models = [m["name"] for m in r.json().get("models", [])]
-        matched = any(m == ollama_model or m.startswith(ollama_model.split(":")[0]) for m in models)
-        if matched:
-            logger.info(f"[OK]  Ollama model   — '{ollama_model}' is available")
-        else:
-            logger.error(f"[FAIL] Ollama model  — '{ollama_model}' not found")
-            logger.error(f"       Run: ollama pull {ollama_model}")
-            if models:
-                logger.error(f"       Available models: {', '.join(models)}")
-            all_ok = False
-    except Exception as e:
-        logger.error(f"[FAIL] Ollama model  — {e}")
-        all_ok = False
-
-    # --- 5. /api/chat endpoint (required for response generation) ---
-    try:
-        r = requests.post(
-            f"{ollama_url}/api/chat",
-            json={"model": ollama_model, "messages": [{"role": "user", "content": "hi"}], "stream": False, "options": {"num_predict": 1}},
-            timeout=30,
-        )
-        if r.status_code == 404:
-            logger.error("[FAIL] Ollama /api/chat — endpoint not found (Ollama is too old)")
-            logger.error("       Update Ollama to v0.1.14 or newer: https://ollama.com/download/windows")
-            all_ok = False
-        elif r.ok:
-            logger.info("[OK]  Ollama /api/chat — endpoint works")
-        else:
-            logger.warning(f"[WARN] Ollama /api/chat — status {r.status_code}: {r.text[:80]}")
-    except Exception as e:
-        logger.warning(f"[WARN] Ollama /api/chat — {e}")
-
-    # --- 6. Gemini API key (optional — for embeddings) ---
+    # --- 3. Gemini API key (optional — for embeddings) ---
     google_key = os.getenv("GOOGLE_API_KEY")
     if google_key:
         logger.info("[OK]  Gemini API key — present (semantic embedding enabled)")
@@ -244,7 +192,7 @@ async def chat(request: ChatRequest):
         api_key=request.api_key,
     )
 
-    # Persist this turn into session history (Ollama uses "assistant" not "model")
+    # Persist this turn into session history
     history.append({"role": "user", "content": request.message})
     history.append({"role": "assistant", "content": result['answer']})
 

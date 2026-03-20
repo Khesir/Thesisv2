@@ -52,8 +52,8 @@ chatbot_deploy/
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net
 MONGODB_NAME=thesis
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.2:1b
+GROQ_API_KEY=gsk_your_api_key_here
+GROQ_MODEL=llama-3.1-8b-instant
 GOOGLE_API_KEY=your-google-api-key   # optional, for semantic embeddings
 ```
 
@@ -169,20 +169,19 @@ docker compose up chatbot-api
 |----------|----------|-------------|
 | `MONGODB_URI` | Yes | MongoDB connection string. Atlas (`mongodb+srv://...`) or local (`mongodb://localhost:27017`) |
 | `MONGODB_NAME` | No | Database name. Default: `thesis` |
-| `OLLAMA_BASE_URL` | No | Ollama server URL. Default: `http://localhost:11434` |
-| `OLLAMA_MODEL` | No | Ollama model to use. Default: `llama3.2:1b` |
-| `GOOGLE_API_KEY` | No* | Google AI API key — used only for crop embeddings |
+| `GROQ_API_KEY` | Yes* | Groq API key for chat generation |
+| `GROQ_MODEL` | No | Groq model to use. Default: `llama-3.1-8b-instant` |
+| `GOOGLE_API_KEY` | No** | Google AI API key — used only for crop embeddings |
 
-> *Without `GOOGLE_API_KEY`: embeddings are skipped and the system falls back to keyword-based crop retrieval. Chat responses are still AI-generated via Ollama.
+> *Without `GROQ_API_KEY`: the API still works but returns raw formatted crop data instead of AI-generated answers.
 >
-> Without Ollama running: the API still works but returns raw formatted crop data instead of AI-generated answers.
+> **Without `GOOGLE_API_KEY`: embeddings are skipped and the system falls back to keyword-based crop retrieval.
 
-### Installing Ollama
+### Getting a Groq API Key
 
-1. Download from [ollama.com](https://ollama.com/download)
-2. Install and run: `ollama serve`
-3. Pull a model: `ollama pull llama3.2:1b` (or `mistral`, `phi3`, etc.)
-4. Verify: `curl http://localhost:11434/api/tags`
+1. Sign up at [console.groq.com](https://console.groq.com)
+2. Go to **API Keys** → **Create API Key**
+3. Copy the key (starts with `gsk_...`) into your `.env` file
 
 ### Getting a Google API Key (for embeddings only)
 
@@ -303,49 +302,21 @@ Common causes:
 
 **Symptom:** `LLM available: False` in startup log, chat returns raw data.
 
-**If running locally:**
-```bash
-ollama serve
-ollama pull llama3.2:1b   # if not already downloaded
+`GROQ_API_KEY` is missing from `chatbot/.env`. Add it:
+
+```env
+GROQ_API_KEY=gsk_your_api_key_here
 ```
 
-**If running via Docker:**
-```bash
-# Check if the ollama container is running
-docker ps | grep chatbot_ollama
+Get a key at [console.groq.com](https://console.groq.com).
 
-# Pull the model inside the container (first time only)
-docker exec chatbot_ollama ollama pull llama3.2:1b
+### `AuthenticationError` in chat responses
 
-# Restart the chatbot API so it reconnects
-docker compose -f chatbot/docker-compose.standalone.yml restart chatbot-api
-```
+The Groq API key is invalid or expired. Generate a new one at [console.groq.com](https://console.groq.com).
 
-The `OLLAMA_BASE_URL` must be:
-- `http://localhost:11434` when running chatbot locally
-- `http://ollama:11434` when both services run in Docker (set automatically by docker-compose)
+### `RateLimitError` in chat responses
 
-### Ollama model not found
-
-**Symptom:** Error in chat response mentioning `model not found` or `pull model first`.
-
-**Fix:**
-```bash
-# Local
-ollama pull llama3.2:1b
-
-# Docker
-docker exec chatbot_ollama ollama pull llama3.2:1b
-```
-
-Check available models:
-```bash
-# Local
-ollama list
-
-# Docker
-docker exec chatbot_ollama ollama list
-```
+Free tier rate limit reached. Wait a moment, or upgrade at [groq.com/pricing](https://groq.com/pricing).
 
 ### PyInstaller build fails
 

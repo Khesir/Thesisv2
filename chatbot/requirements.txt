@@ -1,5 +1,5 @@
-# LLM Integration (Ollama - local inference via HTTP)
-requests>=2.31.0
+# LLM Integration (Groq API)
+groq>=0.9.0
 
 # Embeddings (Gemini - cached in MongoDB after first run)
 google-genai>=1.0.0

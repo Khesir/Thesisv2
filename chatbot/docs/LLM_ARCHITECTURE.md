@@ -1,6 +1,6 @@
-# LLM Architecture: Grounded Q&A with Ollama
+# LLM Architecture: Grounded Q&A with Groq
 
-This document explains the LLM design decisions behind the agricultural RAG chatbot — specifically why local Ollama inference is used for chat generation, while Gemini is retained for embeddings.
+This document explains the LLM design decisions behind the agricultural RAG chatbot — specifically why Groq API is used for chat generation, while Gemini is retained for embeddings.
 
 ---
 
@@ -24,7 +24,7 @@ User Question
          │  Crop context (structured text)
          ▼
 ┌─────────────────┐
-│   Ollama LLM    │  ← Reads context + question, writes a natural answer
+│    Groq LLM     │  ← Reads context + question, writes a natural answer
 └────────┬────────┘
          │
          ▼
@@ -35,7 +35,7 @@ This is fundamentally different from open-ended generation tasks (creative writi
 
 ---
 
-## Why Ollama for Chat Generation?
+## Why Groq for Chat Generation?
 
 ### The Key Insight: Retrieval Does the Heavy Lifting
 
@@ -45,20 +45,20 @@ In a RAG pipeline, the quality of the final answer depends mostly on:
 2. **Context completeness** — is the crop data rich enough? (handled by the extraction pipeline)
 3. **Response formatting** — can the model read the context and write a clear answer?
 
-Step 3 is what the chat LLM handles. For this task, `llama3.1` or `mistral` are more than capable. The model does not need to know anything about agriculture on its own — the answer is handed to it in the prompt.
+Step 3 is what the chat LLM handles. For this task, `llama-3.1-8b-instant` is more than capable. The model does not need to know anything about agriculture on its own — the answer is handed to it in the prompt.
 
-### Practical Advantages of Ollama
+### Practical Advantages of Groq
 
-| Concern | Gemini (cloud) | Ollama (local) |
-|---------|---------------|----------------|
-| API quota | Hits limit after ~2 queries on free tier | Unlimited |
-| Cost at scale | Accumulates per-token charges | Free after hardware |
-| Latency | Network round-trip (~1–3s) | Local inference (hardware-dependent) |
-| Privacy | Data leaves the machine | Fully local |
-| Availability | Requires internet + valid API key | Works offline |
-| Setup | Just an API key | Ollama must be installed and running |
+| Concern | Gemini (cloud) | Groq (cloud) |
+|---------|---------------|--------------|
+| API quota | Hits limit after ~2 queries on free tier | Generous free tier (14,400 req/day) |
+| Cost at scale | Accumulates per-token charges | Pay-per-token (very cheap) |
+| Latency | Network round-trip (~1–3s) | Extremely fast (~200–500ms via LPU) |
+| Privacy | Data leaves the machine | Data sent to Groq servers |
+| Availability | Requires internet + valid API key | Requires internet + valid API key |
+| Setup | Just an API key | Just an API key |
 
-For a thesis prototype running locally alongside a Flutter desktop app, Ollama is the natural fit.
+For a thesis prototype, Groq's free tier is more than sufficient and eliminates the need to run a local Ollama server.
 
 ---
 
@@ -89,12 +89,7 @@ The MTEB leaderboard is publicly verifiable at: [huggingface.co/spaces/mteb/lead
 
 The retrieval score (67.71) is particularly relevant here — it directly measures the task the embedding is used for in this system (finding the most semantically relevant crop given a user query).
 
-Switching embeddings to an Ollama model (e.g., `nomic-embed-text`) would:
-- Require clearing and regenerating all cached embeddings (different vector dimensions)
-- Reduce retrieval quality (local embedding models score ~10+ points lower on MTEB retrieval)
-- Save very little — embedding calls only happen once per new crop, then are cached
-
-**The split is deliberate:** use Gemini's strengths (embeddings) where they matter most and have near-zero ongoing cost; use Ollama (local inference) where the volume is high (every chat query).
+**The split is deliberate:** use Gemini's strengths (embeddings) where they matter most and have near-zero ongoing cost; use Groq (fast cloud inference) where the volume is high (every chat query).
 
 ---
 
@@ -108,7 +103,7 @@ User sends follow-up: "What about fertilizer for those?"
                 ▼
   ┌─────────────────────────┐
   │  Call 1: Reformulation  │  → "fertilizer recommendations for rice and wheat"
-  │  (api/generate, 64 tok) │     (only if conversation history exists)
+  │  (keyword match, 0 tok) │     (only if conversation history exists; no LLM call)
   └─────────────┬───────────┘
                 │ standalone search query
                 ▼
@@ -117,13 +112,11 @@ User sends follow-up: "What about fertilizer for those?"
                 ▼
   ┌─────────────────────────┐
   │  Call 2: Chat response  │  → Natural language answer
-  │  (api/chat, 1024 tok)   │
+  │  (Groq, 256 tok)        │
   └─────────────────────────┘
 ```
 
-**Why reformulate?** Follow-up questions like "what about those?" or "how do I apply it?" don't contain enough keywords for retrieval. Without reformulation, the vector search would return irrelevant crops. The reformulation call is cheap (64 output tokens, no streaming) and significantly improves retrieval accuracy for multi-turn conversations.
-
-With Ollama, both calls are free — there is no quota concern.
+**Why reformulate?** Follow-up questions like "what about those?" or "how do I apply it?" don't contain enough keywords for retrieval. Without reformulation, the vector search would return irrelevant crops. The reformulation step uses local keyword matching (no LLM call) and then the single Groq call handles the final answer.
 
 ---
 
@@ -138,7 +131,7 @@ sessions: Dict[str, List[dict]] = {}
 
 Each turn is appended after a successful response. The full history is passed to the LLM on every request, allowing natural follow-up questions.
 
-**Role convention:** `"user"` and `"assistant"` (standard OpenAI/Ollama format).
+**Role convention:** `"user"` and `"assistant"` (standard OpenAI-compatible format — Groq uses the same schema).
 
 **Limitations:**
 - Sessions are lost on server restart (no database persistence)
@@ -149,117 +142,50 @@ For the current thesis scope, in-memory sessions are acceptable. A future improv
 
 ---
 
-## Hosting Ollama
+## Groq Setup
 
-### Option 1: Local (Development)
+### Get an API Key
 
-Install Ollama directly on the host machine:
-
-```bash
-# Install from https://ollama.com/download, then:
-ollama serve                  # starts the server on :11434
-ollama pull llama3.1          # download the model (~4.7 GB)
-```
-
-Set in `.env`:
-```env
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1
-```
-
-### Option 2: Docker (Recommended for consistent deployment)
-
-Ollama has an official Docker image: `ollama/ollama`. It is included in `chatbot/docker-compose.standalone.yml`.
-
-```bash
-# Start both Ollama and the chatbot API
-docker compose -f chatbot/docker-compose.standalone.yml up -d
-
-# Pull the model inside the container (first run only — model persists in the ollama_data volume)
-docker exec chatbot_ollama ollama pull llama3.1
-
-# Restart chatbot so it can connect to Ollama
-docker compose -f chatbot/docker-compose.standalone.yml restart chatbot-api
-```
-
-The `chatbot-api` container connects to Ollama via the internal Docker network at `http://ollama:11434` — no port exposure needed between containers.
-
-#### CPU vs GPU
-
-By default the Ollama container runs on **CPU**. This is slower (~10–60s per response depending on model size and hardware) but works on any machine.
-
-To enable **NVIDIA GPU** acceleration, install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) and uncomment the `deploy` section in `docker-compose.standalone.yml`:
-
-```yaml
-deploy:
-  resources:
-    reservations:
-      devices:
-        - driver: nvidia
-          count: all
-          capabilities: [gpu]
-```
-
-GPU inference is 5–20x faster and is recommended for demo environments.
-
-#### Model Storage
-
-Downloaded models are stored in the `ollama_data` Docker volume and persist across container restarts. A model only needs to be pulled once. Approximate sizes:
-
-| Model | Disk |
-|-------|------|
-| `llama3.1:8b` | ~4.7 GB |
-| `mistral:7b` | ~4.1 GB |
-| `phi3:mini` | ~2.2 GB |
-| `llama3.1:70b` | ~40 GB |
-
-### Option 3: Remote Ollama Server
-
-Point `OLLAMA_BASE_URL` at any machine running Ollama on your network:
+1. Sign up at [console.groq.com](https://console.groq.com)
+2. Navigate to **API Keys** → **Create API Key**
+3. Copy the key into `chatbot/.env`:
 
 ```env
-OLLAMA_BASE_URL=http://192.168.1.100:11434
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=llama-3.1-8b-instant
 ```
 
-This is useful if you have a dedicated GPU machine and want the chatbot API to run on a lighter machine.
+### Available Models
 
----
-
-## Model Recommendations
-
-| Model | Size | Best for | Notes |
-|-------|------|----------|-------|
-| `llama3.1:8b` | ~5 GB | General use, English Q&A | Good default |
-| `mistral:7b` | ~4 GB | Concise, fast answers | Slightly faster than llama3.1 |
-| `llama3.1:70b` | ~40 GB | Higher reasoning quality | Needs strong GPU/RAM |
-| `deepseek-r1:8b` | ~5 GB | Step-by-step reasoning | Overkill for grounded Q&A |
-| `phi3:mini` | ~2 GB | Low-resource environments | Lower quality, very fast |
-
-For most thesis demo scenarios, `llama3.1:8b` or `mistral:7b` is the recommended choice.
+| Model | Context | Best for |
+|-------|---------|----------|
+| `llama-3.1-8b-instant` | 128k | Default — fast, free-tier friendly |
+| `llama-3.3-70b-versatile` | 128k | Higher quality answers |
+| `mixtral-8x7b-32768` | 32k | Alternative MoE model |
+| `gemma2-9b-it` | 8k | Lightweight, fast |
 
 Configure via environment variable:
 
 ```env
-OLLAMA_MODEL=llama3.1
-OLLAMA_BASE_URL=http://localhost:11434
+GROQ_MODEL=llama-3.1-8b-instant
 ```
 
 ---
 
 ## Fallback Behavior
 
-The system degrades gracefully when Ollama is unavailable:
+The system degrades gracefully when Groq is unavailable (no API key set):
 
 ```
-Ollama running?
+GROQ_API_KEY set?
     │
-   YES → Generate natural language answer
+   YES → Generate natural language answer via Groq
     │
     NO → Return raw formatted crop data from context
          (still useful, just unformatted)
 ```
 
-The `/` health endpoint reports `llm_available: false` when Ollama is not reachable, so clients can surface an appropriate message.
+The `/` health endpoint reports `llm_available: false` when the Groq client is not configured, so clients can surface an appropriate message.
 
 ---
 
@@ -267,7 +193,7 @@ The `/` health endpoint reports `llm_available: false` when Ollama is not reacha
 
 | Component | Provider | Reason |
 |-----------|----------|--------|
-| Chat generation | Ollama (local) | Unlimited, free, sufficient for grounded Q&A |
-| Query reformulation | Ollama (local) | Cheap call, same provider, no quota risk |
+| Chat generation | Groq (`llama-3.1-8b-instant`) | Fast, free tier, sufficient for grounded Q&A |
+| Query reformulation | Local keyword matching | Zero cost, no API call needed |
 | Crop embeddings | Gemini `embedding-001` | Best retrieval accuracy, cached after first run |
 | Crop retrieval | Vector search + keyword fallback | No LLM needed for lookup |

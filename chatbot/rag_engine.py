@@ -1,34 +1,31 @@
 """
 RAG Engine
 Retrieval-Augmented Generation for agricultural chatbot.
-Uses local Ollama for free, quota-free chat inference.
+Uses Groq API for fast, free-tier-friendly chat inference.
 Gemini is retained in crop_store.py solely for embedding generation (cached).
 """
 import os
-import requests
 from typing import Dict, List, Optional
+
+from groq import Groq
 
 from .crop_store import CropStore
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+DEFAULT_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
 
 class RAGEngine:
-    """RAG Engine for agricultural Q&A using Ollama for generation."""
+    """RAG Engine for agricultural Q&A using Groq for generation."""
 
     def __init__(self, crop_store: CropStore, model: str = DEFAULT_MODEL):
         self.crop_store = crop_store
         self.model_name = model
-        self.base_url = OLLAMA_BASE_URL.rstrip("/")
+        api_key = os.getenv("GROQ_API_KEY")
+        self._client = Groq(api_key=api_key) if api_key else None
 
     def is_available(self) -> bool:
-        """Check if Ollama is running and reachable."""
-        try:
-            response = requests.get(f"{self.base_url}/api/tags", timeout=2)
-            return response.status_code == 200
-        except Exception:
-            return False
+        """Check if Groq client is configured."""
+        return self._client is not None
 
     def chat(
         self,
@@ -36,7 +33,7 @@ class RAGEngine:
         conversation_history: Optional[List[dict]] = None,
         top_k: int = 2,
         include_context: bool = True,
-        api_key: Optional[str] = None,  # Kept for API schema compatibility; unused by Ollama
+        api_key: Optional[str] = None,  # Kept for API schema compatibility
     ) -> Dict:
         """
         Process a user query with RAG, optionally continuing a conversation.
@@ -82,7 +79,7 @@ class RAGEngine:
             context_parts.append(f"# {crop['name']}\n{summary}")
         context = "\n\n---\n\n".join(context_parts)
 
-        # Step 4: Fall back to raw context if Ollama is unavailable
+        # Step 4: Fall back to raw context if Groq is unavailable
         if not self.is_available():
             return {
                 "answer": f"Here's what I found:\n\n{context}",
@@ -91,25 +88,17 @@ class RAGEngine:
                 "llm_used": False,
             }
 
-        # Step 5: Generate response via Ollama /api/chat
+        # Step 5: Generate response via Groq
         messages = self._build_messages(query, context, history)
 
         try:
-            response = requests.post(
-                f"{self.base_url}/api/chat",
-                json={
-                    "model": self.model_name,
-                    "messages": messages,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "num_predict": 256,
-                    },
-                },
-                timeout=300,
+            completion = self._client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=256,
             )
-            response.raise_for_status()
-            answer = response.json()["message"]["content"]
+            answer = completion.choices[0].message.content
 
             return {
                 "answer": answer,
@@ -122,8 +111,7 @@ class RAGEngine:
             return {
                 "answer": (
                     f"Error generating response: {e}\n\n"
-                    "Make sure Ollama is running (`ollama serve`) and the model is pulled "
-                    f"(`ollama pull {self.model_name}`).\n\n"
+                    "Make sure GROQ_API_KEY is set in your .env file.\n\n"
                     f"Here's the raw data:\n\n{context}"
                 ),
                 "crops_used": crops_used,
@@ -139,33 +127,30 @@ class RAGEngine:
 
         E.g. "What about fertilizer for those?" + history about rice/wheat
           → "fertilizer recommendations for rice and wheat"
-
-        Uses Ollama /api/generate with a very low token budget (64 tokens)
-        since this is a simple rewriting task.
         """
         # Already specific enough — don't touch it
         if len(query.split()) >= 6:
             return query
- 
+
         # Gather recent history text for crop name extraction
         recent = conversation_history[-6:]
         history_text = " ".join(t["content"] for t in recent).lower()
- 
+
         # Match against known crop names from the store
-        known_crops = self.crop_store.list_crops()  # e.g. ["Rice", "Corn", "Tomato", ...]
+        known_crops = self.crop_store.list_crops()
         query_lower = query.lower()
- 
+
         mentioned_crops = [
             crop for crop in known_crops
             if crop.lower() in history_text
-            and crop.lower() not in query_lower  # only append if not already in query
+            and crop.lower() not in query_lower
         ]
- 
+
         if mentioned_crops:
-            crops_str = " and ".join(mentioned_crops[:3])  # cap at 3 to avoid bloat
+            crops_str = " and ".join(mentioned_crops[:3])
             return f"{query} for {crops_str}"
- 
-        return 
+
+        return query
 
     def _build_messages(
         self,
@@ -174,7 +159,7 @@ class RAGEngine:
         conversation_history: List[dict],
     ) -> List[dict]:
         """
-        Build an Ollama-compatible messages list for multi-turn chat.
+        Build a Groq-compatible messages list for multi-turn chat.
 
         Structure:
           - system: agricultural advisor instruction
@@ -191,7 +176,7 @@ class RAGEngine:
                     "Answer questions based ONLY on the crop information provided in each message. "
                     "Be conversational and include specific numbers when available."
                     "IMPORTANT: Always respond in English only, regardless of the language "
-                    "used in the user's question or the crop data provided."                  
+                    "used in the user's question or the crop data provided."
                 ),
             }
         ]

@@ -17,7 +17,7 @@ A FastAPI-based agricultural advisory chatbot using Retrieval-Augmented Generati
 - [Error Handling](#error-handling)
 - [Examples](#examples)
 
-> **LLM Design:** Chat generation uses local Ollama (free, unlimited). Embeddings use Gemini (cached in MongoDB after first run). See [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md) for the full rationale.
+> **LLM Design:** Chat generation uses Groq API (free tier, fast). Embeddings use Gemini (cached in MongoDB after first run). See [LLM_ARCHITECTURE.md](./LLM_ARCHITECTURE.md) for the full rationale.
 
 ---
 
@@ -45,9 +45,9 @@ pip install -r requirements.txt
 Copy `.env.example` to `.env` and configure your API keys:
 
 ```env
-# Ollama (required for chat generation)
-OLLAMA_BASE_URL=http://localhost:11434   # default
-OLLAMA_MODEL=llama3.1                   # or mistral, phi3, etc.
+# Groq (required for chat generation)
+GROQ_API_KEY=gsk_your_api_key_here
+GROQ_MODEL=llama-3.1-8b-instant        # or llama-3.3-70b-versatile, gemma2-9b-it, etc.
 
 # Google API (optional - for semantic embeddings; falls back to keyword search without it)
 GOOGLE_API_KEY=your_google_api_key
@@ -469,7 +469,7 @@ GET /sources
 
 ## Security Considerations
 
-The chatbot uses **local Ollama** for chat generation — no external API keys are sent per request. The only external service is Google (for embeddings), and those are cached after the first run.
+The chatbot uses **Groq API** for chat generation. The only other external service is Google (for embeddings), and those are cached after the first run. Keep `GROQ_API_KEY` and `GOOGLE_API_KEY` out of version control.
 
 **Best Practices:**
 
