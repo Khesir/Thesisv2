@@ -177,6 +177,7 @@ class RAGEngine:
                     "Be conversational and include specific numbers when available."
                     "IMPORTANT: Always respond in English only, regardless of the language "
                     "used in the user's question or the crop data provided."
+                    "Answer all the questions concisely, and keep all relevant context"
                 ),
             }
         ]

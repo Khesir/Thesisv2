@@ -365,19 +365,32 @@ The web panel's token rotation service manages a pool of LLM API keys with per-k
 
 ## 3.7 System Evaluation
 
+This study employs a three-layer evaluation framework: extraction accuracy (Section 3.7.1), user-perceived usability and impact (Section 3.7.2), and response quality (Section 3.7.3). This structure follows Design Science Research practice, which requires that a constructed artifact be rigorously evaluated against both technical correctness criteria and stakeholder-oriented criteria (Hevner et al., 2004). Each layer directly addresses one or more of the study's research questions: extraction fidelity measures how accurately the knowledge base was built from official documents (RQ2) and how effectively hallucinations are mitigated (RQ3); user evaluation measures how well the conversational interface improves information accessibility for students, novice farmers, and the general public (RQ4); and response quality evaluation measures how faithfully and accurately the RAG pipeline produces grounded responses from those documents (RQ1, RQ3).
+
 ### 3.7.1 Extraction Evaluation
 
 Since all source documents are official Philippine government publications, their content is treated as the authoritative reference. Extraction quality is evaluated as **source fidelity** — the degree to which the system accurately captures information as stated in the source text — rather than real-world factual correctness. A verification set was constructed by randomly sampling [N] chunks and manually inspecting the raw text alongside the structured extraction output at the field level.
 
+Evaluation is conducted at the **field level**: for each expected field in each sampled chunk (e.g., crop name, planting method, fertilizer requirement), a reviewer determines whether the system's extracted value is correct, absent, or fabricated relative to what the source text contains. Each field instance is assigned to one of four categories, following the standard binary classification framework used in information extraction evaluation (Manning et al., 2008; Tjong Kim Sang & De Meulder, 2003):
+
+- **True Positive (TP)** — The field value was present in the source chunk *and* the system correctly extracted it. This represents a successful, accurate extraction.
+- **False Positive (FP)** — The system produced a value for the field, but no corresponding information exists in the source chunk. This constitutes a hallucinated or fabricated extraction. A high FP count inflates the apparent coverage of the system while reducing trustworthiness.
+- **True Negative (TN)** — The field was absent from the source chunk *and* the system correctly left it empty (null/not extracted). This represents correct recognition of missing information. TN is tracked but not used in Precision or Recall calculations, as it is not informative for imbalanced fields.
+- **False Negative (FN)** — The field value was present in the source chunk but the system failed to extract it. This represents a missed extraction. A high FN count indicates the system is under-extracting and leaving relevant data uncaptured.
+
+These four categories define the confusion matrix from which extraction metrics are derived. The choice of Precision, Recall, and F1-Score as primary metrics follows established practice in Named Entity Recognition (NER) and Information Extraction (IE) shared tasks, where the same framework has been applied to evaluate structured extraction from unstructured text (Sang & De Meulder, 2003; Chinchor, 1992). Precision penalizes hallucination; Recall penalizes missed extractions; the F1-Score provides a balanced single-number summary that is sensitive to both failure modes equally, making it suitable as the primary performance indicator when neither hallucination nor omission is categorically more harmful.
+
+Field Coverage Rate and Hallucination Rate are reported as supplementary operational indicators. Field Coverage Rate measures the completeness of the extraction schema — how many of the expected fields are populated — regardless of whether each value is correct. Hallucination Rate directly quantifies fabrication as a proportion of all extracted output, providing a standalone trustworthiness signal aligned with concerns about LLM reliability in structured extraction tasks (Bang et al., 2023).
+
 **Metrics and Formulas**
 
-| Metric | Formula |
-|---|---|
-| Precision | TP / (TP + FP) |
-| Recall | TP / (TP + FN) |
-| F1-Score | 2 × (Precision × Recall) / (Precision + Recall) |
-| Field Coverage Rate | (Fields Populated / Total Expected Fields) × 100% |
-| Hallucination Rate | (Hallucinated Values / Total Extracted Values) × 100% |
+| Metric | Formula | Interpretation |
+|---|---|---|
+| Precision | TP / (TP + FP) | Proportion of extracted values that are correct; penalizes hallucination |
+| Recall | TP / (TP + FN) | Proportion of present values that were captured; penalizes missed extractions |
+| F1-Score | 2 × (Precision × Recall) / (Precision + Recall) | Harmonic mean balancing Precision and Recall |
+| Field Coverage Rate | (Fields Populated / Total Expected Fields) × 100% | Schema completeness regardless of correctness |
+| Hallucination Rate | (Hallucinated Values / Total Extracted Values) × 100% | Proportion of extracted values with no source basis (FP rate) |
 
 **Tools:** Manual annotation by reviewers; metric computation via custom Python scripts.
 
@@ -385,16 +398,52 @@ Since all source documents are official Philippine government publications, thei
 
 A structured usability questionnaire was administered to [N] respondents after each participant completed a hands-on testing session with the chatbot. Each respondent was given direct access to the chatbot interface and asked to submit predefined crop-related questions, engage in follow-up queries, and review the chatbot's responses. Ratings were recorded only after the session concluded to ensure all responses reflect actual interaction with the chatbot rather than hypothetical assessment.
 
-The instrument used a 5-point Likert scale (1 = Strongly Disagree, 5 = Strongly Agree) covering four dimensions: Usability, which covers ease of interaction and clarity of the chatbot interface; Response Comprehensibility, which covers how clearly and understandably the chatbot communicates its answers; System Reliability, which covers the chatbot's consistency and responsiveness across queries; and Perceived Impact, which covers the chatbot's potential to improve access to agricultural knowledge. The instrument was structured around conversational agent usability heuristics adapted for the agricultural domain.
+Respondents were drawn from the target user population of the system: agriculture students, novice farmers, extension workers, and faculty or researchers with agricultural backgrounds. The inclusion of actual farmers as respondents is deliberate — RQ4 specifically asks whether the system improves accessibility of agronomic information for farmers and the general public, and a usability evaluation that excludes this group would fail to answer that question. Farmer respondents were recruited through [describe recruitment channel, e.g., local agricultural office, farming cooperative, etc.].
 
-**Metrics and Formulas**
+The instrument used a 5-point Likert scale (1 = Strongly Disagree, 5 = Strongly Agree) covering four dimensions: Usability, which covers ease of interaction and clarity of the chatbot interface; Response Comprehensibility, which covers how clearly and understandably the chatbot communicates its answers; System Reliability, which covers the chatbot's consistency and responsiveness across queries; and Perceived Impact, which covers the chatbot's potential to improve access to agricultural knowledge compared to traditional document-based retrieval. The instrument was structured around conversational agent usability heuristics adapted for the agricultural domain (Quesenbery, 2003; Radziwill & Benton, 2017).
 
-| Metric | Applied To | Formula |
-|---|---|---|
-| Weighted Mean | All dimensions | Σ(f × x) / n |
-| Cronbach's Alpha | Overall instrument | (k / (k − 1)) × (1 − Σσ²ᵢ / σ²total) |
+The Perceived Impact dimension specifically includes an item asking respondents to compare their experience with the system against searching through documents manually — *"This system made it easier to find agricultural information than searching through documents manually."* This item operationalizes the comparative element of RQ4 without requiring a controlled experiment, instead capturing user-perceived relative advantage as a self-reported measure, which is an accepted approach for comparative accessibility evaluation in technology adoption research (Davis, 1989).
 
-Weighted mean results are interpreted on a five-point scale: 4.50–5.00 = Strongly Agree, 3.50–4.49 = Agree, 2.50–3.49 = Neutral, 1.50–2.49 = Disagree, and 1.00–1.49 = Strongly Disagree. Cronbach's Alpha assesses internal consistency across all scale items to confirm that items within each dimension reliably measure the same underlying construct.
+The Weighted Mean is the primary descriptive statistic applied per item and per dimension. It is preferred over a simple arithmetic mean in Likert-scale analysis because it accounts for the full frequency distribution of responses rather than treating each response as equally weighted (Jamieson, 2004). Cronbach's Alpha is reported as the reliability coefficient for the overall instrument to confirm that items within each dimension cohesively measure the same latent construct rather than capturing unrelated perceptions (Cronbach, 1951; Taber, 2018).
+
+**Metrics and Formulas — Variable Definitions**
+
+**Weighted Mean** = Σ(f × x) / n
+
+| Variable | Meaning |
+|---|---|
+| f | Frequency of respondents who selected a particular rating value x (e.g., how many respondents chose "4") |
+| x | The numeric rating value on the Likert scale (1, 2, 3, 4, or 5) |
+| n | Total number of respondents who answered the item |
+| Σ(f × x) | Sum of each rating value multiplied by its frequency, across all five scale points |
+
+**Cronbach's Alpha (α)** = (k / (k − 1)) × (1 − Σσ²ᵢ / σ²total)
+
+| Variable | Meaning |
+|---|---|
+| k | Number of items (questions) in the instrument or dimension being assessed |
+| σ²ᵢ | Variance of individual respondent scores on item i — how much responses to that single question vary across all respondents |
+| σ²total | Variance of each respondent's total composite score (sum of all item ratings) — how much total scores vary across all respondents |
+| Σσ²ᵢ | Sum of per-item variances across all k items |
+| 1 − Σσ²ᵢ / σ²total | The proportion of total score variance attributable to shared construct variance rather than item-specific noise; higher values indicate stronger internal consistency |
+
+**Interpretation Scales**
+
+| Weighted Mean Range | Verbal Interpretation |
+|---|---|
+| 4.50 – 5.00 | Strongly Agree |
+| 3.50 – 4.49 | Agree |
+| 2.50 – 3.49 | Neutral |
+| 1.50 – 2.49 | Disagree |
+| 1.00 – 1.49 | Strongly Disagree |
+
+| Cronbach's Alpha | Internal Consistency |
+|---|---|
+| ≥ 0.90 | Excellent |
+| 0.80 – 0.89 | Good |
+| 0.70 – 0.79 | Acceptable |
+| 0.60 – 0.69 | Questionable |
+| < 0.60 | Unacceptable |
 
 **Tools:** Structured questionnaire (Google Forms); descriptive statistics and reliability analysis via Python (`pandas`, `scipy`, `pingouin`).
 
@@ -404,22 +453,63 @@ Response quality was assessed using a custom gold-standard evaluation test set p
 
 The chatbot's actual responses to each prompt were collected and presented to a panel of [N] raters — comprising observers, coders, and subject-matter annotators — who independently rated each response on a 1-to-5 ordinal scale, where 1 indicates the response is entirely inaccurate or irrelevant relative to the expected answer and 5 indicates a fully accurate, complete, and relevant response. Raters assessed responses without knowledge of one another's scores to preserve independence.
 
-**Metrics and Formulas**
+Human evaluation by a multi-rater panel is preferred over automated metrics for response quality in this study because the evaluation task requires contextual judgment — whether a response is agriculturally appropriate, faithful to government source content, and responsive to the specific query intent — qualities that automated string-similarity metrics (e.g., ROUGE, BLEU) are insufficient to capture for long-form, knowledge-grounded responses (Gatt & Krahmer, 2018; Liu et al., 2023). Krippendorff's Alpha is selected as the inter-rater reliability measure because it supports ordinal data, accommodates any number of raters, and handles missing ratings, making it more appropriate for small annotation panels than Cohen's Kappa or Fleiss' Kappa (Krippendorff, 2011).
 
-| Metric | Applied To | Formula |
-|---|---|---|
-| Mean Rating Score | Per item and overall | Σ ratings / (raters × items) |
-| Krippendorff's Alpha | Inter-rater agreement | α = 1 − (D_o / D_e) |
+**Metrics and Formulas — Variable Definitions**
 
-Krippendorff's Alpha is computed using an ordinal difference function appropriate for the 1–5 rating scale, where D_o is the observed disagreement across all rater pairs and D_e is the expected disagreement by chance. Values above 0.80 indicate strong inter-rater agreement; 0.67–0.80 indicate tentative but acceptable agreement. Mean rating scores are interpreted against the same five-point scale used in the usability evaluation.
+**Mean Rating Score** = Σ ratings / (raters × items)
+
+| Variable | Meaning |
+|---|---|
+| Σ ratings | The total sum of all scores given by all raters across all evaluation items (e.g., if 3 raters each scored 20 items, this is the sum of 60 individual scores) |
+| raters | The number of independent raters in the evaluation panel |
+| items | The number of chatbot response items in the test set |
+| raters × items | The total number of individual rating observations; the denominator normalizes the sum to produce an average score per response |
+
+**Krippendorff's Alpha (α)** = 1 − (D_o / D_e)
+
+| Variable | Meaning |
+|---|---|
+| D_o | Observed disagreement — the average squared difference between all pairs of ratings assigned to the same response item, summed across all items; measures how much raters actually disagreed |
+| D_e | Expected disagreement — the disagreement that would be expected if all raters assigned ratings randomly based on the observed marginal distribution of all scores; serves as the chance-agreement baseline |
+| D_o / D_e | The ratio of actual disagreement to chance-level disagreement; values less than 1.0 mean raters agreed better than chance |
+| 1 − (D_o / D_e) | Converts the disagreement ratio into a reliability coefficient: 1.0 = perfect agreement, 0.0 = chance-level agreement, negative values = worse than chance |
+
+An **ordinal difference function** is applied in computing D_o and D_e, meaning disagreement is weighted by the distance between ratings on the 1–5 scale (e.g., a disagreement of 4 vs. 5 is penalized less than a disagreement of 1 vs. 5). This is appropriate when the scale categories are ordered and the distances between them carry meaning.
+
+**Interpretation Scales**
+
+| Mean Rating Score | Verbal Interpretation |
+|---|---|
+| 4.50 – 5.00 | Excellent / Fully Accurate |
+| 3.50 – 4.49 | Good / Mostly Accurate |
+| 2.50 – 3.49 | Fair / Partially Accurate |
+| 1.50 – 2.49 | Poor / Mostly Inaccurate |
+| 1.00 – 1.49 | Very Poor / Entirely Inaccurate |
+
+| Krippendorff's Alpha | Inter-Rater Agreement |
+|---|---|
+| > 0.80 | Strong agreement |
+| 0.67 – 0.80 | Tentative, acceptable agreement |
+| < 0.67 | Insufficient agreement for reliable conclusions |
 
 **Tools:** Custom evaluation rubric and scoring sheet; inter-rater reliability computed via Python (`krippendorff`).
 
-### 3.7.4 System Performance Evaluation
+**Bias Prevention Measures**
 
-Operational performance was measured under representative load conditions across three indicators: average extraction time per chunk (seconds), end-to-end chatbot response latency (milliseconds) decomposed into embedding, retrieval, and generation time, and system error rate across a full extraction run.
+Several potential sources of bias were identified in the rater panel design and addressed through the following controls:
 
-**Tools:** Python `time` module for extraction timing; FastAPI middleware for request-level latency logging.
+| Bias Type | Control Applied |
+|---|---|
+| **Rater independence bias** | Raters scored all items independently and were not permitted to discuss scores with other panel members until after all ratings were submitted. No rater had access to another's scores during the evaluation period. |
+| **Response source blinding** | All chatbot responses presented to raters were stripped of any identifying information about the LLM provider or system configuration that generated them. Raters evaluated the content of each response only, preventing unconscious scoring bias toward or against a particular model. |
+| **Anchor drift** | Prior to scoring, all raters were provided with two calibration examples — one clearly poor response (expected score 1–2) and one clearly excellent response (expected score 4–5) with written justification for each anchor score. This aligned raters' interpretation of the scale before the formal evaluation began. |
+| **Order and sequence bias** | The order in which responses were presented was randomized independently for each rater to prevent anchoring effects from earlier items influencing scores on later items. |
+| **Confirmation bias** | Raters were not briefed on the system's development goals, the identity of the researchers, or the expected outcome of the evaluation. Instructions described only the scoring task and rubric. |
+
+**Acknowledged Limitation — Researcher-Defined Expected Responses**
+
+The expected responses used as the reference standard for each test item were authored by the researchers who designed and built the system. This introduces a potential source of confirmation bias: expected responses may have been framed in ways that inadvertently favor the system's output style, inflating rater scores. This limitation is partially mitigated by the use of Krippendorff's Alpha as an inter-rater reliability check — if rater agreement is strong (α > 0.67), it suggests that scoring was driven by clear response quality signals rather than subjective interpretation of an ambiguous standard. However, independent expert validation of the expected responses by a subject-matter specialist (e.g., an agricultural extension officer) was not conducted in this study and is recommended for future work.
 
 ---
 
@@ -437,15 +527,15 @@ No personally identifiable information was collected beyond basic demographic ca
 
 All PDF documents processed were sourced from publicly available Philippine government repositories and are classified as official public information. Government-issued agricultural publications are considered part of the public domain under Philippine law and do not require additional licensing for academic use.
 
-The use of government documents confers a dual ethical benefit: the information extracted carries institutional authority and accountability, reducing the risk of propagating unverified agricultural guidance; and the system effectively democratizes access to knowledge that is already public but practically inaccessible in its original unstructured PDF format. The system preserves full source provenance by attributing every extracted record and every chatbot response to its originating document, allowing users to trace any piece of information back to its official government source.
+The use of government documents confers a dual ethical benefit: the information extracted carries institutional authority and accountability, reducing the risk of propagating unverified agricultural guidance; and the system effectively democratizes access to knowledge that is already public but practically inaccessible in its original unstructured PDF format. This democratization rationale is consistent with the motivation articulated in comparable agricultural AI systems — Singh et al. (2024) similarly ground the ethical justification for Farmer.Chat in expanding smallholder farmers' access to expert-level agricultural guidance that would otherwise require in-person extension services. The system preserves full source provenance by attributing every extracted record and every chatbot response to its originating document, allowing users to trace any piece of information back to its official government source.
 
 ### 3.8.4 AI-Generated Content and Hallucination Risk
 
-The study acknowledges that LLM-based extraction and generation carry an inherent risk of hallucination or factual error. Mitigation strategies applied in this system include ground truth validation of extraction outputs against source text, RAG-grounded generation that anchors responses to retrieved document context rather than model parametric memory, and user-facing source citation in chatbot responses so that any claim can be independently verified against the originating government document.
+The study acknowledges that LLM-based extraction and generation carry an inherent risk of hallucination or factual error. Evaluations of LLM systems across reasoning, knowledge, and factual tasks have documented systematic hallucination behavior even in high-capability models (Bang et al., 2023), and this risk is of particular concern in agricultural advisory contexts where incorrect guidance could have direct consequences for crop outcomes and farmer livelihoods. Mitigation strategies applied in this system include ground truth validation of extraction outputs against source text, RAG-grounded generation that anchors responses to retrieved document context rather than model parametric memory — a strategy shown to substantially reduce hallucination compared to closed-book LLM generation (Lewis et al., 2020) — and user-facing source citation in chatbot responses so that any claim can be independently verified against the originating government document. In agricultural RAG systems specifically, AgriRegion (Fanuel et al., 2024) reports hallucination reductions of 10–20% over baseline LLMs through retrieval grounding, further supporting RAG as an appropriate hallucination mitigation strategy for this domain.
 
 ### 3.8.5 Bias and Fairness
 
-The agricultural corpus was reviewed for geographic and crop-type coverage balance to prevent the system from producing high-quality responses only for majority crops while underserving minority or regional varieties. Coverage gaps identified during evaluation are disclosed in the results and discussed in terms of their implications for equitable system utility across different agricultural contexts.
+The agricultural corpus was reviewed for geographic and crop-type coverage balance to prevent the system from producing high-quality responses only for majority crops while underserving minority or regional varieties. This is a recognized concern in domain-specific AI systems — the CROP benchmark (NeurIPS, 2024), which covers 5,045 questions across crop science subfields, notes that uneven coverage across crop categories in training and evaluation data leads to measurable performance disparities between well-represented and underrepresented crops. Similarly, Samuel et al. (2025) identify corpus coverage imbalance as a primary limitation of RAG-based agricultural systems, as retrieval quality degrades for crop types or regions not well represented in the knowledge base. Coverage gaps identified during evaluation in this study are disclosed in the results and discussed in terms of their implications for equitable system utility across different agricultural contexts.
 
 ---
 
@@ -453,104 +543,19 @@ The agricultural corpus was reviewed for geographic and crop-type coverage balan
 
 # Chapter 4: Results and Discussion
 
-## 4.1 Application Testing and Usability Survey Results
-
-All survey results presented in this section are based on respondents' direct, hands-on experience with the deployed system. Each participant completed a structured testing session before completing the survey, ensuring that all ratings reflect actual observed system behavior rather than abstract or hypothetical assessments.
-
-### 4.1.1 Respondent Profile
-
-**Table 4.1. Demographic Profile of Respondents (n = [N])**
-
-| Category | Frequency | Percentage (%) |
-|---|---|---|
-| Agriculture Students | | |
-| Extension Workers | | |
-| Faculty / Researchers | | |
-| Other | | |
-| **Total** | **[N]** | **100%** |
-
-*Discussion:* Describe the composition of respondents and how it reflects the target user population. Note any relevant prior experience with agricultural information systems or chatbot tools that may have influenced ratings.
-
-### 4.1.2 Usability
-
-**Table 4.2. Usability — Survey Results**
-
-| Item | Mean | SD | Interpretation |
-|---|---|---|---|
-| The interface was easy to navigate during testing. | | | |
-| I was able to complete the assigned tasks without assistance. | | | |
-| The chatbot responses were easy to read and understand. | | | |
-| I did not need additional instructions to use the system. | | | |
-| The layout of the application is clear and well-organized. | | | |
-| **Overall Weighted Mean** | | | |
-
-*Discussion:* Interpret usability scores in the context of the testing tasks performed. Identify items with the lowest scores and relate them to specific interface elements or interaction flows observed during the testing session. Discuss whether any task generated noticeably more difficulty than others.
-
-### 4.1.3 Response Quality
-
-**Table 4.3. Response Quality — Survey Results**
-
-| Item | Mean | SD | Interpretation |
-|---|---|---|---|
-| The chatbot provided answers that matched my query. | | | |
-| The information in the responses was accurate and reliable. | | | |
-| The responses were complete and did not leave out important details. | | | |
-| I could verify the chatbot's answer against the referenced document. | | | |
-| **Overall Weighted Mean** | | | |
-
-*Discussion:* Discuss how user-perceived response quality aligns with the objective extraction and retrieval metrics reported in Sections 4.3 and 4.4. Since source documents are official government publications, respondents who cross-referenced answers against the source are particularly informative — note any patterns in verification behavior. Discuss implications for user trust in the system's outputs.
-
-### 4.1.4 System Reliability
-
-**Table 4.4. System Reliability — Survey Results**
-
-| Item | Mean | SD | Interpretation |
-|---|---|---|---|
-| The system responded consistently throughout the testing session. | | | |
-| I did not encounter errors or unexpected behavior during testing. | | | |
-| The system responded within an acceptable amount of time. | | | |
-| **Overall Weighted Mean** | | | |
-
-*Discussion:* Relate perceived reliability to the objective system performance metrics in Section 4.5 (error rate, latency). If user-perceived reliability diverges from measured metrics, analyze possible causes (e.g., latency perception, error visibility, recovery behavior).
-
-### 4.1.5 Overall Satisfaction
-
-**Table 4.5. Overall Satisfaction — Survey Results**
-
-| Item | Mean | SD | Interpretation |
-|---|---|---|---|
-| Overall, I am satisfied with the system's performance. | | | |
-| I would recommend this system for agricultural information lookup. | | | |
-| This system would be useful in real agricultural practice or study. | | | |
-| **Overall Weighted Mean** | | | |
-
-*Discussion:* Discuss overall satisfaction as an integrative measure across all tested dimensions. Compare against individual dimension means to identify whether satisfaction tracks most closely with usability or response quality.
-
-### 4.1.6 Summary of Survey Results
-
-**Table 4.6. Summary of All Survey Dimensions**
-
-| Dimension | Overall Weighted Mean | SD | Interpretation |
-|---|---|---|---|
-| Usability | | | |
-| Response Quality | | | |
-| System Reliability | | | |
-| Overall Satisfaction | | | |
-| **Grand Mean** | | | |
-
-*Scale: 4.50–5.00 = Strongly Agree / Excellent; 3.50–4.49 = Agree / Good; 2.50–3.49 = Neutral / Fair; 1.50–2.49 = Disagree / Poor; 1.00–1.49 = Strongly Disagree / Very Poor*
-
-*Discussion:* Provide a holistic interpretation of the post-testing survey results. Identify which dimension scored highest and lowest and connect findings to observed system behaviors. Discuss the Cronbach's Alpha reliability coefficient to establish internal consistency of the survey instrument. Conclude with a statement on the system's overall acceptance based on user testing outcomes.
+This chapter presents the evaluation findings in two parts. Section 4.1 reports all quantitative results across the three evaluation components — extraction accuracy, user-perceived usability and impact, and response quality — in tabular form without interpretation. Section 4.2 provides the full discussion and synthesis of those results, organized by evaluation component and concluding with a direct answer to each of the four research questions.
 
 ---
 
-## 4.2 Data Processing and Extraction Validation
+## 4.1 Results
 
-All source documents are official government agricultural publications. Validation in this section measures **extraction fidelity** — whether the system accurately and completely captures content as it appears in the source text. The factual correctness of the underlying government content is not re-evaluated.
+### 4.1.1 Extraction Evaluation
 
-### 4.2.1 Corpus Statistics
+All source documents are official Philippine government agricultural publications. A sampled verification set of [N] chunks was manually reviewed at the field level by [N] annotators to produce the results below.
 
-**Table 4.7. PDF Corpus Summary**
+#### 4.1.1.1 Corpus and Processing Statistics
+
+**Table 4.1. PDF Corpus Summary**
 
 | Metric | Value |
 |---|---|
@@ -563,11 +568,9 @@ All source documents are official government agricultural publications. Validati
 | Records Passing Schema Validation | |
 | Schema Validation Pass Rate (%) | |
 
-*Discussion:* Comment on chunking behavior — whether the sliding window strategy produced coherent chunks or fragmented key information across chunk boundaries. Note any document types (scanned PDFs, complex tables, multi-column layouts) that degraded text extraction quality and describe how these were handled.
+#### 4.1.1.2 Extraction Field Coverage
 
-### 4.2.2 Extraction Field Coverage
-
-**Table 4.8. Extraction Field Coverage Rate**
+**Table 4.2. Extraction Field Coverage Rate**
 
 | Field | Expected Occurrences | Extracted | Coverage Rate (%) |
 |---|---|---|---|
@@ -582,136 +585,301 @@ All source documents are official government agricultural publications. Validati
 | Harvest Indicators | | | |
 | **Average Coverage** | | | **[N]%** |
 
-*Discussion:* Distinguish between two causes of low coverage: (1) the field is genuinely absent from the source document (a corpus characteristic, not an extraction failure), and (2) the field is present in the source but the LLM failed to extract it (a true extraction miss). Government documents vary in scope — a pest management bulletin will naturally have no yield data. Disaggregating these causes is essential for accurately interpreting coverage rates.
+#### 4.1.1.3 Overall Extraction Performance
 
----
-
-## 4.3 Extraction Accuracy
-
-Extraction accuracy is evaluated as fidelity to the official government source documents. A sampled verification set of [N] chunks was reviewed to confirm whether extracted field values are correctly derived from the source text, partially captured, or hallucinated (no basis in the source chunk).
-
-### 4.3.1 Overall Extraction Performance
-
-**Table 4.9. Overall LLM Extraction Performance (All Fields, All Providers)**
+**Table 4.3. Overall LLM Extraction Performance (All Fields, All Providers)**
 
 | Metric | Score |
 |---|---|
 | Precision | |
 | Recall | |
 | F1-Score | |
-| Exact Match (EM) | |
-| Hallucination Rate | |
+| Field Coverage Rate (%) | |
+| Hallucination Rate (%) | |
 
-*Discussion:* Interpret overall extraction fidelity. Discuss the precision-recall tradeoff — whether the system tends toward over-extraction (high recall, lower precision, higher hallucination risk) or conservative extraction (high precision, lower recall, higher miss rate). Given that all source content is authoritative government text, a low hallucination rate is a critical correctness indicator.
+#### 4.1.1.4 Per-Field Extraction Performance
 
-### 4.3.2 Per-Field Extraction Performance
+**Table 4.4. Precision, Recall, F1-Score, and Hallucination Rate per Extracted Field**
 
-**Table 4.10. Precision, Recall, F1-Score, and Hallucination Rate per Extracted Field**
+| Field | TP | FP | FN | Precision | Recall | F1-Score | Hallucination Rate (%) |
+|---|---|---|---|---|---|---|---|
+| Crop Name | | | | | | | |
+| Variety | | | | | | | |
+| Growth Duration | | | | | | | |
+| Soil Requirements | | | | | | | |
+| Climate Requirements | | | | | | | |
+| Fertilizer Recommendations | | | | | | | |
+| Pest/Disease Management | | | | | | | |
+| Yield Data | | | | | | | |
+| Harvest Indicators | | | | | | | |
+| **Macro Average** | | | | | | | |
+| **Weighted Average** | | | | | | | |
 
-| Field | Precision | Recall | F1-Score | EM | Hallucination Rate |
-|---|---|---|---|---|---|
-| Crop Name | | | | | |
-| Variety | | | | | |
-| Growth Duration | | | | | |
-| Soil Requirements | | | | | |
-| Climate Requirements | | | | | |
-| Fertilizer Recommendations | | | | | |
-| Pest/Disease Management | | | | | |
-| Yield Data | | | | | |
-| Harvest Indicators | | | | | |
-| **Macro Average** | | | | | |
-| **Weighted Average** | | | | | |
+#### 4.1.1.5 Provider Comparison
 
-*Discussion:* Analyze which fields are extracted most and least reliably. Distinguish between extraction misses (field present in source but not extracted) and hallucinations (value extracted but absent from source). Numeric and discrete fields (e.g., growth duration, yield data) are expected to produce higher hallucination risk due to unit variation and inferential filling. Narrative fields (e.g., pest management recommendations) may exhibit lower precision but higher recall due to paraphrasing.
+**Table 4.5. Extraction Performance by LLM Provider**
 
-### 4.3.3 Provider Comparison
-
-**Table 4.10. Extraction Performance by LLM Provider**
-
-| Provider | Precision | Recall | F1-Score | Avg. Latency (s) | Cost (per 1K chunks) |
+| Provider | Precision | Recall | F1-Score | Hallucination Rate (%) | Avg. Latency (s) |
 |---|---|---|---|---|---|
 | Claude ([model]) | | | | | |
 | Gemini ([model]) | | | | | |
 | Ollama ([model]) | | | | | |
 
-*Discussion:* Compare providers on quality-cost-latency tradeoffs. Discuss whether the failover strategy successfully maintained pipeline throughput during provider quota events. Provide a recommendation for optimal provider selection based on results.
-
 ---
 
-## 4.4 RAG Chatbot Performance
+### 4.1.2 User Evaluation — App Usability and Impact
 
-### 4.4.1 Retrieval Performance
+Results below are based on respondents' direct, hands-on testing of the deployed system. Each participant completed a structured session before completing the questionnaire.
 
-**Table 4.11. Retrieval Evaluation on Benchmark Query Set (n = [N] queries)**
+#### 4.1.2.1 Respondent Profile
 
-| Metric | Score |
-|---|---|
-| Hit Rate @ 1 | |
-| Hit Rate @ 3 | |
-| Hit Rate @ 5 | |
-| Mean Reciprocal Rank (MRR) | |
-| nDCG @ 5 | |
+**Table 4.6. Demographic Profile of Respondents (n = [N])**
 
-*Discussion:* Discuss retrieval quality and how Top-K selection affected the accuracy-context-length tradeoff. Note any query types (e.g., multi-crop comparisons, regional queries) that consistently failed retrieval and analyze root causes.
+| Category | Frequency | Percentage (%) |
+|---|---|---|
+| Agriculture Students | | |
+| Novice Farmers | | |
+| Extension Workers | | |
+| Faculty / Researchers | | |
+| Other | | |
+| **Total** | **[N]** | **100%** |
 
-### 4.4.2 End-to-End Response Quality
+#### 4.1.2.2 Usability
 
-**Table 4.12. Chatbot Response Quality Metrics**
+**Table 4.7. Usability — Survey Results**
 
-| Metric | Score |
-|---|---|
-| ROUGE-L | |
-| BERTScore (F1) | |
-| Faithfulness Score | |
-| Answer Relevance Score | |
-
-*Discussion:* Discuss the relationship between retrieval quality and response quality. Provide qualitative examples: a best-case response demonstrating grounded, accurate output, and a failure case (hallucination or incomplete answer) with attribution of cause. Discuss mitigation strategies applied.
-
-### 4.4.3 System Latency
-
-**Table 4.13. System Latency Profile**
-
-| Operation | Mean (ms) | Median (ms) | P95 (ms) |
+| Item | Weighted Mean | SD | Interpretation |
 |---|---|---|---|
-| Query Embedding | | | |
-| Vector Retrieval | | | |
-| LLM Generation | | | |
-| End-to-End Response | | | |
+| The interface was easy to navigate during testing. | | | |
+| I was able to complete the assigned tasks without assistance. | | | |
+| The chatbot responses were easy to read and understand. | | | |
+| I did not need additional instructions to use the system. | | | |
+| The layout of the application is clear and well-organized. | | | |
+| **Overall Weighted Mean** | | | |
 
-*Discussion:* Evaluate latency against acceptable response time thresholds for interactive use (typically < 3s for perceived responsiveness). Identify the dominant latency contributor and propose optimization strategies (caching, streaming generation).
+#### 4.1.2.3 Response Comprehensibility
+
+**Table 4.8. Response Comprehensibility — Survey Results**
+
+| Item | Weighted Mean | SD | Interpretation |
+|---|---|---|---|
+| The chatbot provided answers that matched my query. | | | |
+| The information in the responses was accurate and reliable. | | | |
+| The responses were complete and did not leave out important details. | | | |
+| I could verify the chatbot's answer against the referenced document. | | | |
+| **Overall Weighted Mean** | | | |
+
+#### 4.1.2.4 System Reliability
+
+**Table 4.9. System Reliability — Survey Results**
+
+| Item | Weighted Mean | SD | Interpretation |
+|---|---|---|---|
+| The system responded consistently throughout the testing session. | | | |
+| I did not encounter errors or unexpected behavior during testing. | | | |
+| The system responded within an acceptable amount of time. | | | |
+| **Overall Weighted Mean** | | | |
+
+#### 4.1.2.5 Perceived Impact
+
+**Table 4.10. Perceived Impact — Survey Results**
+
+| Item | Weighted Mean | SD | Interpretation |
+|---|---|---|---|
+| This system improves access to agricultural information. | | | |
+| This system made it easier to find agricultural information than searching through documents manually. | | | |
+| I would recommend this system for agricultural information lookup. | | | |
+| This system would be useful in real agricultural practice or study. | | | |
+| **Overall Weighted Mean** | | | |
+
+#### 4.1.2.6 Survey Summary and Internal Consistency
+
+**Table 4.11. Summary of All Survey Dimensions**
+
+| Dimension | Overall Weighted Mean | SD | Interpretation |
+|---|---|---|---|
+| Usability | | | |
+| Response Comprehensibility | | | |
+| System Reliability | | | |
+| Perceived Impact | | | |
+| **Grand Mean** | | | |
+
+*Scale: 4.50–5.00 = Strongly Agree; 3.50–4.49 = Agree; 2.50–3.49 = Neutral; 1.50–2.49 = Disagree; 1.00–1.49 = Strongly Disagree*
+
+**Table 4.12. Instrument Reliability — Cronbach's Alpha**
+
+| Scope | Cronbach's Alpha (α) | Number of Items (k) | Interpretation |
+|---|---|---|---|
+| Full Instrument | | | |
+| Usability Subscale | | | |
+| Response Comprehensibility Subscale | | | |
+| System Reliability Subscale | | | |
+| Perceived Impact Subscale | | | |
 
 ---
 
-## 4.5 System Performance Under Load
+### 4.1.3 Response Quality Evaluation
 
-**Table 4.14. Extraction Pipeline Throughput**
+Results below are from the researcher-constructed gold-standard test set evaluated by a panel of [N] raters, covering [N] agricultural query prompts.
 
-| Metric | Value |
-|---|---|
-| Average Extraction Time per Chunk (s) | |
-| Chunks Processed per Hour | |
-| Error Rate (%) | |
-| Provider Failover Events | |
+#### 4.1.3.1 Test Set Overview
 
-*Discussion:* Discuss pipeline stability, error recovery behavior, and the effectiveness of the token rotation mechanism in sustaining throughput across large batches.
+**Table 4.13. Test Set Composition**
+
+| Query Category | Number of Items | Proportion (%) |
+|---|---|---|
+| Soil and Climate Requirements | | |
+| Nutrient and Fertilizer Management | | |
+| Pest and Disease Control | | |
+| Planting Methods and Practices | | |
+| Yield and Harvest Information | | |
+| **Total** | **[N]** | **100%** |
+
+#### 4.1.3.2 Mean Rating Scores
+
+**Table 4.14. Chatbot Response Quality — Mean Rating Scores by Query Category**
+
+| Query Category | Mean Rating | SD | Interpretation |
+|---|---|---|---|
+| Soil and Climate Requirements | | | |
+| Nutrient and Fertilizer Management | | | |
+| Pest and Disease Control | | | |
+| Planting Methods and Practices | | | |
+| Yield and Harvest Information | | | |
+| **Overall Mean** | | | |
+
+*Scale: 4.50–5.00 = Excellent; 3.50–4.49 = Good; 2.50–3.49 = Fair; 1.50–2.49 = Poor; 1.00–1.49 = Very Poor*
+
+#### 4.1.3.3 Inter-Rater Reliability
+
+**Table 4.15. Inter-Rater Agreement — Krippendorff's Alpha**
+
+| Scope | Krippendorff's Alpha (α) | D_o | D_e | Interpretation |
+|---|---|---|---|---|
+| All Items | | | | |
+| Soil and Climate | | | | |
+| Nutrient and Fertilizer | | | | |
+| Pest and Disease | | | | |
+| Planting Methods | | | | |
+| Yield and Harvest | | | | |
 
 ---
 
-## 4.6 Summary of Results
+### 4.1.4 Consolidated Results Summary
 
 **Table 4.16. Consolidated Evaluation Summary**
 
-| Evaluation Dimension | Key Metric | Result | Rating |
-|---|---|---|---|
-| User Testing — Usability | Weighted Mean | | |
-| User Testing — Response Quality | Weighted Mean | | |
-| User Testing — System Reliability | Weighted Mean | | |
-| User Testing — Overall Satisfaction | Weighted Mean | | |
-| Extraction Fidelity | Macro F1-Score | | |
-| Extraction Fidelity | Hallucination Rate | | |
-| Retrieval Quality | MRR | | |
-| Chatbot Response Quality | BERTScore F1 | | |
-| Response Faithfulness | Faithfulness Score | | |
-| System Latency | Mean E2E (ms) | | |
+| Evaluation Dimension | Table | Key Metric | Result | Interpretation |
+|---|---|---|---|---|
+| Extraction — Precision | 4.3 | Precision | | |
+| Extraction — Recall | 4.3 | Recall | | |
+| Extraction — F1-Score | 4.3 | Macro F1 | | |
+| Extraction — Hallucination | 4.3 | Hallucination Rate (%) | | |
+| Usability | 4.7 | Weighted Mean | | |
+| Response Comprehensibility | 4.8 | Weighted Mean | | |
+| System Reliability | 4.9 | Weighted Mean | | |
+| Perceived Impact | 4.10 | Weighted Mean | | |
+| Survey Instrument Reliability | 4.12 | Cronbach's Alpha | | |
+| Response Quality — Mean Score | 4.14 | Overall Mean Rating | | |
+| Response Quality — Agreement | 4.15 | Krippendorff's Alpha | | |
 
-*Discussion:* Provide a holistic synthesis of all evaluation dimensions. Address the three research questions from Section 3.2.1 directly: (1) extraction fidelity to government source documents, (2) chatbot effectiveness for agricultural queries, and (3) user-observed usability and satisfaction from hands-on testing. Discuss the degree to which the system meets its design goals, limitations encountered, and how findings compare to related work in agricultural knowledge systems and LLM-based information extraction.
+---
+
+## 4.2 Discussion
+
+### 4.2.1 Extraction Evaluation
+
+**Corpus and Chunking.** [Discuss chunking behavior — whether the sliding window strategy produced coherent chunks or fragmented key information across chunk boundaries. Note any document types (scanned PDFs, complex tables, multi-column layouts) that degraded text extraction quality and how these were handled.]
+
+**Field Coverage.** [Distinguish between two causes of low coverage: (1) the field is genuinely absent from the source document — a corpus characteristic, not an extraction failure — and (2) the field is present in the source but the LLM failed to extract it (a true FN). Government documents vary in scope; a pest management bulletin will naturally contain no yield data. Disaggregating these causes is essential for accurate interpretation of coverage rates.]
+
+**Overall Extraction Fidelity.** [Interpret Precision, Recall, and F1 results from Table 4.3. Precision (TP / (TP + FP)) indicates how much of what was extracted is correct; a low score signals hallucination. Recall (TP / (TP + FN)) indicates how much of what was available was captured; a low score signals missed extraction. Discuss the precision-recall tradeoff — whether the system leans toward over-extraction or conservative extraction. Given that all source content is authoritative government text, the Hallucination Rate is a critical trustworthiness indicator.]
+
+**Per-Field Performance.** [Using Table 4.4, analyze which fields were extracted most and least reliably. Interpret raw TP, FP, and FN counts alongside derived metrics. A field with low recall but zero FP is a safe but incomplete extractor; a field with high FP is a hallucination risk. Numeric and discrete fields (e.g., growth duration, yield data) are expected to carry higher hallucination risk due to unit variation and inferential filling. Narrative fields (e.g., pest management recommendations) may show lower precision but higher recall due to paraphrasing.]
+
+**Provider Comparison.** [Using Table 4.5, compare providers on the quality-latency tradeoff. Discuss whether the multi-provider failover strategy successfully maintained pipeline throughput during quota events. Recommend the optimal provider configuration for this use case based on the combined Precision, Recall, Hallucination Rate, and latency profile.]
+
+---
+
+### 4.2.2 User Evaluation — App Usability and Impact
+
+**Respondent Profile.** [Describe the composition from Table 4.6 and how it reflects the target user population — particularly noting the proportion of actual farmers and novice users, whose ratings most directly address RQ4. Note any relevant prior experience with agricultural information systems or chatbot tools that may have influenced ratings.]
+
+**Usability.** [Interpret Table 4.7 weighted mean scores in the context of the testing tasks. Identify items with the lowest scores and relate them to specific interface elements or interaction flows. Note whether any testing task generated noticeably more difficulty than others.]
+
+**Response Comprehensibility.** [Interpret Table 4.8. Discuss how user-perceived comprehensibility aligns with the objective response quality scores in Table 4.14. Respondents who used the document verification item are particularly informative — note any patterns in verification behavior and discuss implications for user trust in system outputs grounded in government sources.]
+
+**System Reliability.** [Interpret Table 4.9. If perceived reliability diverges from what users experienced during the session, analyze possible causes such as latency perception, error visibility, or recovery behavior.]
+
+**Perceived Impact.** [Interpret Table 4.10 with particular attention to the comparison item: *"This system made it easier to find agricultural information than searching through documents manually."* A high score on this item from farmer and novice respondents is the most direct evidence for RQ4. Compare Perceived Impact scores across respondent groups (students vs. farmers vs. extension workers) to identify whether accessibility gains are evenly distributed or concentrated in one group.]
+
+**Internal Consistency.** [Report and interpret Cronbach's Alpha from Table 4.12. An alpha ≥ 0.70 per subscale confirms that items within each dimension reliably measure the same underlying construct. Identify which dimension showed the strongest and weakest consistency and discuss implications for instrument validity. Conclude with a statement on overall user acceptance of the system.]
+
+---
+
+### 4.2.3 Response Quality Evaluation
+
+**Test Set Representativeness.** [Discuss how Table 4.13 categories were selected to reflect the range of queries that target users would realistically submit. Note any categories that were under-represented due to corpus coverage limitations.]
+
+**Mean Rating Scores.** [Interpret Table 4.14. Identify which query categories produced the highest and lowest scores. For low-scoring categories, analyze root causes — whether failures stem from retrieval gaps (relevant crop records absent from the knowledge base), generation errors (LLM produced inaccurate responses despite correct context), or coverage gaps in the source corpus. Provide at least one qualitative example of a best-case response and one failure case with attribution of cause.]
+
+**Inter-Rater Reliability.** [Interpret Table 4.15. Krippendorff's Alpha (α = 1 − D_o / D_e) measures rater panel agreement beyond chance. Report whether the overall α exceeds 0.67. If any query category shows substantially lower agreement, this suggests ambiguous evaluation criteria for that domain and should be acknowledged as a limitation of the response quality results for that category.]
+
+---
+
+### 4.2.4 Research Questions Synthesis
+
+**RQ1 — How can a RAG framework be architected to provide natural language responses grounded in official Philippine agricultural documents?**
+[Draw on Table 4.14 mean rating scores and Table 4.15 inter-rater reliability. Discuss whether retrieved context from official government documents was faithfully reflected in generated responses. Cite high- and low-scoring query categories as evidence of where the RAG architecture succeeded and where it was constrained by retrieval or generation limitations.]
+
+**RQ2 — How can a specialized knowledge base be curated using official agricultural documents to address local agri-information gaps?**
+[Draw on Tables 4.2, 4.3, and 4.4. A high overall F1 and low hallucination rate directly demonstrate that the pipeline produces a trustworthy, high-fidelity knowledge base from official source documents. Identify which fields were curated most completely and which represent persistent coverage gaps in the current corpus.]
+
+**RQ3 — How does the integration of an EBR filter mitigate the risk of LLM hallucinations?**
+[Draw primarily on the Hallucination Rate from Table 4.3 and per-field hallucination rates from Table 4.4. Discuss how EBR-grounded retrieval constrains LLM generation to verified source content, reducing fabrication compared to ungrounded generation. Reference the faithfulness dimension of rater scores from Table 4.14 as corroborating evidence at the response level.]
+
+**RQ4 — To what extent does a conversational AI interface improve the accessibility of agronomic information for students, novice farmers, and the masses compared to traditional document-based retrieval?**
+[Draw on Tables 4.10 and 4.11. Anchor the answer on the comparison item — *"easier than searching through documents manually"* — and break scores down by respondent group. Identify whether ease-of-use or response quality was the stronger driver of perceived accessibility improvement, and state whether the system meets its accessibility objective for the target population.]
+
+---
+
+---
+
+# Chapter 5: Conclusion and Recommendations
+
+## 5.1 Conclusion
+
+[This section synthesizes the overall findings of the study and states whether the system achieved its intended purpose. Write 3–5 paragraphs covering the following, in order:]
+
+**Opening — Restate the problem and objective.**
+[Briefly restate that the study developed an agricultural RAG chatbot to make officially published Philippine government crop information accessible through natural language queries. Remind the reader why this problem matters — agricultural knowledge locked in unstructured PDFs is practically inaccessible to the target population without a system like this.]
+
+**Summary of key findings — one paragraph per major finding.**
+[Paragraph 1: Extraction fidelity. Summarize the overall F1 score and hallucination rate. State whether the pipeline successfully curated a high-fidelity knowledge base from official documents (RQ2) and whether the EBR filter demonstrably constrained hallucination (RQ3).]
+[Paragraph 2: Response quality. Summarize the overall mean rater score. State whether RAG-grounded generation produced responses that are accurate, complete, and faithful to the official source documents (RQ1).]
+[Paragraph 3: User acceptance and accessibility. Summarize the grand mean and perceived impact score, with particular emphasis on farmer respondents and the document-comparison item. State whether the system improved accessibility compared to manual document retrieval for the target population (RQ4).]
+
+**Closing — Overall conclusion statement.**
+[State whether the system, as evaluated, meets its design goals and is fit for its intended purpose. Acknowledge the primary limitation (e.g., corpus coverage, scanned PDF exclusion) that bounds the conclusion.]
+
+---
+
+## 5.2 Recommendations
+
+[This section proposes specific, actionable directions for improving the system and for future research. Organize as a numbered list of recommendations, each with a brief justification.]
+
+**For system improvement:**
+
+1. **Expand the corpus to include regional and indigenous crop varieties.** [The current corpus is weighted toward nationally prominent crops. Coverage gaps identified in Section 4.2.1 limit the system's utility for users in regions that rely on minority or regional varieties. Future work should incorporate documents from regional DA offices and local government agricultural units.]
+
+2. **Integrate OCR preprocessing for scanned PDFs.** [Scanned documents without an embedded text layer were excluded from the current pipeline. Incorporating an OCR step (e.g., Tesseract, AWS Textract) would substantially expand the accessible corpus, as a significant proportion of older Philippine agricultural publications exist only in scanned form.]
+
+3. **Implement response confidence scoring.** [Add a confidence indicator to chatbot responses that reflects retrieval similarity scores, allowing users to distinguish between high-confidence answers grounded in close matches and lower-confidence answers derived from partial matches. This directly supports the ethical hallucination mitigation goal described in Section 3.8.4.]
+
+4. **Conduct a longitudinal usability study with farmer respondents.** [The current evaluation captured user perception after a single structured testing session. A longitudinal study tracking farmers' information-seeking behavior over weeks of real-world use would provide stronger evidence for RQ4 and identify whether initial accessibility gains are sustained over time.]
+
+**For future research:**
+
+5. **Extend the EBR filter to multi-hop agricultural queries.** [The current EBR retrieves the top-K most similar crops for a single query. Agricultural advisory scenarios often require multi-hop reasoning (e.g., "What fertilizer is recommended for rice grown in clay soil during the dry season?"). Future work should explore chained retrieval or knowledge graph integration to support compound queries.]
+
+6. **Evaluate cross-lingual retrieval for Filipino and regional language queries.** [The current system is English-only. Many Filipino farmers are more comfortable querying in Filipino or regional languages. Future work should evaluate multilingual embedding models and assess whether retrieval quality degrades for non-English queries against an English-language knowledge base.]
