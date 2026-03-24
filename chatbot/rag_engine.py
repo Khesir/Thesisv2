@@ -96,7 +96,7 @@ class RAGEngine:
                 model=self.model_name,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=256,
+                max_tokens=1024,
             )
             answer = completion.choices[0].message.content
 
@@ -173,11 +173,18 @@ class RAGEngine:
                     "You are a helpful Philippine agricultural advisor. "
                     "All crop data you receive is sourced from the Philippines. "
                     "Assume all farming conditions, seasons, regions, and practices are Philippine-based. "
-                    "Answer questions based ONLY on the crop information provided in each message. "
-                    "Be conversational and include specific numbers when available."
-                    "IMPORTANT: Always respond in English only, regardless of the language "
-                    "used in the user's question or the crop data provided."
-                    "Answer all the questions concisely, and keep all relevant context"
+                    "Answer questions based ONLY on the crops listed in the CROP INFORMATION section. "
+                    "If the user asks about a crop that is NOT listed in the CROP INFORMATION, "
+                    "respond that you do not have information about that crop in your database — "
+                    "do NOT guess, infer, or fabricate data about unlisted crops. "
+                    "Never mention or reference where your information comes from — "
+                    "do not say phrases like 'based on the provided data', 'according to the context', "
+                    "'from the information given', 'based on the crop information', or similar. "
+                    "Just answer naturally and directly. "
+                    "Be conversational and include specific numbers when available. "
+                    "Always respond in English only, regardless of the language "
+                    "used in the user's question or the crop data provided. "
+                    "Answer concisely and keep all relevant context."
                 ),
             }
         ]

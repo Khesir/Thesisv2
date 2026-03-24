@@ -396,7 +396,7 @@ class CropStore:
 
         results = []
         for key, similarity in scores[:top_k]:
-            if similarity > 0:
+            if similarity > 0.3:
                 results.append({
                     'crop': self.crop_index[key],
                     'score': similarity,
@@ -418,6 +418,21 @@ class CropStore:
         """
         if not self.loaded:
             self.load_all()
+
+        # Direct name match: if query contains a known crop name, return it immediately.
+        # This prevents vector/keyword search from returning a wrong crop when the user
+        # explicitly names one (e.g. "tell me about ampalaya").
+        query_lower = query.lower()
+        name_matches = []
+        for key, crop in self.crop_index.items():
+            if key in query_lower:
+                name_matches.append({
+                    'crop': crop,
+                    'score': 1.0,
+                    'name': crop.get('name')
+                })
+        if name_matches:
+            return name_matches[:top_k]
 
         # Try vector search first
         if self.embedding_search_available:
