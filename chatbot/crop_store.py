@@ -396,7 +396,7 @@ class CropStore:
 
         results = []
         for key, similarity in scores[:top_k]:
-            if similarity > 0.3:
+            if similarity > 0.1:
                 results.append({
                     'crop': self.crop_index[key],
                     'score': similarity,
@@ -443,7 +443,33 @@ class CropStore:
                     return results
 
         # Fall back to keyword search
-        return self._keyword_search(query, top_k)
+        keyword_results = self._keyword_search(query, top_k)
+        if keyword_results:
+            return keyword_results
+
+        # Last resort: return top vector result regardless of threshold
+        # (handles small databases where the one relevant crop scores below threshold)
+        if self.embedding_search_available:
+            query_embedding = self._embed_query(query)
+            if query_embedding is not None:
+                query_norm = np.linalg.norm(query_embedding)
+                if query_norm > 0:
+                    scores = []
+                    for key, crop_emb in self.crop_embeddings.items():
+                        crop_norm = np.linalg.norm(crop_emb)
+                        if crop_norm > 0:
+                            sim = float(np.dot(query_embedding, crop_emb) / (query_norm * crop_norm))
+                            scores.append((key, sim))
+                    if scores:
+                        scores.sort(key=lambda x: x[1], reverse=True)
+                        key, sim = scores[0]
+                        return [{
+                            'crop': self.crop_index[key],
+                            'score': sim,
+                            'name': self.crop_index[key].get('name')
+                        }]
+
+        return []
 
     def get_crop(self, crop_name: str) -> Optional[Dict]:
         """Get a specific crop by name"""
