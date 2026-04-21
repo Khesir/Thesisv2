@@ -8,7 +8,7 @@ google-genai>=1.0.0
 numpy==1.26.4
 
 # Data Handling
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 
 # API Backend
 fastapi==0.115.0

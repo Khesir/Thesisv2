@@ -16,7 +16,7 @@ nltk==3.8.1
 numpy==1.26.4
 
 # Data Handling
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 
 # Utilities
 tqdm==4.66.1
